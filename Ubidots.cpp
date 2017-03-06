@@ -62,7 +62,7 @@ float Ubidots::getValue(char* id) {
   uint8_t bodyPosinit;
   uint8_t bodyPosend;
   if (_client.connect(HTTPSERVER, HTTPPORT)) {
-        Serial.println(F("Geting your variable"));
+        //Serial.println(F("Geting your variable"));
         _client.print(F("GET /api/v1.6/variables/"));
         _client.print(id);
         _client.println(F("/values?page_size=1 HTTP/1.1"));
@@ -150,9 +150,9 @@ bool Ubidots::sendTLATE() {
 //        }
         sprintf(data, "%s,", data);
     }
-    //Serial.println(data);
+    Serial.println(data);
     if (_client.connect(SERVER, PORT)) {
-        //Serial.println(F("POSTING YOUR VARIABLES"));
+        Serial.println(F("POSTING YOUR VARIABLES"));
         _client.print(_agent);
         _client.print(F("/"));
         _client.print(VERSION);
@@ -176,7 +176,7 @@ bool Ubidots::sendTLATE() {
     }
     while (_client.available()) {
         char c = _client.read();
-        //Serial.write(c);
+        Serial.write(c);
     }
     currentValue = 0;
     return true;

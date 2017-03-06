@@ -5,7 +5,6 @@
 #include <SensorReceiver.h>   // https://github.com/realholgi/433MHzForArduino/tree/master/RemoteSensor
 #include <Adafruit_SSD1305.h> // https://github.com/adafruit/Adafruit_SSD1305_Library ???
 #include <Adafruit_GFX.h>
-#include "Ubidots.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
@@ -17,14 +16,15 @@
 #include <Ticker.h>
 #include <TimeClient.h> // https://github.com/squix78/esp8266-weather-station
 
+#include "Ubidots.h"
 #include "icons.h"
 #include "globals.h"
+#include "PAGE_Wetter.h"
 
 ////// TRY: https://github.com/squix78/esp8266-oled-ssd1306  but cannot rotate
 ////// #include "SH1106.h"
 ////// SH1106Wire display(0x3D, SDA, SCL);
 
-#define SERIAL_DEBUG true
 #include <FormattingSerialDebug.h> // https://github.com/rlogiacco/MicroDebug
 
 
@@ -46,19 +46,19 @@ bool shouldSaveConfig = false;
 bool initialConfig = false;
 
 volatile uint32_t upload_beginWait = millis() + UBIDOTS_MIN_UPLOAD_INTERVAL;
-volatile uint32_t receive_beginWait = millis() + MIN_RECEIVE_INTERVAL + 1;
-volatile uint32_t tempread_beginWait = millis() + MIN_TEMP_READ_INTERVAL + 1;
+volatile uint32_t last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
+volatile uint32_t last_received_int = millis() + MIN_RECEIVE_WAIT_INT + 1;
 String prevDisplay = "--"; // when the digital clock was displayed
 
 const char* configPortalPassword = PORTAL_DEFAULT_PASSWORD;
 
+//  additional portal parameters
 char UBIDOTS_API_KEY[40] = "";
 uint32_t TIMEZONE = 1;
 
 TimeClient timeClient(TIMEZONE);
 
-void printNumI(int num);
-void printNumF (double num, byte dec = 1, int length = 0);
+#include "display.h"
 
 void setup()   {
   SERIAL_DEBUG_SETUP(115200);
@@ -68,17 +68,11 @@ void setup()   {
   DEBUG("FW %s\n", FIRMWAREVERSION);
   DEBUG("SDK: %s\n", ESP.getSdkVersion());
 
+  ESP.wdtDisable();
+  ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
+
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
-
-  if (!htu.begin()) {
-    DEBUG("Couldn't find local sensor!\n");
-    while (1);
-  }
-
-  // OLED: Turn On VCC
-  pinMode(D4, OUTPUT);
-  digitalWrite(D4, HIGH);
 
   display.begin();
   display.setRotation(3);
@@ -87,40 +81,37 @@ void setup()   {
 
   display.setTextWrap(false);
   display.setTextColor(WHITE);
-
   display.setTextSize(1);
 
-  display.setCursor(6, 0 + OFFSET);
-  display.print(F("Config..."));
-  display.display();
+  if (!htu.begin()) {
+    printAt(6, 0, "ERROR:", false);
+    printAt(6, 20, "internal", false);
+    printAt(6, 30, "Sensor", false);
+    printAt(6, 30, "failed!");
+    DEBUG("Couldn't find local sensor!\n");
+    while (1);
+  }
 
-  doSetup();
+  printAt(6, 0, "Config...");
+  if (shouldStartSetup()) {
+    doSetup();
+  }
 
-  display.setCursor(6, 10 + OFFSET);
-  display.print(F("WIFI..."));
-  display.display();
+  printAt(6, 10, "WIFI");
+  setupWIFI();
 
-  setupWIFI2();
-
-  display.setCursor(6, 20  + OFFSET);
-  display.print(F("HTTP..."));
-  display.display();
-
+  printAt(6, 20, "HTTP...");
   setupWebserver();
 
-  display.setCursor(6, 30  + OFFSET);
-  display.print(F("Time..."));
-  display.display();
+  printAt(6, 30, "Time...");
 
   timeClient = TimeClient(TIMEZONE);
   timeClient.updateTime();
 
+  printAt(6, 40, "433MHz...");
   SensorReceiver::init(RECEIVER_PIN, getRemoteTempHumi);
 
-  ESP.wdtDisable();
-  ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
-
-  // Setup OTA
+  printAt(6, 50, "OTA...");
   ArduinoOTA.setHostname(HOSTNAME);
   ArduinoOTA.onProgress(drawOtaProgress);
   ArduinoOTA.onEnd(drawOtaEnd);
@@ -130,56 +121,71 @@ void setup()   {
   DEBUG("Ready\n");
 }
 
-//callback notifying us of the need to save config
-void saveConfigCallback () {
-  DEBUG("Should save config");
-  shouldSaveConfig = true;
+void loop() {
+  drd.loop();
+  HTTP.handleClient();
+  ArduinoOTA.handle();
+  MDNS.update();
+
+  updateInternalSensor();
+
+  displayData();
+
+  uploadData();
+
+  delay(1000);
 }
 
-void flash() {
-  // triggers the LED
-  int state = digitalRead(BUILTIN_LED);
-  digitalWrite(BUILTIN_LED, !state);
+void updateInternalSensor() {
+  if (millis() - last_received_int < MIN_RECEIVE_WAIT_INT) {
+    return;
+  }
+
+  humidity_indoor = htu.readHumidity();
+  temperature_indoor = htu.readTemperature();
+
+  if (temperature_indoor > -273 && humidity_indoor > 0) {
+    humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
+    dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
+    last_received_int = millis();
+  }
 }
 
-void doSetup() {
-
-  loadConfig2();
-
-  if (WiFi.SSID() == "") {
+boolean shouldStartSetup() {
+  if ( (!loadConfig()) || WiFi.SSID() == "") {
     DEBUG("No stored access-point credentials; initiating configuration portal.");
     display.clearDisplay();
-    display.setCursor(6, 0  + OFFSET);
-    display.print(F("no Cfg"));
-    display.setCursor(6, 10  + OFFSET);
-    display.print(F("Portal"));
-    display.display();
+    printAt(6, 0, "no Cfg", false);
+    printAt(6, 10, "Portal");
     delay(1000);
     initialConfig = true;
+    return true;
   }
+
   if (drd.detectDoubleReset()) {
     DEBUG("Double-reset detected...");
     display.clearDisplay();
-    display.setCursor(6, 0  + OFFSET);
-    display.print(F("RESET"));
-    display.setCursor(6, 20  + OFFSET);
-    display.print(F("Portal"));
-    display.display();
+    printAt(6, 0, "RESET", false);
+    printAt(6, 10, "Portal");
     delay(1000);
     initialConfig = true;
+    return true;
   }
+  return false;
+}
+
+void doSetup() {
 
   WiFiManagerParameter custom_UBIDOTS_API_KEY("UDkey", "UBIDOTS API key", UBIDOTS_API_KEY, 40, "<p>UBIDOTS API Key</p");
   WiFiManagerParameter custom_TIMEZONE("TIMEZONE", "Timezone",  String(TIMEZONE).c_str(), 5, TYPE_NUMBER);
 
   if (initialConfig) {
     DEBUG("Starting configuration portal.");
+
     flasher.attach(0.1, flash);
 
     WiFiManager wifiManager;
     wifiManager.setSaveConfigCallback(saveConfigCallback);
-
-    // Uncomment for testing wifi manager
     wifiManager.setAPCallback(configModeCallback);
 
     //add all your parameters here
@@ -205,7 +211,7 @@ void doSetup() {
 
       //save the custom parameters to FS
       if (shouldSaveConfig) {
-        Serial.println("saving config");
+        DEBUG("saving config");
         DynamicJsonBuffer jsonBuffer;
         JsonObject& json = jsonBuffer.createObject();
         json["UBIDOTS_API_KEY"] = UBIDOTS_API_KEY;
@@ -232,7 +238,20 @@ void doSetup() {
   WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 }
 
-void loadConfig2() {
+
+//callback notifying us of the need to save config
+void saveConfigCallback () {
+  DEBUG("Should save config");
+  shouldSaveConfig = true;
+}
+
+void flash() {
+  // blink the LED
+  int state = digitalRead(BUILTIN_LED);
+  digitalWrite(BUILTIN_LED, !state);
+}
+
+boolean loadConfig() {
   //read configuration from FS json
   DEBUG("mounting FS...");
 
@@ -265,6 +284,7 @@ void loadConfig2() {
           strcpy(UBIDOTS_API_KEY, json["UBIDOTS_API_KEY"]);
           TIMEZONE = json["TIMEZONE"];
           DEBUG("...finished...");
+          return true;
         } else {
           DEBUG("failed to load json config");
         }
@@ -273,31 +293,26 @@ void loadConfig2() {
       DEBUG("CONFIG_FILE does not exist.");
     }
   } else {
-    Serial.println("failed to mount FS");
+    DEBUG("failed to mount FS");
   }
   //end read
+  return false;
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
   DEBUG("Entered config mode");
   DEBUG(WiFi.softAPIP().toString().c_str());
-  //if you used auto generated SSID, print it
   DEBUG(myWiFiManager->getConfigPortalSSID().c_str());
+
   display.clearDisplay();
   display.setTextSize(1);
-  display.setCursor(6, 0 + OFFSET);
-  display.print(F("SETUP"));
-  display.setCursor(6, 20 + OFFSET);
-  display.print(F("SSID:"));
-  display.setCursor(6, 30 + OFFSET);
-  display.print(myWiFiManager->getConfigPortalSSID());
-  display.display();
+  printAt(6, 0, "SETUP", false);
+  printAt(6, 20, "SSID:", false);
+  printAt(6, 40, myWiFiManager->getConfigPortalSSID());
 }
 
-void setupWIFI2() {
-  //WiFiManager
-  //Local intialization. Once its business is done, there is no need to keep it around
-  WiFiManager wifiManager;
+void setupWIFI() {
+  WiFiManager wifiManager; //Local intialization. Once its business is done, there is no need to keep it around
 
   // Uncomment for testing wifi manager
   // wifiManager.resetSettings();
@@ -309,7 +324,7 @@ void setupWIFI2() {
   //Manual Wifi
   // WiFi.begin(SSID, PASSWORD);
   String hostname(HOSTNAME);
-  hostname += String(ESP.getChipId(), HEX);
+  //hostname += String(ESP.getChipId(), HEX);
   WiFi.hostname(hostname);
 
   DEBUG("Enabling WIFI...\n");
@@ -317,60 +332,34 @@ void setupWIFI2() {
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
     delay(500);
     DEBUG(".");
+    display.print(".");
+    display.display();
   }
   DEBUG("\n");
+  MDNS.begin("wetter"); //find it as http://wetter.local
 }
 
 void drawOtaProgress(unsigned int progress, unsigned int total) {
   display.clearDisplay();
   display.setTextSize(1);
-  display.setCursor(6, 0 + OFFSET);
-  display.print(F("OTA..."));
-  display.setCursor(6, 10 + OFFSET);
-  display.print(progress / (total / 100));
-  display.print(F("%"));
-  display.display();
+  printAt(6, 0, "OTA...", false);
+  String percent = (progress / (total / 100)) + "%";
+  printAt(6, 10, percent);
 }
 
 void drawOtaEnd() {
-  display.setCursor(6, 20 + OFFSET);
-  display.print(F("OK, Reboot"));
-  display.display();
+  printAt(6, 20, "OK, Reboot");
 }
-
-void loop() {
-  drd.loop();
-  HTTP.handleClient();
-  ArduinoOTA.handle();
-  MDNS.update();
-
-  if (millis() - tempread_beginWait > MIN_TEMP_READ_INTERVAL) {
-    humidity_indoor = htu.readHumidity();
-    temperature_indoor = htu.readTemperature();
-    tempread_beginWait = millis();
-    if (temperature_indoor > -273 && humidity_indoor > 0) {
-      humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
-      dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
-    }
-  }
-
-  displayData();
-
-  uploadData();
-
-  delay(1000);
-}
-
 
 void uploadData() {
   if (millis() - upload_beginWait < UBIDOTS_MIN_UPLOAD_INTERVAL) {
     return;
   }
 
-  Ubidots ubiclient(UBIDOTS_API_KEY, HOSTNAME);
-  ubiclient.setDataSourceName(HOSTNAME);
+  Ubidots ubiclient(UBIDOTS_API_KEY, UBI_HOSTNAME);
+  ubiclient.setDataSourceName(UBI_HOSTNAME);
 
-  DEBUG("Uploading to ubidots...\n");
+  DEBUG("Uploading to Ubidots...\n");
 
   if (humidity_indoor > 0)
     ubiclient.add("h_in", int(humidity_indoor));
@@ -405,22 +394,20 @@ void uploadData() {
 void displayData() {
   display.clearDisplay();
   display.setTextSize(2);
-  display.setCursor(6, 0 + OFFSET);
+
   if (temperature_outdoor > -273) {
-    printNumF(temperature_outdoor);
+    printNumF(6, 0, temperature_outdoor);
   }
 
   display.setTextSize(1);
-  display.setCursor(46, 20 + OFFSET);
   if (humidity_outdoor > 0) {
-    printNumI(humidity_outdoor);
+    printNumI(46, 20, humidity_outdoor);
     display.print("%");
   }
 
   display.setTextSize(1);
-  display.setCursor(34, 30 + OFFSET); //
   if (humidity_abs_outdoor > -1) {
-    printNumF(humidity_abs_outdoor);
+    printNumF(34, 30, humidity_abs_outdoor);
   }
 
   display.drawBitmap(2, 20 + OFFSET,  sun_icon16x16, 16, 16, WHITE);
@@ -429,22 +416,19 @@ void displayData() {
   display.drawLine(0, 40 + OFFSET, display.width() - 1, 40 + OFFSET, WHITE);
 
   display.setTextSize(2);
-  display.setCursor(6, 40 + 4 + OFFSET);
   if (temperature_indoor > -273) {
-    printNumF(temperature_indoor);
+    printNumF(6, 40 + 4, temperature_indoor);
   }
 
   display.setTextSize(1);
-  display.setCursor(46, 20 + 40 + 2 + OFFSET);
   if (humidity_indoor > 0) {
-    printNumI(humidity_indoor);
+    printNumI(46, 20 + 40 + 2, humidity_indoor);
     display.print("%");
   }
 
   display.setTextSize(1);
-  display.setCursor(34, 30 + 40 + 2 + OFFSET);
   if (humidity_abs_indoor > -1) {
-    printNumF(humidity_abs_indoor);
+    printNumF(34, 30 + 40 + 2, humidity_abs_indoor);
   }
 
   display.drawBitmap(2, 20 + 40 + 2 + OFFSET,  home_icon16x16, 16, 16, WHITE);
@@ -454,10 +438,10 @@ void displayData() {
   // -----------
 
   display.setTextSize(2);
-  display.setCursor(6, 82 + 4 + OFFSET);
+
   if (temperature_outdoor > -273 && humidity_outdoor > 0 && temperature_indoor > -273 && humidity_indoor > 0) {
     float diff = humidity_abs_indoor - humidity_abs_outdoor;
-    printNumF(diff);
+    printNumF(6, 82 + 4, diff);
     int color = WHITE;
     if (diff > 0.0 && abs(diff) < MIN_DIFF) {
       color = BLACK;
@@ -465,17 +449,13 @@ void displayData() {
     display.drawBitmap(0, 3 + 82 + OFFSET,  warning_icon16x16, 16, 16, color);
   }
 
-  display.setCursor(6, 82 + 4 + 22 + OFFSET);
-
   if (timeClient.getHours() != prevDisplay) { // update internet time every hour
     timeClient.updateTime();
     prevDisplay = timeClient.getHours();
   }
 
   String time = timeClient.getFormattedTime().substring(0, 5);
-  display.print(time);
-
-  display.display();
+  printAt(6, 82 + 4 + 22, time);
 }
 
 void setupWebserver() {
@@ -483,13 +463,12 @@ void setupWebserver() {
   HTTP.on("/data.json", HTTP_GET, [&]() {
     HTTP.sendHeader("Connection", "close");
     HTTP.sendHeader("Access-Control-Allow-Origin", "*");
-    return handleData();
+    return handleJsonData();
   });
   HTTP.onNotFound(handleNotFound);
 
   HTTP.begin();
 
-  MDNS.begin("wetter"); //find it as http://wetter.local
   MDNS.addService("http", "tcp", 80);
 }
 
@@ -508,7 +487,7 @@ void handleNotFound() {
   HTTP.send(404, "text/plain", message);
 }
 
-void handleData() {
+void handleJsonData() {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
 
@@ -529,101 +508,16 @@ void handleData() {
 }
 
 void handleRoot() {
-  String message = F("<!DOCTYPE html>\n");
-  message += F("<html lang=\"de\">\n");
-  message += F("<head>\n");
-  message += F("  <title>Wetterstation</title>\n");
-  message += F("  <meta charset=\"utf-8\">\n");
-  message += F("  <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n");
-  message += F("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
-  message += F("<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->\n");
-  message += F("  <link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\" integrity=\"sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u\" crossorigin=\"anonymous\">\n");
-  message += F("  <link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css\" integrity=\"sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp\" crossorigin=\"anonymous\">\n");
-  message += F("<!--[if lt IE 9]>\n");
-  message += F("  <script src=\"https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js\"></script>\n");
-  message += F("  <script src=\"https://oss.maxcdn.com/respond/1.4.2/respond.min.js\"></script>\n");
-  message += F("<![endif]-->\n");
-  message += F("</head>\n");
-
-  message += F("<body>\n");
-  message += F("<div class=\"container\">\n");
-  message += F("<div class=\"page-header\"><h1>Wetterstation</h1></div>\n");
-
-  message += F("<div id=\"error\"></div>");
-
-  message += F("<div class=\"panel panel-info\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Innen</h3></div><div class=\"panel-body\"><ul>\n");
-  message += F("<li>Temperatur: <span id=\"t_in\">");
-  message +=  temperature_indoor;
-  message += F("</span>&deg;C</li>\n");
-  message += F("<li>Relative Feuchtigkeit: <span id=\"h_in\">");
-  message +=  int(humidity_indoor);
-  message += F("</span>%</li>\n");
-  message += F("<li>Absolute Feuchtigkeit: <span id=\"f_in\">");
-  message +=  humidity_abs_indoor;
-  message += F("</span> g/m³</li>\n");
-  message += F("<li>Taupunkt: <span id=\"dp_in\">");
-  message += dp_indoor;
-  message += F("</span>&deg;C</li>\n");
-  message += F("</ul></div></div>\n");
-
-  message += F("<div class=\"panel panel-info\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Aussen</h3></div><div class=\"panel-body\"><ul>\n");
-  message += F("<li>Temperatur: <span id=\"t_out\">");
-  message +=  temperature_outdoor;
-  message += F("</span>&deg;C</li>\n");
-  message += F("<li>Relative Feuchtigkeit: <span id=\"h_out\">");
-  message +=  int(humidity_outdoor);
-  message += F("</span>%</li>\n");
-  message += F("<li>Absolute Feuchtigkeit: <span id=\"f_out\">");
-  message +=  humidity_abs_outdoor;
-  message += F("</span> g/m³</li>\n");
-  message += F("</ul></div></div>");
-
-  message += F("<div class=\"panel panel-primary\"><div class=\"panel-heading\"><h3 class=\"panel-title\">Absolute Feuchtigkeitsdifferenz Innen/Aussen</h3></div><div class=\"panel-body\"><ul><li><span id=\"f_diff\">\n");
-  message += humidity_abs_indoor - humidity_abs_outdoor;
-  message += F("</span> g/m³</li></ul></div></div>\n");
-
-  message += F("</div><!-- /container -->\n");
-  message += F("<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js\"></script>\n");
-  message += F("<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\" integrity=\"sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa\" crossorigin=\"anonymous\"></script>\n");
-
-  message += F("<script src=\"https://unpkg.com/axios/dist/axios.min.js\"></script>");
-
-  message += F("<script>\n");
-  message += F("  Number.prototype.round = function(decimals) { return Number((Math.round(this + \"e\" + decimals)  + \"e-\" + decimals)); }\n");
-  message += F("  var fn = function(){\n");
-  message += F("    axios.get('/data.json')\n");
-  message += F("      .then(function (response) {\n");
-  message += F("          document.getElementById('t_in').innerHTML = response.data.t_in.round(1);\n");
-  message += F("          document.getElementById('h_in').innerHTML = response.data.h_in;\n");
-  message += F("          document.getElementById('f_in').innerHTML = response.data.f_in.round(1);\n");
-  message += F("          document.getElementById('dp_in').innerHTML = response.data.dp_in.round(1);\n");
-  message += F("          document.getElementById('t_out').innerHTML = response.data.t_out.round(1);\n");
-  message += F("          document.getElementById('h_out').innerHTML = response.data.h_out;\n");
-  message += F("          document.getElementById('f_out').innerHTML = response.data.f_out.round(1);\n");
-  message += F("          document.getElementById('f_diff').innerHTML = response.data.f_diff.round(1);\n");
-  message += F("          document.getElementById('error').innerHTML = '';\n");
-  message += F("       })\n");
-  message += F("      .catch(function (err) {\n");
-  message += F("        document.getElementById('error').innerHTML = '<div class=\"alert alert-danger\" role=\"alert\">' + err.message + '</div>';\n");
-  message += F("      });\n");
-  message += F("      };\n");
-  message += F("      fn();\n");
-  message += F("      var interval = setInterval(fn, 5000);\n");
-  message += F("</script>\n");
-
-  message += F("</body></html>");
-
-  HTTP.send(200, "text/html", message);
+  HTTP.send(200, "text/html", PAGE_Wetter);
 }
 
 ICACHE_RAM_ATTR void getRemoteTempHumi(byte * data) {
 
-  if (millis() - receive_beginWait < MIN_RECEIVE_INTERVAL) {
+  if (millis() - last_received_ext < MIN_RECEIVE_WAIT_EXT) {
     return;
   }
 
-  // is data a ThermoHygro-device?
-  if ((data[3] & 0x1f) == 0x1e) {
+  if ((data[3] & 0x1f) == THERMO_HYGRO_DEVICE) {   // is data a ThermoHygro-device?
 
     byte channel, randomId;
     int temp;
@@ -631,7 +525,7 @@ ICACHE_RAM_ATTR void getRemoteTempHumi(byte * data) {
 
     SensorReceiver::decodeThermoHygro(data, channel, randomId, temp, humidity);
 
-    if (randomId == RF_RECEIVER_ID) {
+    if (randomId == MY_RF_RECEIVER_ID) {
       humidity_outdoor = humidity;
       temperature_outdoor = temp / 10.0;
 
@@ -639,12 +533,11 @@ ICACHE_RAM_ATTR void getRemoteTempHumi(byte * data) {
         humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
       }
 
-      DEBUG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", temp / 10, abs(temp % 10), humidity, randomId);
-
-      receive_beginWait = millis();
+      last_received_ext = millis();
     } else {
-      DEBUG("ROGUE SENSOR: Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", temp / 10, abs(temp % 10), humidity, randomId);
+      DEBUG("ROGUE SENSOR FOUND!");
     }
+    DEBUG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", temp / 10, abs(temp % 10), humidity, randomId);
   }
 }
 
@@ -664,32 +557,4 @@ double RHtoDP(double t, double RH) {
   double td = BAROMETRIC_PRESSURE * H / (WATER_VAPOR - H);
   return td;
 }
-
-void printNumI(int num)
-{
-  char st[27];
-
-  sprintf(st, "%i", num);
-  if (strlen(st) == 1) {
-    display.print(" ");
-  }
-  display.print(st);
-}
-
-void printNumF (double num, byte dec, int length)
-{
-  char st[27];
-
-  dtostrf(num, length, dec, st );
-  int l = strlen(st);
-  // fixed output length 4
-  if (l == 3) {
-    display.print(F("  "));
-  }
-  if (l == 4) {
-    display.print(F(" "));
-  }
-  display.print(st);
-}
-
 
