@@ -1,22 +1,22 @@
 #define FIRMWAREVERSION "0.8.2"
 
-#define SERIAL_DEBUG true
-
 #define THERMO_HYGRO_DEVICE 0x1e
 #define MY_RF_RECEIVER_ID 27 // 12|27
 
 #define HOSTNAME "wetter"
 
 #define UBI_HOSTNAME "esp-wetter"
-#define UBIDOTS_MIN_UPLOAD_INTERVAL 2*60*1000
+#define UBIDOTS_UPLOAD_INTERVAL 2*60
 
 #define OLED_RESET D3
 
 #define MIN_DIFF 3.0
 #define RECEIVER_PIN D6
 
-#define MIN_RECEIVE_WAIT_INT 2000
+#define MIN_RECEIVE_WAIT_INT 2
 #define MIN_RECEIVE_WAIT_EXT 200
+
+#define UPDATE_NTP_TIME_INTERVAL 3600
 
 #define OFFSET 1
 

@@ -25,6 +25,8 @@
 ////// #include "SH1106.h"
 ////// SH1106Wire display(0x3D, SDA, SCL);
 
+#define SERIAL_DEBUG true
+
 #include <FormattingSerialDebug.h> // https://github.com/rlogiacco/MicroDebug
 
 
@@ -32,7 +34,10 @@ Adafruit_SSD1305 display(OLED_RESET);
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 ESP8266WebServer HTTP(80);
 DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
-Ticker flasher;
+
+Ticker tickerForInternalSensorUpdate;
+Ticker tickerForUploadData;
+Ticker tickerForTimeUpdate;
 
 volatile float humidity_outdoor = 0; // volatile var is stored in RAM (not register) for interrupvar_doesnt_exist handler - See more at: http://www.esp8266.com/viewtopic.php?f=28&t=9702&start=4#sthash.zNy41Ef8.dpuf
 float humidity_indoor = 0;
@@ -45,10 +50,12 @@ volatile float humidity_abs_outdoor = -1;
 bool shouldSaveConfig = false;
 bool initialConfig = false;
 
-volatile uint32_t upload_beginWait = millis() + UBIDOTS_MIN_UPLOAD_INTERVAL;
 volatile uint32_t last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
-volatile uint32_t last_received_int = millis() + MIN_RECEIVE_WAIT_INT + 1;
 String prevDisplay = "--"; // when the digital clock was displayed
+
+bool readyForInternalSensorUpdate = true;
+bool readyForUploadData = false;
+bool readyForTimeUpdate = false;
 
 const char* configPortalPassword = PORTAL_DEFAULT_PASSWORD;
 
@@ -118,6 +125,10 @@ void setup()   {
   //ArduinoOTA.setPassword(PORTAL_DEFAULT_PASSWORD);
   ArduinoOTA.begin();
 
+  tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForInternalSensorUpdate);
+  tickerForUploadData.attach(UBIDOTS_UPLOAD_INTERVAL, setReadyForUploadData);
+  tickerForTimeUpdate.attach(UPDATE_NTP_TIME_INTERVAL, setReadyForTimeUpdate);
+
   DEBUG("Ready\n");
 }
 
@@ -125,29 +136,38 @@ void loop() {
   drd.loop();
   HTTP.handleClient();
   ArduinoOTA.handle();
-  MDNS.update();
 
-  updateInternalSensor();
+  if (readyForInternalSensorUpdate) {
+    updateInternalSensor();
+  }
+
+  if (readyForTimeUpdate) {
+    updateTime();
+  }
 
   displayData();
 
-  uploadData();
+  if (readyForUploadData) {
+    uploadData();
+  }
 
   delay(1000);
+  yield();
+}
+
+void updateTime() {
+  timeClient.updateTime();
+  readyForTimeUpdate = false;
 }
 
 void updateInternalSensor() {
-  if (millis() - last_received_int < MIN_RECEIVE_WAIT_INT) {
-    return;
-  }
-
   humidity_indoor = htu.readHumidity();
   temperature_indoor = htu.readTemperature();
 
   if (temperature_indoor > -273 && humidity_indoor > 0) {
     humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
     dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
-    last_received_int = millis();
+    readyForInternalSensorUpdate = false;
   }
 }
 
@@ -182,6 +202,7 @@ void doSetup() {
   if (initialConfig) {
     DEBUG("Starting configuration portal.");
 
+    Ticker flasher;
     flasher.attach(0.1, flash);
 
     WiFiManager wifiManager;
@@ -352,10 +373,6 @@ void drawOtaEnd() {
 }
 
 void uploadData() {
-  if (millis() - upload_beginWait < UBIDOTS_MIN_UPLOAD_INTERVAL) {
-    return;
-  }
-
   Ubidots ubiclient(UBIDOTS_API_KEY, UBI_HOSTNAME);
   ubiclient.setDataSourceName(UBI_HOSTNAME);
 
@@ -388,7 +405,7 @@ void uploadData() {
 
   ubiclient.sendAll(false);
 
-  upload_beginWait = millis();
+  readyForUploadData = false;
 }
 
 void displayData() {
@@ -447,11 +464,6 @@ void displayData() {
       color = BLACK;
     }
     display.drawBitmap(0, 3 + 82 + OFFSET,  warning_icon16x16, 16, 16, color);
-  }
-
-  if (timeClient.getHours() != prevDisplay) { // update internet time every hour
-    timeClient.updateTime();
-    prevDisplay = timeClient.getHours();
   }
 
   String time = timeClient.getFormattedTime().substring(0, 5);
@@ -539,6 +551,18 @@ ICACHE_RAM_ATTR void getRemoteTempHumi(byte * data) {
     }
     DEBUG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", temp / 10, abs(temp % 10), humidity, randomId);
   }
+}
+
+void setReadyForInternalSensorUpdate() {
+  readyForInternalSensorUpdate = true;
+}
+
+void setReadyForTimeUpdate() {
+  readyForUploadData = true;
+}
+
+void setReadyForUploadData() {
+  readyForTimeUpdate = true;
 }
 
 // absolute Feuchtegehalt der Luft in Gramm Wasserdampf pro Kubikmeter
