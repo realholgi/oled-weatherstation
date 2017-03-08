@@ -29,7 +29,6 @@
 
 #include <FormattingSerialDebug.h> // https://github.com/rlogiacco/MicroDebug
 
-
 Adafruit_SSD1305 display(OLED_RESET);
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 ESP8266WebServer HTTP(80);
@@ -75,8 +74,8 @@ void setup()   {
   DEBUG("FW %s\n", FIRMWAREVERSION);
   DEBUG("SDK: %s\n", ESP.getSdkVersion());
 
-  ESP.wdtDisable();
-  ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
+  // ESP.wdtDisable();
+  // ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
 
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
@@ -112,7 +111,7 @@ void setup()   {
 
   printAt(6, 30, "Time...");
 
-  timeClient = TimeClient(TIMEZONE);
+  timeClient = TimeClient(TIMEZONE); // set TZ value from config
   timeClient.updateTime();
 
   printAt(6, 40, "433MHz...");
@@ -150,6 +149,8 @@ void loop() {
   if (readyForUploadData) {
     uploadData();
   }
+
+  MDNS.update();
 
   delay(1000);
   yield();
@@ -357,7 +358,7 @@ void setupWIFI() {
     display.display();
   }
   DEBUG("\n");
-  MDNS.begin("wetter"); //find it as http://wetter.local
+  MDNS.begin(HOSTNAME);
 }
 
 void drawOtaProgress(unsigned int progress, unsigned int total) {
