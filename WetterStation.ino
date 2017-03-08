@@ -520,7 +520,7 @@ void handleJsonData() {
 }
 
 void handleRoot() {
-  HTTP.send(200, "text/html", PAGE_Wetter);
+  HTTP.send_P(200, "text/html", PAGE_Wetter);
 }
 
 ICACHE_RAM_ATTR void getRemoteTempHumi(byte * data) {
