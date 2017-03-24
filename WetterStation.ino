@@ -91,11 +91,13 @@ void setup()   {
 
   if (!htu.begin()) {
     printAt(6, 0, "ERROR:", false);
-    printAt(6, 20, "internal", false);
+    printAt(6, 20, "local", false);
     printAt(6, 30, "Sensor", false);
-    printAt(6, 30, "failed!");
+    printAt(6, 40, "failing!");
     DEBUG("Couldn't find local sensor!\n");
-    while (1);
+    while (1) {
+      yield();
+    }
   }
 
   printAt(6, 0, "Config...");
@@ -435,7 +437,7 @@ void displayData() {
 
   display.setTextSize(2);
   if (temperature_indoor > -273) {
-    printNumF(6, 40 + 4, temperature_indoor);
+    printNumF(6, 40 + 4, temperature_indoor - TEMP_OFFSET_INDOOR);
   }
 
   display.setTextSize(1);
@@ -504,7 +506,7 @@ void handleJsonData() {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
 
-  json["t_in"] = temperature_indoor;
+  json["t_in"] = temperature_indoor - TEMP_OFFSET_INDOOR;
   json["h_in"] = int(humidity_indoor);
   json["f_in"] = humidity_abs_indoor;
   json["dp_in"] = dp_indoor;

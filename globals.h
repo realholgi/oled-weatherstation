@@ -33,3 +33,4 @@ const char TYPE_NUMBER[]  = "type=\"number\" step=\"any\"";
 #define WATER_VAPOR 17.62f
 #define BAROMETRIC_PRESSURE 243.12f
 
+#define TEMP_OFFSET_INDOOR 1.0
