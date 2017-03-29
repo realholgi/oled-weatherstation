@@ -14,8 +14,8 @@
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 #include <DoubleResetDetector.h>  // https://github.com/datacute/DoubleResetDetector
 #include <Ticker.h>
-#include <TimeClient.h> // https://github.com/squix78/esp8266-weather-station
 
+#include "TimeClient.h"
 #include "Ubidots.h"
 #include "icons.h"
 #include "globals.h"
@@ -62,7 +62,7 @@ const char* configPortalPassword = PORTAL_DEFAULT_PASSWORD;
 char UBIDOTS_API_KEY[40] = "";
 uint32_t TIMEZONE = 1;
 
-TimeClient timeClient(TIMEZONE);
+TimeClient timeClient(TIMEZONE, 1);
 
 #include "display.h"
 
@@ -74,8 +74,8 @@ void setup()   {
   DEBUG("FW %s\n", FIRMWAREVERSION);
   DEBUG("SDK: %s\n", ESP.getSdkVersion());
 
-  // ESP.wdtDisable();
-  // ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
+  ESP.wdtDisable();
+  ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
 
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
@@ -113,7 +113,7 @@ void setup()   {
 
   printAt(6, 30, "Time...");
 
-  timeClient = TimeClient(TIMEZONE); // set TZ value from config
+  timeClient = TimeClient(TIMEZONE, 1); // set TZ value from config
   timeClient.updateTime();
 
   printAt(6, 40, "433MHz...");
