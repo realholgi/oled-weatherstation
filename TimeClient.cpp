@@ -111,6 +111,7 @@ String TimeClient::getMinutes()
   }
   return String(minutes);
 }
+
 String TimeClient::getSeconds()
 {
   if (localEpoc == 0) {

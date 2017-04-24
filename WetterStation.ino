@@ -37,6 +37,7 @@ DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 Ticker tickerForInternalSensorUpdate;
 Ticker tickerForUploadData;
 Ticker tickerForTimeUpdate;
+Ticker tickerForExternalSensorInvalidate;
 
 volatile float humidity_outdoor = 0; // volatile var is stored in RAM (not register) for interrupvar_doesnt_exist handler - See more at: http://www.esp8266.com/viewtopic.php?f=28&t=9702&start=4#sthash.zNy41Ef8.dpuf
 float humidity_indoor = 0;
@@ -50,7 +51,6 @@ bool shouldSaveConfig = false;
 bool initialConfig = false;
 
 volatile uint32_t last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
-String prevDisplay = "--"; // when the digital clock was displayed
 
 bool readyForInternalSensorUpdate = true;
 bool readyForUploadData = false;
@@ -129,6 +129,7 @@ void setup()   {
   tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForInternalSensorUpdate);
   tickerForUploadData.attach(UBIDOTS_UPLOAD_INTERVAL, setReadyForUploadData);
   tickerForTimeUpdate.attach(UPDATE_NTP_TIME_INTERVAL, setReadyForTimeUpdate);
+  tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT, setExternalSensorInvalid);
 
   DEBUG("Ready\n");
 }
@@ -171,6 +172,13 @@ void updateInternalSensor() {
     humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
     dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
     readyForInternalSensorUpdate = false;
+  }
+}
+
+void setExternalSensorInvalid() {
+  if (millis() - last_received_ext > MAX_RECEIVE_WAIT_EXT) {
+    temperature_outdoor = -273;
+    humidity_outdoor = 0;
   }
 }
 
@@ -514,6 +522,7 @@ void handleJsonData() {
   json["t_out"] = temperature_outdoor;
   json["h_out"] = int(humidity_outdoor);
   json["f_out"] = humidity_abs_outdoor;
+  json["last_out"] = int (millis() - last_received_ext) / 1000;
 
   json["f_diff"] = humidity_abs_indoor - humidity_abs_outdoor;
 
