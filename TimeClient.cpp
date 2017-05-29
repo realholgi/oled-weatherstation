@@ -209,8 +209,9 @@ int TimeClient::adjustDSTEurope(int year, int month, int day)
   int endDSTMonth = 10;
 
   // DST is valid as:
-  if (((month >= startDSTMonth) && (day >= startDSTDay))
-      || ((month <= endDSTMonth) && (day < endDSTDay))) {
+  if (((month = startDSTMonth) && (day >= startDSTDay))
+      || ((month > startDSTMonth) && (month < endDSTMonth))
+      || ((month = endDSTMonth) && (day < endDSTDay))) {
     return 1;  // DST europe = utc +2 hour
   } else {
     return 0; // nonDST europe = utc +1 hour
