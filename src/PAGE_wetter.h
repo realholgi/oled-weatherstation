@@ -10,7 +10,7 @@ const char PAGE_Wetter[] PROGMEM = R"=====(
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
   <!--[if lt IE 9]>
- <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
   <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
@@ -35,6 +35,7 @@ const char PAGE_Wetter[] PROGMEM = R"=====(
 <li>Temperatur: <span id="t_out"></span>&deg;C</li>
 <li>Relative Feuchtigkeit: <span id="h_out"></span>%</li>
 <li>Absolute Feuchtigkeit: <span id="f_out"></span> g/m³</li>
+<li>Batterie: <span id="b_out"></span> mV</li>
 <li>Letzte Aktualisierung vor <span id="last_out"></span> s</li>
 </ul>
 </div></div>
@@ -62,6 +63,7 @@ const char PAGE_Wetter[] PROGMEM = R"=====(
            document.getElementById('dp_in').innerHTML = response.data.dp_in.round(1);
            document.getElementById('t_out').innerHTML = response.data.t_out.round(1);
            document.getElementById('h_out').innerHTML = response.data.h_out;
+           document.getElementById('b_out').innerHTML = response.data.b_out;
            document.getElementById('f_out').innerHTML = response.data.f_out.round(1);
            document.getElementById('last_out').innerHTML = response.data.last_out;
            document.getElementById('f_diff').innerHTML = response.data.f_diff.round(1);

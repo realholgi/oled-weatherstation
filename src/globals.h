@@ -1,7 +1,8 @@
-#define FIRMWAREVERSION "0.8.3"
+#define FIRMWAREVERSION "0.9.1"
 
 #define THERMO_HYGRO_DEVICE 0x1e
 #define MY_RF_RECEIVER_ID 27 // 12|27
+#define MY_RF_RECEIVER2_ID 28 // battery in mV in temp
 
 #define HOSTNAME "wetter"
 
