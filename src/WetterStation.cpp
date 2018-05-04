@@ -91,8 +91,8 @@ void setup() {
     DEBUG_MSG("FW %s\n", FIRMWAREVERSION);
     DEBUG_MSG("SDK: %s\n", ESP.getSdkVersion());
 
-    ESP.wdtDisable();
-    ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
+    //ESP.wdtDisable();
+    //ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
 
     pinMode(BUILTIN_LED, OUTPUT);
     digitalWrite(BUILTIN_LED, LOW);

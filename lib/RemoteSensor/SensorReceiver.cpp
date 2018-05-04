@@ -18,12 +18,14 @@
 #define ICACHE_RAM_ATTR
 #endif
 
+#define MAX_DATA_LEN 14
+
 byte SensorReceiver::halfBit = 0;
 word SensorReceiver::clockTime;
 boolean SensorReceiver::isOne;
 unsigned long SensorReceiver::lastChange=0;
 SensorReceiverCallback SensorReceiver::callback;
-byte SensorReceiver::data[14];
+byte SensorReceiver::data[MAX_DATA_LEN];
 byte SensorReceiver::packageLength;
 word SensorReceiver::duration;
 boolean SensorReceiver::enabled;
@@ -87,13 +89,14 @@ void ICACHE_RAM_ATTR SensorReceiver::interruptHandler() {
 			byte currentBit = (halfBit >> 1) % 9; // nine bits in a byte.
 
 			if (currentBit < 8) {
-				if (isOne) {
-					// Set current bit of current byte
-					data[currentByte] |= 1 << currentBit;
-				} 
-				else {
-				  // Reset current bit of current byte
-				  data[currentByte] &= ~(1 << currentBit);
+				if(currentByte < MAX_DATA_LEN) {
+					if (isOne) {
+						// Set current bit of current byte
+						data[currentByte] |= 1 << currentBit;
+					} else {
+						// Reset current bit of current byte
+						data[currentByte] &= ~(1 << currentBit);
+					}
 				}
 			} 
 			else {
