@@ -12,7 +12,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_HTU21DF.h> // https://github.com/adafruit/Adafruit_HTU21DF_Library
-#include <SensorReceiver.h>   // https://github.com/realholgi/433MHzForArduino/tree/master/RemoteSensor
+#include <fws433.h>   // https://github.com/realholgi/433MHzForArduino/tree/master/RemoteSensor
 #include <Adafruit_SSD1305.h> // https://github.com/adafruit/Adafruit_SSD1305_Library ???
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -63,6 +63,8 @@ float temperature_indoor = -273;
 float humidity_abs_indoor = -1;
 float dp_indoor = -273;
 volatile float humidity_abs_outdoor = -1;
+
+FWS433 fws = FWS433();
 
 bool shouldSaveConfig = false;
 bool initialConfig = false;
@@ -134,7 +136,7 @@ void setup() {
     timeClient.updateTime();
 
     printAt(6, 40, "433MHz...");
-    SensorReceiver::init(RECEIVER_PIN, getRemoteTempHumi);
+    fws.start(RECEIVER_PIN);
 
     printAt(6, 50, "OTA...");
     ArduinoOTA.setHostname(HOSTNAME);
@@ -164,6 +166,22 @@ void loop() {
 
     if (readyForTimeUpdate) {
         updateTime();
+    }
+
+    if (fws.isDataAvailable()) {
+        fwsResult result = fws.getData();
+
+        humidity_outdoor = result.humidity;
+        temperature_outdoor = result.temperature / 10.0;
+
+        if (temperature_outdoor > -273 && humidity_outdoor > 0) {
+            humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
+        }
+
+        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", result.temperature / 10,
+                  abs(result.temperature % 10), result.humidity,
+                  result.id);
+
     }
 
     displayData();
@@ -291,7 +309,8 @@ void doSetup() {
     }
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
-    WiFi.mode(WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
+    WiFi.mode(
+            WIFI_STA); // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
 }
 
 
@@ -560,39 +579,6 @@ void handleJsonData() {
 
 void handleRoot() {
     HTTP.send_P(200, "text/html", PAGE_Wetter);
-}
-
-ICACHE_RAM_ATTR void getRemoteTempHumi(byte *data) {
-
-    if (millis() - last_received_ext < MIN_RECEIVE_WAIT_EXT) {
-        return;
-    }
-
-    if ((data[3] & 0x1f) == THERMO_HYGRO_DEVICE) {   // is data a ThermoHygro-device?
-
-        byte channel, randomId;
-        int temp;
-        byte humidity;
-
-        SensorReceiver::decodeThermoHygro(data, channel, randomId, temp, humidity);
-
-        if (randomId == MY_RF_RECEIVER_ID) {
-            humidity_outdoor = humidity;
-            temperature_outdoor = temp / 10.0;
-
-            if (temperature_outdoor > -273 && humidity_outdoor > 0) {
-                humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
-            }
-
-            last_received_ext = millis();
-        } else if (randomId == MY_RF_RECEIVER2_ID) {
-            battery_outdoor = temp;
-        } else {
-            DEBUG_MSG("ROGUE SENSOR FOUND!");
-        }
-        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", temp / 10, abs(temp % 10), humidity,
-                  randomId);
-    }
 }
 
 void setReadyForInternalSensorUpdate() {
