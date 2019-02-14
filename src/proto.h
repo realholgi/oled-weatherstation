@@ -57,4 +57,6 @@ void handleRoot();
 
 void handleJsonData();
 
+void updateExternalSensor();
+
 #endif //WETTERSTATION_PROTO_H

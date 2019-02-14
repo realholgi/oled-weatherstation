@@ -12,7 +12,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_HTU21DF.h> // https://github.com/adafruit/Adafruit_HTU21DF_Library
-#include <fws433.h>   // https://github.com/realholgi/433MHzForArduino/tree/master/RemoteSensor
+#include <fws433.h>   // https://github.com/realholgi/FWS433
 #include <Adafruit_SSD1305.h> // https://github.com/adafruit/Adafruit_SSD1305_Library ???
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -81,7 +81,7 @@ const char *configPortalPassword = PORTAL_DEFAULT_PASSWORD;
 //char UBIDOTS_API_KEY[40] = "";
 uint32_t TIMEZONE = 1;
 
-TimeClient timeClient(TIMEZONE, 1);
+TimeClient timeClient(TIMEZONE);
 
 #include "display.h"
 
@@ -132,7 +132,7 @@ void setup() {
 
     printAt(6, 30, "Time...");
 
-    timeClient = TimeClient(TIMEZONE, 1); // set TZ value from config
+    timeClient = TimeClient(TIMEZONE); // set TZ value from config
     timeClient.updateTime();
 
     printAt(6, 40, "433MHz...");
@@ -169,19 +169,7 @@ void loop() {
     }
 
     if (fws.isDataAvailable()) {
-        fwsResult result = fws.getData();
-
-        humidity_outdoor = result.humidity;
-        temperature_outdoor = result.temperature / 10.0;
-
-        if (temperature_outdoor > -273 && humidity_outdoor > 0) {
-            humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
-        }
-
-        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", result.temperature / 10,
-                  abs(result.temperature % 10), result.humidity,
-                  result.id);
-
+        updateExternalSensor();
     }
 
     displayData();
@@ -197,6 +185,26 @@ void loop() {
     delay(1000);
     yield();
 }
+
+void updateExternalSensor() {
+    fwsResult result = fws.getData();
+
+    if (result.channel == 3) {
+        last_received_ext = millis();
+
+        humidity_outdoor = result.humidity;
+        temperature_outdoor = result.temperature / 10.0;
+
+        if (temperature_outdoor > -40 && temperature_outdoor < 50 && humidity_outdoor > 0 && humidity_outdoor < 100) {
+            humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
+        }
+
+        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", result.temperature / 10,
+                  abs(result.temperature % 10), result.humidity,
+                  result.id);
+
+    }
+};
 
 void updateTime() {
     timeClient.updateTime();
@@ -249,7 +257,7 @@ void doSetup() {
 
     //WiFiManagerParameter custom_UBIDOTS_API_KEY("UDkey", "UBIDOTS API key", UBIDOTS_API_KEY, 40,
     //                                            "<p>UBIDOTS API Key</p");
-    WiFiManagerParameter custom_TIMEZONE("TIMEZONE", "Timezone", String(TIMEZONE).c_str(), 5, TYPE_NUMBER);
+    //WiFiManagerParameter custom_TIMEZONE("TIMEZONE", "Timezone", String(TIMEZONE).c_str(), 5, TYPE_NUMBER);
 
     if (initialConfig) {
         DEBUG_MSG("Starting configuration portal.");
@@ -263,7 +271,7 @@ void doSetup() {
 
         //add all your parameters here
         //wifiManager.addParameter(&custom_UBIDOTS_API_KEY);
-        wifiManager.addParameter(&custom_TIMEZONE);
+        //wifiManager.addParameter(&custom_TIMEZONE);
 
         //it starts an access point
         //and goes into a blocking loop awaiting configuration
@@ -281,7 +289,7 @@ void doSetup() {
 
             //read updated parameters
             //strcpy(UBIDOTS_API_KEY, custom_UBIDOTS_API_KEY.getValue());
-            TIMEZONE = String(custom_TIMEZONE.getValue()).toInt();
+            //TIMEZONE = String(custom_TIMEZONE.getValue()).toInt();
 
             //save the custom parameters to FS
             if (shouldSaveConfig) {
@@ -289,7 +297,7 @@ void doSetup() {
                 DynamicJsonBuffer jsonBuffer;
                 JsonObject &json = jsonBuffer.createObject();
                 //json["UBIDOTS_API_KEY"] = UBIDOTS_API_KEY;
-                json["TIMEZONE"] = TIMEZONE;
+                //json["TIMEZONE"] = TIMEZONE;
 
                 File configFile = SPIFFS.open(CONFIG_FILE, "w");
                 if (!configFile) {
@@ -298,7 +306,7 @@ void doSetup() {
 
                 json.printTo(Serial);
                 json.printTo(configFile);
-                DEBUG_MSG("fnished saving configuration file, closing");
+                DEBUG_MSG("finished saving configuration file, closing");
                 configFile.close();
                 //end save
             }
@@ -357,7 +365,7 @@ boolean loadConfig() {
                 if (json.success()) {
                     DEBUG_MSG("\nparsed json");
                     //strcpy(UBIDOTS_API_KEY, json["UBIDOTS_API_KEY"]);
-                    TIMEZONE = json["TIMEZONE"];
+                    //TIMEZONE = json["TIMEZONE"];
                     DEBUG_MSG("...finished...");
                     return true;
                 } else {

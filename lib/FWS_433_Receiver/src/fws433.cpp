@@ -119,7 +119,13 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
             crc = (crc >> 1);
         }
     }
-    crc ^= _binToDec(_buff, 34, 37);
+
+    dbg("CRCin: " + String(crc));
+
+    crc = _binToDec(_buff, 8, 11);
+    dbg("CRCsoll: " + String(crc));
+
+    //crc ^= _binToDec(_buff, 34, 37);
     //if (crc != _binToDec(_buff, 38, 41)) {
     //	dbg("CRC error!");
     //_buffEnd = 0;
@@ -127,6 +133,10 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
     //return;
     //}
     //dbg("CRC OK.");
+
+    int is_transmit_button = _binToDec(_buff, 12, 12);
+    int is_temp_descending = _binToDec(_buff, 14, 14);
+    int is_temp_rising = _binToDec(_buff, 15, 15);
 
     humi1 = _binToDecRev(_buff, 28, 31);
     humi2 = _binToDecRev(_buff, 32, 35);
@@ -142,11 +152,13 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
     channel = _binToDecRev(_buff, 38, 39);
 
     temperature = _binToDecRev(_buff, 16, 27);
+
+    // temperature = (int)((float)(((temperature*10) - 9000) - 3200) * ((float)5/(float)9));
     temperature = (temperature / 10) - 90.0;
     temperature = (temperature - 32) / 1.8 * 10;
 
 
-    battery = _binToDecRev(_buff, 36, 37) != 1;
+    battery = _binToDecRev(_buff, 13, 13) != 1;
     _avail = false;
 }
 
