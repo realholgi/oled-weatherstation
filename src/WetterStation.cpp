@@ -64,6 +64,8 @@ float humidity_abs_indoor = -1;
 float dp_indoor = -273;
 volatile float humidity_abs_outdoor = -1;
 
+WiFiManager wifiManager;
+
 FWS433 fws = FWS433();
 
 bool shouldSaveConfig = false;
@@ -265,7 +267,6 @@ void doSetup() {
         Ticker flasher;
         flasher.attach(0.1, flash);
 
-        WiFiManager wifiManager;
         wifiManager.setSaveConfigCallback(saveConfigCallback);
         wifiManager.setAPCallback(configModeCallback);
 
@@ -395,8 +396,7 @@ void configModeCallback(WiFiManager *myWiFiManager) {
 }
 
 void setupWIFI() {
-    WiFiManager wifiManager; //Local intialization. Once its business is done, there is no need to keep it around
-
+    
     // Uncomment for testing wifi manager
     // wifiManager.resetSettings();
     wifiManager.setAPCallback(configModeCallback);
