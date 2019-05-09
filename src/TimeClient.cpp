@@ -140,7 +140,7 @@ int TimeClient::convertMonthNameToNumber(String strMonthName) {
     else if (strMonthName == "FEB") { return 2; }
     else if (strMonthName == "MAR") { return 3; }
     else if (strMonthName == "APR") { return 4; }
-    else if (strMonthName == "MAI") { return 5; }
+    else if (strMonthName == "MAY") { return 5; }
     else if (strMonthName == "JUN") { return 6; }
     else if (strMonthName == "JUL") { return 7; }
     else if (strMonthName == "AUG") { return 8; }
