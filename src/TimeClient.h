@@ -65,5 +65,5 @@ public:
 private:
     int convertMonthNameToNumber(String strMonthName);
 
-    int adjustDSTEurpoe(int iYear, int iMonth, int iDay);
+    int adjustDSTEurope(int iYear, int iMonth, int iDay);
 };

@@ -76,7 +76,7 @@ void TimeClient::updateTime() {
                 //Serial.println("Annee: " + String(parsedYear) + " mois: " + String(parsedMonth) + " Jour; " +
                 //               String(parsedDay));
 
-                parsedHours = parsedHours + adjustDSTEurpoe(parsedYear, parsedMonth, parsedDay);
+                parsedHours = parsedHours + adjustDSTEurope(parsedYear, parsedMonth, parsedDay);
 
                 localEpoc = (parsedHours * 60 * 60 + parsedMinutes * 60 + parsedSeconds);
                 //Serial.println(localEpoc);
@@ -150,7 +150,7 @@ int TimeClient::convertMonthNameToNumber(String strMonthName) {
     else if (strMonthName == "DEC") { return 12; }
 }
 
-int TimeClient::adjustDSTEurpoe(int iYear, int iMonth, int iDay) {
+int TimeClient::adjustDSTEurope(int iYear, int iMonth, int iDay) {
 
     //Serial.println("Calcul du DST");
     // last sunday of march
@@ -164,7 +164,7 @@ int TimeClient::adjustDSTEurpoe(int iYear, int iMonth, int iDay) {
     // DST is valid as:
     if (((iMonth > beginDSTMonth) && (iMonth < endDSTMonth))
         || ((iMonth == beginDSTMonth) && (iDay >= beginDSTDate))
-        || ((iMonth == endDSTMonth) && (iDay <= endDSTDate)))
+        || ((iMonth == endDSTMonth) && (iDay < endDSTDate)))
         return 1;  // DST europe = utc +2 hour
     else return 0; // nonDST europe = utc +1 hour
 }
