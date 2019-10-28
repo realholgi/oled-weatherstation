@@ -79,8 +79,6 @@ bool readyForTimeUpdate = false;
 
 const char *configPortalPassword = PORTAL_DEFAULT_PASSWORD;
 
-//  additional portal parameters
-//char UBIDOTS_API_KEY[40] = "";
 uint32_t TIMEZONE = 1;
 
 TimeClient timeClient(TIMEZONE);
@@ -98,8 +96,8 @@ void setup() {
     //ESP.wdtDisable();
     //ESP.wdtEnable(2000);  // Enable it again with a longer wait time ( 2 seconds instead of the default 1 second )
 
-    pinMode(BUILTIN_LED, OUTPUT);
-    digitalWrite(BUILTIN_LED, LOW);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
 
     display.begin();
     display.setRotation(3);
@@ -233,7 +231,7 @@ void setExternalSensorInvalid() {
 }
 
 bool shouldStartSetup() {
-    if ((!loadConfig()) || WiFi.SSID() == "") {
+    if (WiFi.SSID() == "") {
         DEBUG_MSG("No stored access-point credentials; initiating configuration portal.");
         display.clearDisplay();
         printAt(6, 0, "no Cfg", false);
@@ -257,10 +255,6 @@ bool shouldStartSetup() {
 
 void doSetup() {
 
-    //WiFiManagerParameter custom_UBIDOTS_API_KEY("UDkey", "UBIDOTS API key", UBIDOTS_API_KEY, 40,
-    //                                            "<p>UBIDOTS API Key</p");
-    //WiFiManagerParameter custom_TIMEZONE("TIMEZONE", "Timezone", String(TIMEZONE).c_str(), 5, TYPE_NUMBER);
-
     if (initialConfig) {
         DEBUG_MSG("Starting configuration portal.");
 
@@ -269,13 +263,6 @@ void doSetup() {
 
         wifiManager.setSaveConfigCallback(saveConfigCallback);
         wifiManager.setAPCallback(configModeCallback);
-
-        //add all your parameters here
-        //wifiManager.addParameter(&custom_UBIDOTS_API_KEY);
-        //wifiManager.addParameter(&custom_TIMEZONE);
-
-        //it starts an access point
-        //and goes into a blocking loop awaiting configuration
 
         String hostname;
         hostname = "ESP" + String(ESP.getChipId(), HEX);
@@ -287,30 +274,6 @@ void doSetup() {
         } else {
             //if you get here you have connected to the WiFi
             DEBUG_MSG("Connected to WiFi.");
-
-            //read updated parameters
-            //strcpy(UBIDOTS_API_KEY, custom_UBIDOTS_API_KEY.getValue());
-            //TIMEZONE = String(custom_TIMEZONE.getValue()).toInt();
-
-            //save the custom parameters to FS
-            if (shouldSaveConfig) {
-                DEBUG_MSG("saving config");
-                DynamicJsonBuffer jsonBuffer;
-                JsonObject &json = jsonBuffer.createObject();
-                //json["UBIDOTS_API_KEY"] = UBIDOTS_API_KEY;
-                //json["TIMEZONE"] = TIMEZONE;
-
-                File configFile = SPIFFS.open(CONFIG_FILE, "w");
-                if (!configFile) {
-                    DEBUG_MSG("failed to open config file for writing");
-                }
-
-                json.printTo(Serial);
-                json.printTo(configFile);
-                DEBUG_MSG("finished saving configuration file, closing");
-                configFile.close();
-                //end save
-            }
         }
         ESP.reset(); // This is a bit crude. For some unknown reason webserver can only be started once per boot up
         // so resetting the device allows to go back into config mode again when it reboots.
@@ -331,56 +294,8 @@ void saveConfigCallback() {
 
 void flash() {
     // blink the LED
-    int state = digitalRead(BUILTIN_LED);
-    digitalWrite(BUILTIN_LED, !state);
-}
-
-boolean loadConfig() {
-    //read configuration from FS json
-    DEBUG_MSG("mounting FS...");
-
-    if (SPIFFS.begin()) {
-        DEBUG_MSG("mounted file system");
-
-        // Uncomment following lines to delete the CONFIG_FILE file...
-        /*if (SPIFFS.remove(CONFIG_FILE)) {
-          DEBUG("***Successfully deleted CONFIG_FILE file...***");
-          } else {
-          DEBUG("***...error deleting CONFIG_FILE file...***");
-          }
-        */
-
-        if (SPIFFS.exists(CONFIG_FILE)) {
-            //file exists, reading and loading
-            DEBUG_MSG("reading config file");
-            File configFile = SPIFFS.open(CONFIG_FILE, "r");
-            if (configFile) {
-                DEBUG_MSG("opened config file");
-                size_t size = configFile.size();
-                // Allocate a buffer to store contents of the file.
-                std::unique_ptr<char[]> buf(new char[size]);
-                configFile.readBytes(buf.get(), size);
-                DynamicJsonBuffer jsonBuffer;
-                JsonObject &json = jsonBuffer.parseObject(buf.get());
-                json.printTo(Serial);
-                if (json.success()) {
-                    DEBUG_MSG("\nparsed json");
-                    //strcpy(UBIDOTS_API_KEY, json["UBIDOTS_API_KEY"]);
-                    //TIMEZONE = json["TIMEZONE"];
-                    DEBUG_MSG("...finished...");
-                    return true;
-                } else {
-                    DEBUG_MSG("failed to load json config");
-                }
-            }
-        } else {
-            DEBUG_MSG("CONFIG_FILE does not exist.");
-        }
-    } else {
-        DEBUG_MSG("failed to mount FS");
-    }
-    //end read
-    return false;
+    int state = digitalRead(LED_BUILTIN);
+    digitalWrite(LED_BUILTIN, !state);
 }
 
 void configModeCallback(WiFiManager *myWiFiManager) {
@@ -564,24 +479,24 @@ void handleNotFound() {
 }
 
 void handleJsonData() {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &json = jsonBuffer.createObject();
+    DynamicJsonDocument doc(1024);
 
-    json["t_in"] = temperature_indoor - TEMP_OFFSET_INDOOR;
-    json["h_in"] = int(humidity_indoor);
-    json["f_in"] = humidity_abs_indoor;
-    json["dp_in"] = dp_indoor;
+    doc["t_in"] = temperature_indoor - TEMP_OFFSET_INDOOR;
+    doc["h_in"] = int(humidity_indoor);
+    doc["f_in"] = humidity_abs_indoor;
+    doc["dp_in"] = dp_indoor;
 
-    json["t_out"] = temperature_outdoor;
-    json["h_out"] = int(humidity_outdoor);
-    json["f_out"] = humidity_abs_outdoor;
-    json["b_out"] = battery_outdoor;
-    json["last_out"] = int(millis() - last_received_ext) / 1000;
+    doc["t_out"] = temperature_outdoor;
+    doc["h_out"] = int(humidity_outdoor);
+    doc["f_out"] = humidity_abs_outdoor;
+    doc["b_out"] = battery_outdoor;
+    doc["last_out"] = int(millis() - last_received_ext) / 1000;
 
-    json["f_diff"] = humidity_abs_indoor - humidity_abs_outdoor;
+    doc["f_diff"] = humidity_abs_indoor - humidity_abs_outdoor;
 
     String message = "";
-    json.printTo(message);
+    serializeJson(doc, message);
+
     HTTP.send(200, "application/json;charset=utf-8", message);
 }
 
