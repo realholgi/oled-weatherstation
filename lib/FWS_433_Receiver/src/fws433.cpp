@@ -45,7 +45,7 @@ bool FWS433::isDataAvailable() {
     return _avail;
 }
 
-void FWS433::_handler() {
+ICACHE_RAM_ATTR void FWS433::_handler() {
     static unsigned long lastMs = 0, currMs, diffMs;
     currMs = micros();
     diffMs = currMs - lastMs;
@@ -80,7 +80,7 @@ void FWS433::_handler() {
     }
 }
 
-bool FWS433::_isRepeat() {
+ICACHE_RAM_ATTR bool FWS433::_isRepeat() {
     bool result = false;
     for (int i = 0; i < _buffEnd; i++) {
         if (_buff[i] != _lastBuff[i]) {

@@ -292,7 +292,7 @@ void saveConfigCallback() {
     shouldSaveConfig = true;
 }
 
-void flash() {
+ICACHE_RAM_ATTR void flash() {
     // blink the LED
     int state = digitalRead(LED_BUILTIN);
     digitalWrite(LED_BUILTIN, !state);
@@ -504,15 +504,15 @@ void handleRoot() {
     HTTP.send_P(200, "text/html", PAGE_Wetter);
 }
 
-void setReadyForInternalSensorUpdate() {
+ICACHE_RAM_ATTR void setReadyForInternalSensorUpdate() {
     readyForInternalSensorUpdate = true;
 }
 
-void setReadyForTimeUpdate() {
+ICACHE_RAM_ATTR void setReadyForTimeUpdate() {
     readyForTimeUpdate = true;
 }
 
-void setReadyForUploadData() {
+ICACHE_RAM_ATTR void setReadyForUploadData() {
     readyForUploadData = true;
 }
 
@@ -532,4 +532,3 @@ double RHtoDP(double t, double RH) {
     double td = BAROMETRIC_PRESSURE * H / (WATER_VAPOR - H);
     return td;
 }
-
