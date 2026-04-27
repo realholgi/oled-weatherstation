@@ -6,9 +6,6 @@
 
 #define HOSTNAME "wetter"
 
-#define UBI_HOSTNAME "esp-wetter"
-#define UBIDOTS_UPLOAD_INTERVAL 2*60
-
 #define OLED_RESET D3
 
 #define MIN_DIFF 3.0

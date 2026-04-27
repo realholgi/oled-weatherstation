@@ -33,7 +33,6 @@
 #include "proto.h"
 
 #include "TimeClient.h"
-//#include "Ubidots.h"
 #include "icons.h"
 #include "globals.h"
 #include "PAGE_Wetter.h"
@@ -42,16 +41,12 @@
 ////// #include "SH1106.h"
 ////// SH1106Wire display(0x3D, SDA, SCL);
 
-#define XUBIDOTS
-
-
 Adafruit_SSD1305 display(OLED_RESET);
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 ESP8266WebServer HTTP(80);
 DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 
 Ticker tickerForInternalSensorUpdate;
-Ticker tickerForUploadData;
 Ticker tickerForTimeUpdate;
 Ticker tickerForExternalSensorInvalidate;
 
@@ -74,7 +69,6 @@ bool initialConfig = false;
 volatile uint32_t last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
 
 bool readyForInternalSensorUpdate = true;
-bool readyForUploadData = false;
 bool readyForTimeUpdate = false;
 
 const char *configPortalPassword = PORTAL_DEFAULT_PASSWORD;
@@ -146,9 +140,6 @@ void setup() {
     ArduinoOTA.begin();
 
     tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForInternalSensorUpdate);
-#ifdef UBIDOTS
-    tickerForUploadData.attach(UBIDOTS_UPLOAD_INTERVAL, setReadyForUploadData);
-#endif
     tickerForTimeUpdate.attach(UPDATE_NTP_TIME_INTERVAL, setReadyForTimeUpdate);
     tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 2, setExternalSensorInvalid);
 
@@ -173,12 +164,6 @@ void loop() {
     }
 
     displayData();
-
-#ifdef UBIDOTS
-    if (readyForUploadData) {
-      uploadData();
-    }
-#endif
 
     MDNS.update();
 
@@ -349,44 +334,6 @@ void drawOtaEnd() {
     printAt(6, 20, "OK, Reboot");
 }
 
-#ifdef UBIDOTS
-void uploadData() {
-    Ubidots ubiclient(UBIDOTS_API_KEY, UBI_HOSTNAME);
-    ubiclient.setDataSourceName(UBI_HOSTNAME);
-
-    DEBUG_MSG("Uploading to Ubidots...\n");
-
-    if (humidity_indoor > 0)
-        ubiclient.add("h_in", int(humidity_indoor));
-
-    if (temperature_indoor > -273)
-        ubiclient.add("t_in", temperature_indoor);
-
-    if (humidity_outdoor > 0)
-        ubiclient.add("h_out", int(humidity_outdoor));
-
-    if (temperature_outdoor > -273)
-        ubiclient.add("t_out", temperature_outdoor);
-
-    ubiclient.sendAll(false);
-
-    if (humidity_indoor > 0 && temperature_indoor > -273) {
-        ubiclient.add("f_in", humidity_abs_indoor);
-        ubiclient.add("dp_in", dp_indoor);
-    }
-
-    if (humidity_outdoor > 0 && temperature_outdoor > -273)
-        ubiclient.add("f_out", humidity_abs_outdoor);
-
-    if (temperature_outdoor > -273 && humidity_outdoor > 0 && temperature_indoor > -273 && humidity_indoor > 0)
-        ubiclient.add("f_diff", humidity_abs_indoor - humidity_abs_outdoor);
-
-    ubiclient.sendAll(false);
-
-    readyForUploadData = false;
-}
-#endif
-
 void displayData() {
     display.clearDisplay();
     display.setTextSize(2);
@@ -510,10 +457,6 @@ ICACHE_RAM_ATTR void setReadyForInternalSensorUpdate() {
 
 ICACHE_RAM_ATTR void setReadyForTimeUpdate() {
     readyForTimeUpdate = true;
-}
-
-ICACHE_RAM_ATTR void setReadyForUploadData() {
-    readyForUploadData = true;
 }
 
 // absolute Feuchtegehalt der Luft in Gramm Wasserdampf pro Kubikmeter

@@ -16,6 +16,5 @@ Features:
 - starts in configuration mode its own WiFi portal on double-reset
 - saves config data in SPIFFS
 - displays data in local webpage found at http://weather.local and updates automatically
-- transmits all data to UbiDots
 - updates time from Internet
 - firmware OTA updates

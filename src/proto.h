@@ -21,15 +21,11 @@ void drawOtaProgress(unsigned int progress, unsigned int total);
 
 void drawOtaEnd();
 
-void uploadData();
-
 void displayData();
 
 void setReadyForInternalSensorUpdate();
 
 void setReadyForTimeUpdate();
-
-void setReadyForUploadData();
 
 double berechneTT(double t, double RH);
 
