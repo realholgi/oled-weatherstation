@@ -292,14 +292,16 @@ void setupWIFI() {
     // wifiManager.resetSettings();
     wifiManager.setAPCallback(configModeCallback);
 
+    // Set hostname before association so DHCP hostname is applied reliably.
+    String hostname(HOSTNAME);
+    //hostname += String(ESP.getChipId(), HEX);
+    WiFi.hostname(hostname);
+
     //or use this for auto generated name ESP + ChipID
     wifiManager.autoConnect();
 
     //Manual Wifi
     // WiFi.begin(SSID, PASSWORD);
-    String hostname(HOSTNAME);
-    //hostname += String(ESP.getChipId(), HEX);
-    WiFi.hostname(hostname);
 
     DEBUG_MSG("Enabling WIFI...\n");
     unsigned long startTime = millis();
