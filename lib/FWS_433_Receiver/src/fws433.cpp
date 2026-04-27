@@ -134,10 +134,6 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
     //}
     //dbg("CRC OK.");
 
-    int is_transmit_button = _binToDec(_buff, 12, 12);
-    int is_temp_descending = _binToDec(_buff, 14, 14);
-    int is_temp_rising = _binToDec(_buff, 15, 15);
-
     humi1 = _binToDecRev(_buff, 28, 31);
     humi2 = _binToDecRev(_buff, 32, 35);
     humidity = humi1 * 10 + humi2;
@@ -153,9 +149,8 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
 
     temperature = _binToDecRev(_buff, 16, 27);
 
-    // temperature = (int)((float)(((temperature*10) - 9000) - 3200) * ((float)5/(float)9));
-    temperature = (temperature / 10) - 90.0;
-    temperature = (temperature - 32) / 1.8 * 10;
+    const float tempF = temperature / 10.0f - 90.0f;
+    temperature = (int)((tempF - 32.0f) / 1.8f * 10.0f);
 
 
     battery = _binToDecRev(_buff, 13, 13) != 1;

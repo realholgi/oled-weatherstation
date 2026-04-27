@@ -33,7 +33,7 @@ class TimeClient {
 private:
     float myUtcOffset = 0;
     long localEpoc = 0;
-    unsigned long localMillisAtUpdate;
+    unsigned long localMillisAtUpdate = 0;
 
 public:
     TimeClient(float utcOffset);
