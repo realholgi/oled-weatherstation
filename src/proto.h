@@ -17,10 +17,6 @@ void handleNotFound();
 
 void getRemoteTempHumi(byte *data);
 
-void drawOtaProgress(unsigned int progress, unsigned int total);
-
-void drawOtaEnd();
-
 void displayData();
 
 void setReadyForInternalSensorUpdate();

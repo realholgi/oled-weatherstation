@@ -19,7 +19,6 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 #include <ArduinoJson.h> // https://github.com/bblanchon/ArduinoJson
-#include <ArduinoOTA.h>
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 #include <DoubleResetDetector.h>  // https://github.com/datacute/DoubleResetDetector
 #include <Ticker.h>
@@ -132,13 +131,6 @@ void setup() {
     printAt(6, 40, "433MHz...");
     fws.start(RECEIVER_PIN);
 
-    printAt(6, 50, "OTA...");
-    ArduinoOTA.setHostname(HOSTNAME);
-    ArduinoOTA.onProgress(drawOtaProgress);
-    ArduinoOTA.onEnd(drawOtaEnd);
-    //ArduinoOTA.setPassword(PORTAL_DEFAULT_PASSWORD);
-    ArduinoOTA.begin();
-
     tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForInternalSensorUpdate);
     tickerForTimeUpdate.attach(UPDATE_NTP_TIME_INTERVAL, setReadyForTimeUpdate);
     tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 2, setExternalSensorInvalid);
@@ -149,7 +141,6 @@ void setup() {
 void loop() {
     drd.loop();
     HTTP.handleClient();
-    ArduinoOTA.handle();
 
     if (readyForInternalSensorUpdate) {
         updateInternalSensor();
@@ -320,18 +311,6 @@ void setupWIFI() {
     }
     DEBUG_MSG("\n");
     MDNS.begin(HOSTNAME);
-}
-
-void drawOtaProgress(unsigned int progress, unsigned int total) {
-    display.clearDisplay();
-    display.setTextSize(1);
-    printAt(6, 0, "OTA...", false);
-    String percent = (progress / (total / 100)) + "%";
-    printAt(6, 10, percent);
-}
-
-void drawOtaEnd() {
-    printAt(6, 20, "OK, Reboot");
 }
 
 void displayData() {
