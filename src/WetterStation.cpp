@@ -170,12 +170,13 @@ void updateExternalSensor() {
 
         humidity_outdoor = result.humidity;
         temperature_outdoor = result.temperature / 10.0;
+        battery_outdoor = result.battery ? 1 : 0;
 
         if (temperature_outdoor > -40 && temperature_outdoor < 50 && humidity_outdoor > 0 && humidity_outdoor < 100) {
             humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
         }
 
-        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u % REL, ID: %u\n", result.temperature / 10,
+        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u%% REL, ID: %u\n", result.temperature / 10,
                   abs(result.temperature % 10), result.humidity,
                   result.id);
 
@@ -408,7 +409,7 @@ void handleNotFound() {
 }
 
 void handleJsonData() {
-    DynamicJsonDocument doc(1024);
+    JsonDocument doc;
 
     doc["t_in"] = temperature_indoor - TEMP_OFFSET_INDOOR;
     doc["h_in"] = int(humidity_indoor);
@@ -444,7 +445,7 @@ ICACHE_RAM_ATTR void setReadyForTimeUpdate() {
 // absolute Feuchtegehalt der Luft in Gramm Wasserdampf pro Kubikmeter
 // https://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/2_Humidity_Sensors/Sensirion_Humidity_Sensors_at_a_Glance_V1.pdf
 // dv = 216.7*(RH/100.0*6.112*exp(17.62*t/(243.12+t))/(273.15+t));
-ICACHE_RAM_ATTR double berechneTT(double t, double RH) {
+double berechneTT(double t, double RH) {
     double absFeuchte =
             216.7f * (RH / 100.0f * 6.112f * exp(WATER_VAPOR * t / (BAROMETRIC_PRESSURE + t)) / (273.15f + t));
     return absFeuchte;
