@@ -54,8 +54,8 @@ class FWS433{
 
 			static ICACHE_RAM_ATTR void _handler();
 			static ICACHE_RAM_ATTR bool _isRepeat();
-		int _binToDecRev(volatile byte *binary, int s, int e);
-		int _binToDec(volatile byte *binary, int s, int e);
+		int _binToDecRev(const volatile byte *binary, int s, int e) const;
+		int _binToDec(const volatile byte *binary, int s, int e) const;
 		int _binToSignedRev(volatile byte *binary, int s, int e);
 		int _binToSigned(volatile byte *binary, int s, int e);
 };
