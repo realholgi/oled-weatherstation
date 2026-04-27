@@ -133,7 +133,7 @@ void setup() {
 
     tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForInternalSensorUpdate);
     tickerForTimeUpdate.attach(UPDATE_NTP_TIME_INTERVAL, setReadyForTimeUpdate);
-    tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 2 / 1000.0f, setExternalSensorInvalid);
+    tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 1000, setExternalSensorInvalid);
 
     DEBUG_MSG("Ready\n");
 }
