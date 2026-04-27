@@ -148,10 +148,9 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
     channel = _binToDecRev(_buff, 38, 39);
 
     temperature = _binToDecRev(_buff, 16, 27);
-
-    const float tempF = temperature / 10.0f - 90.0f;
-    temperature = (int)((tempF - 32.0f) / 1.8f * 10.0f);
-
+    
+    temperature = temperature / 10 - 90;        // whole °F
+    temperature = (temperature - 32) * 50 / 9;  // tenths of °C
 
     battery = _binToDecRev(_buff, 13, 13) != 1;
     _avail = false;
