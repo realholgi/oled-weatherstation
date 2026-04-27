@@ -28,20 +28,12 @@ See more at https://thingpulse.com
 
 #include <ESP8266WiFi.h>
 
-#define NTP_PACKET_SIZE 48
-
 class TimeClient {
 
 private:
     float myUtcOffset = 0;
     long localEpoc = 0;
     unsigned long localMillisAtUpdate;
-
-    const char *ntpServerName = "192.168.100.254";
-    unsigned int localPort = 2390;
-
-    byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
-
 
 public:
     TimeClient(float utcOffset);
