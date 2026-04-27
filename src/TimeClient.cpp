@@ -24,6 +24,7 @@ See more at https://thingpulse.com
 */
 
 #include "TimeClient.h"
+#include "DSTEurope.h"
 
 TimeClient::TimeClient(float utcOffset) {
     myUtcOffset = utcOffset;
@@ -76,7 +77,7 @@ void TimeClient::updateTime() {
                 //Serial.println("Annee: " + String(parsedYear) + " mois: " + String(parsedMonth) + " Jour; " +
                 //               String(parsedDay));
 
-                parsedHours = parsedHours + adjustDSTEurope(parsedYear, parsedMonth, parsedDay);
+                parsedHours = parsedHours + DSTEurope::adjust(parsedYear, parsedMonth, parsedDay, parsedHours);
 
                 localEpoc = (parsedHours * 60 * 60 + parsedMinutes * 60 + parsedSeconds);
                 //Serial.println(localEpoc);
@@ -151,21 +152,3 @@ int TimeClient::convertMonthNameToNumber(String strMonthName) {
     return 0;
 }
 
-int TimeClient::adjustDSTEurope(int iYear, int iMonth, int iDay) {
-
-    //Serial.println("Calcul du DST");
-    // last sunday of march
-    int beginDSTDate = (31 - (5 * iYear / 4 + 4) % 7);
-    //Serial.println("beginDSTDate: " + beginDSTDate);
-    int beginDSTMonth = 3;
-    //last sunday of october
-    int endDSTDate = (31 - (5 * iYear / 4 + 1) % 7);
-    //Serial.println("endDSTDate: " + endDSTDate);
-    int endDSTMonth = 10;
-    // DST is valid as:
-    if (((iMonth > beginDSTMonth) && (iMonth < endDSTMonth))
-        || ((iMonth == beginDSTMonth) && (iDay >= beginDSTDate))
-        || ((iMonth == endDSTMonth) && (iDay < endDSTDate)))
-        return 1;  // DST europe = utc +2 hour
-    else return 0; // nonDST europe = utc +1 hour
-}
