@@ -42,13 +42,7 @@ public:
 
     void setUtcOffset(float utcOffset);
 
-    String getHours();
-
-    String getMinutes();
-
-    String getSeconds();
-
-    String getFormattedTime();
+    void getFormattedTime(char *buffer, size_t bufferSize);
 
     long getCurrentEpoch();
 

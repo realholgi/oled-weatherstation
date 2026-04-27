@@ -26,6 +26,9 @@ See more at https://thingpulse.com
 #include "TimeClient.h"
 #include "DSTEurope.h"
 
+#include <cmath>
+#include <cstdio>
+
 TimeClient::TimeClient(float utcOffset) {
     myUtcOffset = utcOffset;
 }
@@ -88,44 +91,20 @@ void TimeClient::updateTime() {
 
 }
 
-String TimeClient::getHours() {
+void TimeClient::getFormattedTime(char *buffer, size_t bufferSize) {
+    if (buffer == nullptr || bufferSize == 0) {
+        return;
+    }
+
     if (localEpoc == 0) {
-        return "--";
+        snprintf(buffer, bufferSize, "--:--");
+        return;
     }
-    int hours = ((getCurrentEpochWithUtcOffset() % 86400L) / 3600) % 24;
-    if (hours < 10) {
-        return "0" + String(hours);
-    }
-    return String(hours); // print the hour (86400 equals secs per day)
 
-}
-
-String TimeClient::getMinutes() {
-    if (localEpoc == 0) {
-        return "--";
-    }
-    int minutes = ((getCurrentEpochWithUtcOffset() % 3600) / 60);
-    if (minutes < 10) {
-        // In the first 10 minutes of each hour, we'll want a leading '0'
-        return "0" + String(minutes);
-    }
-    return String(minutes);
-}
-
-String TimeClient::getSeconds() {
-    if (localEpoc == 0) {
-        return "--";
-    }
-    int seconds = getCurrentEpochWithUtcOffset() % 60;
-    if (seconds < 10) {
-        // In the first 10 seconds of each minute, we'll want a leading '0'
-        return "0" + String(seconds);
-    }
-    return String(seconds);
-}
-
-String TimeClient::getFormattedTime() {
-    return getHours() + ":" + getMinutes() + ":" + getSeconds();
+    const long currentEpoch = getCurrentEpochWithUtcOffset();
+    const int hours = static_cast<int>((currentEpoch % 86400L) / 3600L);
+    const int minutes = static_cast<int>((currentEpoch % 3600L) / 60L);
+    snprintf(buffer, bufferSize, "%02d:%02d", hours, minutes);
 }
 
 long TimeClient::getCurrentEpoch() {
@@ -133,7 +112,13 @@ long TimeClient::getCurrentEpoch() {
 }
 
 long TimeClient::getCurrentEpochWithUtcOffset() {
-    return fmod(round(getCurrentEpoch() + 3600 * myUtcOffset + 86400L), 86400L);
+    const long timezoneOffsetSeconds = lround(3600.0f * myUtcOffset);
+    long adjustedEpoch = getCurrentEpoch() + timezoneOffsetSeconds;
+    adjustedEpoch %= 86400L;
+    if (adjustedEpoch < 0) {
+        adjustedEpoch += 86400L;
+    }
+    return adjustedEpoch;
 }
 
 int TimeClient::convertMonthNameToNumber(String strMonthName) {

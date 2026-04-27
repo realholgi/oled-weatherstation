@@ -371,8 +371,9 @@ void displayData() {
         display.drawBitmap(0, 3 + 82 + OFFSET, warning_icon16x16, 16, 16, color);
     }
 
-    String time = timeClient.getFormattedTime().substring(0, 5);
-    printAt(6, 82 + 4 + 22, time);
+    char timeBuffer[6];
+    timeClient.getFormattedTime(timeBuffer, sizeof(timeBuffer));
+    printAt(6, 82 + 4 + 22, timeBuffer);
 }
 
 void setupWebserver() {
