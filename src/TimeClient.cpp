@@ -148,6 +148,7 @@ int TimeClient::convertMonthNameToNumber(String strMonthName) {
     else if (strMonthName == "OCT") { return 10; }
     else if (strMonthName == "NOV") { return 11; }
     else if (strMonthName == "DEC") { return 12; }
+    return 0;
 }
 
 int TimeClient::adjustDSTEurope(int iYear, int iMonth, int iDay) {
