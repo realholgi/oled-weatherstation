@@ -1,5 +1,5 @@
 //
-// Holgi's Wetterstation V1.1
+// Holgi's Wetterstation
 //
 // Platform: ESP8266 Wemos D1 Mini 1M SPIFFS
 
