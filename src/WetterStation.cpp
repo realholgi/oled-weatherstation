@@ -67,8 +67,8 @@ bool initialConfig = false;
 
 volatile uint32_t last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
 
-bool readyForInternalSensorUpdate = true;
-bool readyForTimeUpdate = false;
+volatile bool readyForInternalSensorUpdate = true;
+volatile bool readyForTimeUpdate = false;
 
 const char *configPortalPassword = PORTAL_DEFAULT_PASSWORD;
 
@@ -199,7 +199,7 @@ void updateInternalSensor() {
     }
 }
 
-void setExternalSensorInvalid() {
+ICACHE_RAM_ATTR void setExternalSensorInvalid() {
     if (millis() - last_received_ext > MAX_RECEIVE_WAIT_EXT) {
         DEBUG_MSG("No External Sensor Signal received for a long time!");
         temperature_outdoor = -273;

@@ -9,7 +9,7 @@ void displayData();
 void setReadyForInternalSensorUpdate();
 void setReadyForTimeUpdate();
 double berechneTT(double t, double RH);
-void setExternalSensorInvalid();
+ICACHE_RAM_ATTR void setExternalSensorInvalid();
 void updateInternalSensor();
 void updateTime();
 double RHtoDP(double t, double RH);
