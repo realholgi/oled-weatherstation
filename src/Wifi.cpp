@@ -7,18 +7,29 @@
 #include "Display.h"
 #include "config.h"
 
+namespace Wifi {
+
 WiFiManager wifiManager;
 DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 
 static bool shouldSaveConfig = false;
 static bool initialConfig = false;
+static Display *activeDisplay = nullptr;
 
-bool shouldStartSetup() {
+static void useDisplay(Display &screen) {
+    activeDisplay = &screen;
+}
+
+static Display &display() {
+    return *activeDisplay;
+}
+
+bool shouldStartSetup(Display &screen) {
+    useDisplay(screen);
+
     if (WiFi.SSID() == "") {
         DEBUG_MSG("No stored access-point credentials; initiating configuration portal.");
-        display.clearDisplay();
-        printAt(6, 0, "no Cfg", false);
-        printAt(6, 10, "Portal");
+        display().showConfigPortalNoCredentials();
         delay(1000);
         initialConfig = true;
         return true;
@@ -26,9 +37,7 @@ bool shouldStartSetup() {
 
     if (drd.detectDoubleReset()) {
         DEBUG_MSG("Double-reset detected...");
-        display.clearDisplay();
-        printAt(6, 0, "RESET", false);
-        printAt(6, 10, "Portal");
+        display().showConfigPortalReset();
         delay(1000);
         initialConfig = true;
         return true;
@@ -36,7 +45,9 @@ bool shouldStartSetup() {
     return false;
 }
 
-void doSetup() {
+void doSetup(Display &screen) {
+    useDisplay(screen);
+
     if (initialConfig) {
         DEBUG_MSG("Starting configuration portal.");
 
@@ -77,14 +88,12 @@ void configModeCallback(WiFiManager *myWiFiManager) {
     DEBUG_MSG(WiFi.softAPIP().toString().c_str());
     DEBUG_MSG(myWiFiManager->getConfigPortalSSID().c_str());
 
-    display.clearDisplay();
-    display.setTextSize(1);
-    printAt(6, 0, "SETUP", false);
-    printAt(6, 20, "SSID:", false);
-    printAt(6, 40, myWiFiManager->getConfigPortalSSID());
+    display().showConfigPortalSsid(myWiFiManager->getConfigPortalSSID());
 }
 
-void setupWIFI() {
+void setup(Display &screen) {
+    useDisplay(screen);
+
     wifiManager.setAPCallback(configModeCallback);
 
     String hostname(HOSTNAME);
@@ -97,9 +106,10 @@ void setupWIFI() {
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
         delay(500);
         DEBUG_MSG(".");
-        display.print(".");
-        display.display();
+        display().appendWifiProgress();
     }
     DEBUG_MSG("\n");
     MDNS.begin(HOSTNAME);
+}
+
 }

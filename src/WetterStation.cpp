@@ -16,7 +16,10 @@
 #include "WebServer.h"
 #include "Wifi.h"
 
-TimeClient timeClient(TIMEZONE);
+static TimeClient timeClient(TIMEZONE);
+static Display display;
+static SensorIndoor sensorIndoor;
+static SensorOutdoor sensorOutdoor;
 
 static Ticker tickerForInternalSensorUpdate;
 static Ticker tickerForTimeUpdate;
@@ -24,8 +27,16 @@ static Ticker tickerForExternalSensorInvalidate;
 
 static volatile bool readyForTimeUpdate = false;
 
+static ICACHE_RAM_ATTR void setReadyForIndoorSensorUpdate() {
+    sensorIndoor.setReadyForUpdate();
+}
+
 static ICACHE_RAM_ATTR void setReadyForTimeUpdate() {
     readyForTimeUpdate = true;
+}
+
+static ICACHE_RAM_ATTR void invalidateOutdoorSensor() {
+    sensorOutdoor.invalidate();
 }
 
 static void updateTime() {
@@ -43,48 +54,45 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LOW);
 
-    setupDisplay();
+    display.setup();
 
-    if (!setupSensorIndoor()) {
-        printAt(6, 0, "ERROR:", false);
-        printAt(6, 20, "local", false);
-        printAt(6, 30, "Sensor", false);
-        printAt(6, 40, "failing!");
-        DEBUG_MSG("Couldn't find local sensor!\n");
+    if (!sensorIndoor.setup()) {
+        display.showSensorFailure();
+        DEBUG_MSG("Couldn't find indoor sensor!\n");
         while (1) { yield(); }
     }
 
-    printAt(6, 0, "Config...");
-    if (shouldStartSetup()) { doSetup(); }
+    display.showStartupConfig();
+    if (Wifi::shouldStartSetup(display)) { Wifi::doSetup(display); }
 
-    printAt(6, 10, "WIFI");
-    setupWIFI();
+    display.showStartupWifi();
+    Wifi::setup(display);
 
-    printAt(6, 20, "HTTP...");
-    setupWebserver();
+    display.showStartupHttp();
+    WebServer::setup();
 
-    printAt(6, 30, "Time...");
+    display.showStartupTime();
     timeClient.updateTime();
 
-    printAt(6, 40, "433MHz...");
-    setupSensorOutdoor();
+    display.showStartupOutdoorSensor();
+    sensorOutdoor.setup();
 
-    tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForInternalSensorUpdate);
+    tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForIndoorSensorUpdate);
     tickerForTimeUpdate.attach(UPDATE_NTP_TIME_INTERVAL, setReadyForTimeUpdate);
-    tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 1000, setExternalSensorInvalid);
+    tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 1000, invalidateOutdoorSensor);
 
     DEBUG_MSG("Ready\n");
 }
 
 void loop() {
-    drd.loop();
-    HTTP.handleClient();
+    Wifi::drd.loop();
+    WebServer::handleClient(sensorIndoor, sensorOutdoor);
 
-    if (readyForInternalSensorUpdate) { updateInternalSensor(); }
+    if (sensorIndoor.isReadyForUpdate()) { sensorIndoor.update(); }
     if (readyForTimeUpdate) { updateTime(); }
-    if (isExternalDataAvailable()) { updateExternalSensor(); }
+    if (sensorOutdoor.isDataAvailable()) { sensorOutdoor.update(); }
 
-    displayData();
+    display.renderData(timeClient, sensorIndoor, sensorOutdoor);
     MDNS.update();
 
     delay(1000);

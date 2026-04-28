@@ -1,14 +1,28 @@
 #pragma once
 
 #include <Arduino.h>
+#include <fws433.h>
 
-extern volatile float humidity_outdoor;
-extern volatile float temperature_outdoor;
-extern volatile int battery_outdoor;
-extern volatile float humidity_abs_outdoor;
-extern volatile uint32_t last_received_ext;
+class SensorOutdoor {
+public:
+    SensorOutdoor();
 
-void setupSensorOutdoor();
-bool isExternalDataAvailable();
-void updateExternalSensor();
-ICACHE_RAM_ATTR void setExternalSensorInvalid();
+    void setup();
+    bool isDataAvailable();
+    void update();
+    ICACHE_RAM_ATTR void invalidate();
+
+    float humidity() const;
+    float temperature() const;
+    int battery() const;
+    float absoluteHumidity() const;
+    uint32_t secondsSinceLastReceived() const;
+
+private:
+    FWS433 fws;
+    volatile float humidityValue;
+    volatile float temperatureValue;
+    volatile int batteryValue;
+    volatile float absoluteHumidityValue;
+    volatile uint32_t lastReceivedAtValue;
+};

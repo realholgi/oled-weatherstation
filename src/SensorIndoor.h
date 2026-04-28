@@ -1,13 +1,27 @@
 #pragma once
 
 #include <Arduino.h>
+#include <Adafruit_HTU21DF.h>
 
-extern float humidity_indoor;
-extern float temperature_indoor;
-extern float humidity_abs_indoor;
-extern float dp_indoor;
-extern volatile bool readyForInternalSensorUpdate;
+class SensorIndoor {
+public:
+    SensorIndoor();
 
-bool setupSensorIndoor();
-void updateInternalSensor();
-ICACHE_RAM_ATTR void setReadyForInternalSensorUpdate();
+    bool setup();
+    void update();
+    bool isReadyForUpdate() const;
+    ICACHE_RAM_ATTR void setReadyForUpdate();
+
+    float humidity() const;
+    float temperature() const;
+    float absoluteHumidity() const;
+    float dewPoint() const;
+
+private:
+    Adafruit_HTU21DF htu;
+    float humidityValue;
+    float temperatureValue;
+    float absoluteHumidityValue;
+    float dewPointValue;
+    volatile bool readyForUpdateFlag;
+};

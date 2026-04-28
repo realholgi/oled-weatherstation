@@ -1,33 +1,52 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <Adafruit_HTU21DF.h>
 #include "SensorIndoor.h"
 #include "HumidityMath.h"
 #include "SensorSanity.h"
 
-static Adafruit_HTU21DF htu;
+SensorIndoor::SensorIndoor()
+    : humidityValue(0),
+      temperatureValue(-273),
+      absoluteHumidityValue(-1),
+      dewPointValue(-273),
+      readyForUpdateFlag(true) {}
 
-float humidity_indoor = 0;
-float temperature_indoor = -273;
-float humidity_abs_indoor = -1;
-float dp_indoor = -273;
-volatile bool readyForInternalSensorUpdate = true;
-
-bool setupSensorIndoor() {
+bool SensorIndoor::setup() {
     return htu.begin();
 }
 
-void updateInternalSensor() {
-    readyForInternalSensorUpdate = false;
-    humidity_indoor = htu.readHumidity();
-    temperature_indoor = htu.readTemperature();
+void SensorIndoor::update() {
+    readyForUpdateFlag = false;
+    humidityValue = htu.readHumidity();
+    temperatureValue = htu.readTemperature();
 
-    if (isPlausibleTemperature(temperature_indoor) && isPlausibleHumidity(humidity_indoor)) {
-        humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
-        dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
+    if (SensorSanity::isPlausibleTemperature(temperatureValue) &&
+        SensorSanity::isPlausibleHumidity(humidityValue)) {
+        absoluteHumidityValue = HumidityMath::berechneTT(temperatureValue, humidityValue);
+        dewPointValue = HumidityMath::RHtoDP(temperatureValue, humidityValue);
     }
 }
 
-ICACHE_RAM_ATTR void setReadyForInternalSensorUpdate() {
-    readyForInternalSensorUpdate = true;
+bool SensorIndoor::isReadyForUpdate() const {
+    return readyForUpdateFlag;
+}
+
+ICACHE_RAM_ATTR void SensorIndoor::setReadyForUpdate() {
+    readyForUpdateFlag = true;
+}
+
+float SensorIndoor::humidity() const {
+    return humidityValue;
+}
+
+float SensorIndoor::temperature() const {
+    return temperatureValue;
+}
+
+float SensorIndoor::absoluteHumidity() const {
+    return absoluteHumidityValue;
+}
+
+float SensorIndoor::dewPoint() const {
+    return dewPointValue;
 }

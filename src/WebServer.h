@@ -1,10 +1,14 @@
 #pragma once
 
-#include <ESP8266WebServer.h>
+class SensorIndoor;
+class SensorOutdoor;
 
-extern ESP8266WebServer HTTP;
+namespace WebServer {
 
-void setupWebserver();
+void setup();
+void handleClient(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor);
 void handleRoot();
 void handleNotFound();
 void handleJsonData();
+
+}

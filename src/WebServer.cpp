@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
 #include "WebServer.h"
 #include "SensorIndoor.h"
@@ -7,11 +8,29 @@
 #include "config.h"
 #include "PAGE_wetter.h"
 
-ESP8266WebServer HTTP(80);
+namespace WebServer {
 
-void setupWebserver() {
+static ESP8266WebServer HTTP(80);
+
+static SensorIndoor *activeIndoorSensor = nullptr;
+static SensorOutdoor *activeOutdoorSensor = nullptr;
+
+static SensorIndoor &indoorSensor() {
+    return *activeIndoorSensor;
+}
+
+static SensorOutdoor &outdoorSensor() {
+    return *activeOutdoorSensor;
+}
+
+static void useSensors(SensorIndoor &indoor, SensorOutdoor &outdoor) {
+    activeIndoorSensor = &indoor;
+    activeOutdoorSensor = &outdoor;
+}
+
+void setup() {
     HTTP.on("/", handleRoot);
-    HTTP.on("/data.json", HTTP_GET, [&]() {
+    HTTP.on("/data.json", HTTP_GET, []() {
         HTTP.sendHeader("Connection", "close");
         HTTP.sendHeader("Access-Control-Allow-Origin", "*");
         return handleJsonData();
@@ -19,6 +38,11 @@ void setupWebserver() {
     HTTP.onNotFound(handleNotFound);
     HTTP.begin();
     MDNS.addService("http", "tcp", 80);
+}
+
+void handleClient(SensorIndoor &indoor, SensorOutdoor &outdoor) {
+    useSensors(indoor, outdoor);
+    HTTP.handleClient();
 }
 
 void handleNotFound() {
@@ -39,18 +63,18 @@ void handleNotFound() {
 void handleJsonData() {
     JsonDocument doc;
 
-    doc["t_in"] = temperature_indoor - TEMP_OFFSET_INDOOR;
-    doc["h_in"] = int(humidity_indoor);
-    doc["f_in"] = humidity_abs_indoor;
-    doc["dp_in"] = dp_indoor;
+    doc["t_in"] = indoorSensor().temperature() - TEMP_OFFSET_INDOOR;
+    doc["h_in"] = int(indoorSensor().humidity());
+    doc["f_in"] = indoorSensor().absoluteHumidity();
+    doc["dp_in"] = indoorSensor().dewPoint();
 
-    doc["t_out"] = temperature_outdoor;
-    doc["h_out"] = int(humidity_outdoor);
-    doc["f_out"] = humidity_abs_outdoor;
-    doc["b_out"] = battery_outdoor;
-    doc["last_out"] = (millis() - last_received_ext) / 1000;
+    doc["t_out"] = outdoorSensor().temperature();
+    doc["h_out"] = int(outdoorSensor().humidity());
+    doc["f_out"] = outdoorSensor().absoluteHumidity();
+    doc["b_out"] = outdoorSensor().battery();
+    doc["last_out"] = outdoorSensor().secondsSinceLastReceived();
 
-    doc["f_diff"] = humidity_abs_indoor - humidity_abs_outdoor;
+    doc["f_diff"] = indoorSensor().absoluteHumidity() - outdoorSensor().absoluteHumidity();
 
     String message = "";
     serializeJson(doc, message);
@@ -60,4 +84,6 @@ void handleJsonData() {
 
 void handleRoot() {
     HTTP.send_P(200, "text/html", PAGE_Wetter);
+}
+
 }
