@@ -1,10 +1,9 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include <SPI.h>
 #include "Display.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
 #include "TimeClient.h"
+#include "config.h"
 #include "icons.h"
 
 Adafruit_SSD1305 display(OLED_RESET);

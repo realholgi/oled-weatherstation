@@ -2,6 +2,7 @@
 #include <fws433.h>
 #include "SensorOutdoor.h"
 #include "HumidityMath.h"
+#include "config.h"
 
 static FWS433 fws;
 

@@ -1,6 +1,7 @@
 #include "TimeClient.h"
 #include "DSTEurope.h"
 
+#include <ESP8266WiFi.h>
 #include <cmath>
 #include <cstdio>
 
@@ -112,4 +113,3 @@ int TimeClient::convertMonthNameToNumber(String strMonthName) {
     else if (strMonthName == "DEC") { return 12; }
     return 0;
 }
-

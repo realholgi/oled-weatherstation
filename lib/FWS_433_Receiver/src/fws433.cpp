@@ -1,6 +1,4 @@
 #include "fws433.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 #define FILTER_MIN 1500
 #define FILTER_MAX 9000

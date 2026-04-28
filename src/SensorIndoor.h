@@ -1,6 +1,6 @@
 #pragma once
 
-#include "config.h"
+#include <Arduino.h>
 
 extern float humidity_indoor;
 extern float temperature_indoor;

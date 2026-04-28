@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ESP8266WiFi.h>
+#include <Arduino.h>
 
 class TimeClient {
 

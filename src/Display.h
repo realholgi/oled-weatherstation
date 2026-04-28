@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
 #include <Adafruit_SSD1305.h>
-#include "config.h"
 
 extern Adafruit_SSD1305 display;
 

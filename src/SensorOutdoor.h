@@ -1,6 +1,6 @@
 #pragma once
 
-#include "config.h"
+#include <Arduino.h>
 
 extern volatile float humidity_outdoor;
 extern volatile float temperature_outdoor;
