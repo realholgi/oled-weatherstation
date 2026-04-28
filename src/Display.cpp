@@ -91,6 +91,9 @@ void displayData() {
     display.setTextSize(2);
     if (temperature_outdoor > -273 && humidity_outdoor > 0 && temperature_indoor > -273 && humidity_indoor > 0) {
         float diff = humidity_abs_indoor - humidity_abs_outdoor;
+        if (abs(diff) < 0.05f) {
+            diff = 0.0f;
+        }
         printNumF(6, 82 + 4, diff);
         int color = WHITE;
         if (diff > 0.0 && abs(diff) < MIN_DIFF) color = BLACK;
