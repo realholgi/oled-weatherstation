@@ -51,3 +51,5 @@ public:
 private:
     int convertMonthNameToNumber(String strMonthName);
 };
+
+extern TimeClient timeClient;
