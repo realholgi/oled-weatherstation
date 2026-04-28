@@ -8,6 +8,7 @@
 #include <Ticker.h>
 
 #include "config.h"
+#include "WetterDebug.h"
 #include "TimeClient.h"
 #include "Display.h"
 #include "SensorIndoor.h"
@@ -33,7 +34,7 @@ static void updateTime() {
 }
 
 void setup() {
-    Serial.begin(115200);
+    DEBUG_SETUP();
 
     DEBUG_MSG("compiled: %s %s\n", __DATE__, __TIME__);
     DEBUG_MSG("FW %s\n", FIRMWAREVERSION);

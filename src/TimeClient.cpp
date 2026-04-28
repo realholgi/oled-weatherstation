@@ -1,4 +1,5 @@
 #include "TimeClient.h"
+#include "WetterDebug.h"
 #include "DSTEurope.h"
 
 #include <ESP8266WiFi.h>
@@ -17,7 +18,7 @@ void TimeClient::updateTime() {
     WiFiClient client;
     const int httpPort = 80;
     if (!client.connect("google.com", httpPort)) {
-        Serial.println("connection failed");
+        DEBUG_MSG("connection failed\n");
         return;
     }
 
@@ -28,7 +29,6 @@ void TimeClient::updateTime() {
     int repeatCounter = 0;
     while (!client.available() && repeatCounter < 10) {
         delay(1000);
-        //Serial.println(".");
         repeatCounter++;
     }
 
@@ -43,23 +43,18 @@ void TimeClient::updateTime() {
             // example:
             // date: Thu, 19 Nov 2015 20:25:40 GMT
             if (line.startsWith("DATE: ")) {
-                //Serial.println(line.substring(23, 25) + ":" + line.substring(26, 28) + ":" + line.substring(29, 31));
                 int parsedHours = line.substring(23, 25).toInt();
                 int parsedMinutes = line.substring(26, 28).toInt();
                 int parsedSeconds = line.substring(29, 31).toInt();
-                //Serial.println(String(parsedHours) + ":" + String(parsedMinutes) + ":" + String(parsedSeconds));
 
                 int parsedYear = line.substring(18, 22).toInt();
                 String strparsedMonth = line.substring(14, 17);
                 int parsedMonth = convertMonthNameToNumber(strparsedMonth);
                 int parsedDay = line.substring(11, 13).toInt();
-                //Serial.println("Annee: " + String(parsedYear) + " mois: " + String(parsedMonth) + " Jour; " +
-                //               String(parsedDay));
 
                 parsedHours = parsedHours + DSTEurope::adjust(parsedYear, parsedMonth, parsedDay, parsedHours);
 
                 localEpoc = (parsedHours * 60 * 60 + parsedMinutes * 60 + parsedSeconds);
-                //Serial.println(localEpoc);
                 localMillisAtUpdate = millis();
                 timeSet = true;
             }

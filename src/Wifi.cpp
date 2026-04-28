@@ -3,6 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include "Wifi.h"
+#include "WetterDebug.h"
 #include "Display.h"
 #include "config.h"
 
@@ -47,7 +48,7 @@ void doSetup() {
 
         String hostname = "ESP" + String(ESP.getChipId(), HEX);
         DEBUG_MSG("Hostname:  ");
-        Serial.println(hostname);
+        DEBUG_MSG("%s\n", hostname.c_str());
 
         if (!wifiManager.startConfigPortal(HOSTNAME)) {
             DEBUG_MSG("Not connected to WiFi but continuing anyway.");

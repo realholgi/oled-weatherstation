@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <fws433.h>
 #include "SensorOutdoor.h"
+#include "WetterDebug.h"
 #include "HumidityMath.h"
 #include "config.h"
 
