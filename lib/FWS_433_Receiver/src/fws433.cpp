@@ -166,7 +166,7 @@ fwsResult FWS433::getData() {
 int FWS433::_binToDecRev(const volatile byte *binary, int s, int e) const {
     int result = 0;
     unsigned int mask = 1;
-    for (; e > 0 && s <= e; mask <<= 1)
+    for (; e >= 0 && s <= e; mask <<= 1)
         if (binary[e--] != 0)
             result |= mask;
     return result;
