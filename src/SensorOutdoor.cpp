@@ -23,15 +23,24 @@ void updateExternalSensor() {
     fwsResult result = fws.getData();
 
     if (result.channel == 3) {
+        const float decodedTemperature = result.temperature / 10.0f;
+        const bool isPlausibleReading =
+            decodedTemperature > -40.0f && decodedTemperature < 60.0f &&
+            result.humidity > 0 && result.humidity < 100;
+
+        if (!isPlausibleReading) {
+            DEBUG_MSG("Ignoring implausible external reading: %d.%d deg, %u%% REL, ID: %u\n", result.temperature / 10,
+                      abs(result.temperature % 10), result.humidity, result.id);
+            return;
+        }
+
         last_received_ext = millis();
 
         humidity_outdoor = result.humidity;
-        temperature_outdoor = result.temperature / 10.0;
+        temperature_outdoor = decodedTemperature;
         battery_outdoor = result.battery ? 1 : 0;
 
-        if (temperature_outdoor > -40 && temperature_outdoor < 50 && humidity_outdoor > 0 && humidity_outdoor < 100) {
-            humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
-        }
+        humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
 
         DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", result.temperature / 10,
                   abs(result.temperature % 10), result.humidity, result.id);

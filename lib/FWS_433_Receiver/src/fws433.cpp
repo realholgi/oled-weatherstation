@@ -56,7 +56,7 @@ ICACHE_RAM_ATTR void FWS433::_handler() {
             if (diffMs > STOP_MIN) { // INIT/STOP pulse
                 dbg("S");
                 if (_buffEnd == 40) { //There is the right amount of data in buff
-                    if (!_isRepeat()) { //if this is the repeat of the previous package ( in 3 sec) then don't respond a false positive availability.
+                    if (_isRepeat()) { // promote only packets that were received twice to suppress noisy one-off frames
                         _avail = true;
                     } else {
                         _buffEnd = 0;
@@ -148,11 +148,12 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
     channel = _binToDecRev(_buff, 38, 39);
 
     temperature = _binToDecRev(_buff, 16, 27);
-    
-    temperature = temperature / 10 - 90;        // whole °F
-    temperature = (temperature - 32) * 50 / 9;  // tenths of °C
+
+    const float tempF = temperature / 10.0f - 90.0f;
+    temperature = (int)((tempF - 32.0f) / 1.8f * 10.0f);
 
     battery = _binToDecRev(_buff, 13, 13) != 1;
+    _buffEnd = 0;
     _avail = false;
 }
 
