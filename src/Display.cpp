@@ -34,7 +34,7 @@ void printAt(int x, int y, String st, boolean onScreen) {
 void printNumI(int x, int y, int num) {
     char st[27];
     display.setCursor(x, y + OFFSET);
-    sprintf(st, "%i", num);
+    snprintf(st, sizeof(st), "%i", num);
     if (strlen(st) == 1) display.print(" ");
     display.print(st);
 }
