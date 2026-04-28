@@ -49,7 +49,7 @@ void updateExternalSensor() {
 }
 
 ICACHE_RAM_ATTR void setExternalSensorInvalid() {
-    if (millis() - last_received_ext > MAX_RECEIVE_WAIT_EXT) {
+    if (millis() - last_received_ext >= MAX_RECEIVE_WAIT_EXT) {
         DEBUG_MSG("No External Sensor Signal received for a long time!");
         temperature_outdoor = -273;
         humidity_outdoor = 0;
