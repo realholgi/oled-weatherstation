@@ -7,24 +7,22 @@
 #include "Display.h"
 #include "config.h"
 
-namespace Wifi {
+bool Wifi::shouldSaveConfig = false;
+bool Wifi::initialConfig = false;
+Display *Wifi::activeDisplay = nullptr;
 
-WiFiManager wifiManager;
-DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
+Wifi::Wifi() : drd(DRD_TIMEOUT, DRD_ADDRESS) {
+}
 
-static bool shouldSaveConfig = false;
-static bool initialConfig = false;
-static Display *activeDisplay = nullptr;
-
-static void useDisplay(Display &screen) {
+void Wifi::useDisplay(Display &screen) {
     activeDisplay = &screen;
 }
 
-static Display &display() {
+Display &Wifi::display() {
     return *activeDisplay;
 }
 
-bool shouldStartSetup(Display &screen) {
+bool Wifi::shouldStartSetup(Display &screen) {
     useDisplay(screen);
 
     if (WiFi.SSID() == "") {
@@ -45,7 +43,7 @@ bool shouldStartSetup(Display &screen) {
     return false;
 }
 
-void doSetup(Display &screen) {
+void Wifi::doSetup(Display &screen) {
     useDisplay(screen);
 
     if (initialConfig) {
@@ -73,17 +71,17 @@ void doSetup(Display &screen) {
     WiFi.mode(WIFI_STA);
 }
 
-void saveConfigCallback() {
+void Wifi::saveConfigCallback() {
     DEBUG_MSG("Should save config");
     shouldSaveConfig = true;
 }
 
-ICACHE_RAM_ATTR void flash() {
+ICACHE_RAM_ATTR void Wifi::flash() {
     int state = digitalRead(LED_BUILTIN);
     digitalWrite(LED_BUILTIN, !state);
 }
 
-void configModeCallback(WiFiManager *myWiFiManager) {
+void Wifi::configModeCallback(WiFiManager *myWiFiManager) {
     DEBUG_MSG("Entered config mode");
     DEBUG_MSG(WiFi.softAPIP().toString().c_str());
     DEBUG_MSG(myWiFiManager->getConfigPortalSSID().c_str());
@@ -91,7 +89,7 @@ void configModeCallback(WiFiManager *myWiFiManager) {
     display().showConfigPortalSsid(myWiFiManager->getConfigPortalSSID());
 }
 
-void setup(Display &screen) {
+void Wifi::setup(Display &screen) {
     useDisplay(screen);
 
     wifiManager.setAPCallback(configModeCallback);
@@ -112,4 +110,6 @@ void setup(Display &screen) {
     MDNS.begin(HOSTNAME);
 }
 
+void Wifi::loop() {
+    drd.loop();
 }

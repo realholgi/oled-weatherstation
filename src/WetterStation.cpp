@@ -20,6 +20,8 @@ static TimeClient timeClient(TIMEZONE);
 static Display display;
 static SensorIndoor sensorIndoor;
 static SensorOutdoor sensorOutdoor;
+static Wifi wifi;
+static WebServer webServer;
 
 static Ticker tickerForInternalSensorUpdate;
 static Ticker tickerForTimeUpdate;
@@ -63,13 +65,13 @@ void setup() {
     }
 
     display.showStartupConfig();
-    if (Wifi::shouldStartSetup(display)) { Wifi::doSetup(display); }
+    if (wifi.shouldStartSetup(display)) { wifi.doSetup(display); }
 
     display.showStartupWifi();
-    Wifi::setup(display);
+    wifi.setup(display);
 
     display.showStartupHttp();
-    WebServer::setup();
+    webServer.setup();
 
     display.showStartupTime();
     timeClient.updateTime();
@@ -85,8 +87,8 @@ void setup() {
 }
 
 void loop() {
-    Wifi::drd.loop();
-    WebServer::handleClient(sensorIndoor, sensorOutdoor);
+    wifi.loop();
+    webServer.handleClient(sensorIndoor, sensorOutdoor);
 
     if (sensorIndoor.isReadyForUpdate()) { sensorIndoor.update(); }
     if (readyForTimeUpdate) { updateTime(); }

@@ -8,59 +8,55 @@
 #include "config.h"
 #include "PAGE_wetter.h"
 
-namespace WebServer {
+WebServer::WebServer() : server(80) {
+}
 
-static ESP8266WebServer HTTP(80);
-
-static SensorIndoor *activeIndoorSensor = nullptr;
-static SensorOutdoor *activeOutdoorSensor = nullptr;
-
-static SensorIndoor &indoorSensor() {
+SensorIndoor &WebServer::indoorSensor() {
     return *activeIndoorSensor;
 }
 
-static SensorOutdoor &outdoorSensor() {
+SensorOutdoor &WebServer::outdoorSensor() {
     return *activeOutdoorSensor;
 }
 
-static void useSensors(SensorIndoor &indoor, SensorOutdoor &outdoor) {
+void WebServer::useSensors(SensorIndoor &indoor, SensorOutdoor &outdoor) {
     activeIndoorSensor = &indoor;
     activeOutdoorSensor = &outdoor;
 }
 
-void setup() {
-    HTTP.on("/", handleRoot);
-    HTTP.on("/data.json", HTTP_GET, []() {
-        HTTP.sendHeader("Connection", "close");
-        HTTP.sendHeader("Access-Control-Allow-Origin", "*");
-        return handleJsonData();
+void WebServer::setup() {
+    server.on("/", [this]() { handleRoot(); });
+    server.on("/data.json", HTTP_GET, [this]() {
+        server.sendHeader("Connection", "close");
+        server.sendHeader("Access-Control-Allow-Origin", "*");
+        handleJsonData();
     });
-    HTTP.onNotFound(handleNotFound);
-    HTTP.begin();
+    server.onNotFound([this]() { handleNotFound(); });
+    server.begin();
     MDNS.addService("http", "tcp", 80);
 }
 
-void handleClient(SensorIndoor &indoor, SensorOutdoor &outdoor) {
+void WebServer::handleClient(SensorIndoor &indoor, SensorOutdoor &outdoor) {
     useSensors(indoor, outdoor);
-    HTTP.handleClient();
+    server.handleClient();
 }
 
-void handleNotFound() {
+void WebServer::handleNotFound() {
     String message = "File Not Found\n\n";
     message += "URI: ";
-    message += HTTP.uri();
+    message += server.uri();
     message += "\nMethod: ";
-    message += (HTTP.method() == HTTP_GET) ? "GET" : "POST";
+    message += (server.method() == HTTP_GET) ? "GET" : "POST";
     message += "\nArguments: ";
-    message += HTTP.args();
+    message += server.args();
     message += "\n";
-    for (uint8_t i = 0; i < HTTP.args(); i++) {
-        message += " " + HTTP.argName(i) + ": " + HTTP.arg(i) + "\n";
+    for (uint8_t i = 0; i < server.args(); i++) {
+        message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
     }
-    HTTP.send(404, "text/plain", message);
+    server.send(404, "text/plain", message);
 }
 
-void handleJsonData() {
+void WebServer::handleJsonData() {
     JsonDocument doc;
 
     doc["t_in"] = indoorSensor().temperature() - TEMP_OFFSET_INDOOR;
@@ -79,11 +75,9 @@ void handleJsonData() {
     String message = "";
     serializeJson(doc, message);
 
-    HTTP.send(200, "application/json;charset=utf-8", message);
+    server.send(200, "application/json;charset=utf-8", message);
 }
 
-void handleRoot() {
-    HTTP.send_P(200, "text/html", PAGE_Wetter);
-}
-
+void WebServer::handleRoot() {
+    server.send_P(200, "text/html", PAGE_Wetter);
 }
