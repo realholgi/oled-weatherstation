@@ -9,10 +9,11 @@ volatile float humidity_outdoor = 0;
 volatile float temperature_outdoor = -273;
 volatile int battery_outdoor = 0;
 volatile float humidity_abs_outdoor = -1;
-volatile uint32_t last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
+volatile uint32_t last_received_ext = 0;
 
 void setupSensorOutdoor() {
     fws.start(RECEIVER_PIN);
+    last_received_ext = millis() + MIN_RECEIVE_WAIT_EXT + 1;
 }
 
 bool isExternalDataAvailable() {
