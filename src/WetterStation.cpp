@@ -176,7 +176,7 @@ void updateExternalSensor() {
             humidity_abs_outdoor = berechneTT(temperature_outdoor, humidity_outdoor);
         }
 
-        DEBUG_MSG("Temperature: %u.%u deg, Humidity: %u%% REL, ID: %u\n", result.temperature / 10,
+        DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", result.temperature / 10,
                   abs(result.temperature % 10), result.humidity,
                   result.id);
 
@@ -420,7 +420,7 @@ void handleJsonData() {
     doc["h_out"] = int(humidity_outdoor);
     doc["f_out"] = humidity_abs_outdoor;
     doc["b_out"] = battery_outdoor;
-    doc["last_out"] = int(millis() - last_received_ext) / 1000;
+    doc["last_out"] = (millis() - last_received_ext) / 1000;
 
     doc["f_diff"] = humidity_abs_indoor - humidity_abs_outdoor;
 
