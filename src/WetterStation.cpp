@@ -63,7 +63,6 @@ void setup() {
     setupWebserver();
 
     printAt(6, 30, "Time...");
-    timeClient = TimeClient(TIMEZONE);
     timeClient.updateTime();
 
     printAt(6, 40, "433MHz...");
