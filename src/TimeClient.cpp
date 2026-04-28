@@ -60,6 +60,7 @@ void TimeClient::updateTime() {
                 localEpoc = (parsedHours * 60 * 60 + parsedMinutes * 60 + parsedSeconds);
                 //Serial.println(localEpoc);
                 localMillisAtUpdate = millis();
+                timeSet = true;
             }
         }
     }
@@ -71,7 +72,7 @@ void TimeClient::getFormattedTime(char *buffer, size_t bufferSize) {
         return;
     }
 
-    if (localEpoc == 0) {
+    if (!timeSet) {
         snprintf(buffer, bufferSize, "--:--");
         return;
     }

@@ -8,6 +8,7 @@ private:
     float myUtcOffset = 0;
     long localEpoc = 0;
     unsigned long localMillisAtUpdate = 0;
+    bool timeSet = false;
 
 public:
     TimeClient(float utcOffset);
