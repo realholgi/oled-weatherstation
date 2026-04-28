@@ -189,13 +189,13 @@ void updateTime() {
 }
 
 void updateInternalSensor() {
+    readyForInternalSensorUpdate = false;
     humidity_indoor = htu.readHumidity();
     temperature_indoor = htu.readTemperature();
 
     if (temperature_indoor > -273 && humidity_indoor > 0) {
         humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
         dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
-        readyForInternalSensorUpdate = false;
     }
 }
 
@@ -254,7 +254,6 @@ void doSetup() {
         }
         ESP.reset(); // This is a bit crude. For some unknown reason webserver can only be started once per boot up
         // so resetting the device allows to go back into config mode again when it reboots.
-        delay(5000);
     }
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
