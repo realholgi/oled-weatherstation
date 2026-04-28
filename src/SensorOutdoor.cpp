@@ -3,6 +3,7 @@
 #include "SensorOutdoor.h"
 #include "WetterDebug.h"
 #include "HumidityMath.h"
+#include "SensorSanity.h"
 #include "config.h"
 
 static FWS433 fws;
@@ -27,11 +28,8 @@ void updateExternalSensor() {
 
     if (result.channel == 3) {
         const float decodedTemperature = result.temperature / 10.0f;
-        const bool isPlausibleReading =
-            decodedTemperature > -40.0f && decodedTemperature < 60.0f &&
-            result.humidity > 0 && result.humidity < 100;
 
-        if (!isPlausibleReading) {
+        if (!isPlausibleTemperature(decodedTemperature) || !isPlausibleHumidity(result.humidity)) {
             DEBUG_MSG("Ignoring implausible external reading: %d.%d deg, %u%% REL, ID: %u\n", result.temperature / 10,
                       abs(result.temperature % 10), result.humidity, result.id);
             return;

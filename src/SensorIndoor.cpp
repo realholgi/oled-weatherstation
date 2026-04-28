@@ -3,6 +3,7 @@
 #include <Adafruit_HTU21DF.h>
 #include "SensorIndoor.h"
 #include "HumidityMath.h"
+#include "SensorSanity.h"
 
 static Adafruit_HTU21DF htu;
 
@@ -21,7 +22,7 @@ void updateInternalSensor() {
     humidity_indoor = htu.readHumidity();
     temperature_indoor = htu.readTemperature();
 
-    if (temperature_indoor > -273 && humidity_indoor > 0) {
+    if (isPlausibleTemperature(temperature_indoor) && isPlausibleHumidity(humidity_indoor)) {
         humidity_abs_indoor = berechneTT(temperature_indoor, humidity_indoor);
         dp_indoor = RHtoDP(temperature_indoor, humidity_indoor);
     }

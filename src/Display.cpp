@@ -2,6 +2,7 @@
 #include "Display.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
+#include "SensorSanity.h"
 #include "TimeClient.h"
 #include "config.h"
 #include "icons.h"
@@ -52,17 +53,17 @@ void displayData() {
     display.clearDisplay();
     display.setTextSize(2);
 
-    if (temperature_outdoor > -273) {
+    if (isPlausibleTemperature(temperature_outdoor)) {
         printNumF(6, 0, temperature_outdoor);
     }
 
     display.setTextSize(1);
-    if (humidity_outdoor > 0) {
+    if (isPlausibleHumidity(humidity_outdoor)) {
         printNumI(46, 20, humidity_outdoor);
         display.print("%");
     }
 
-    if (humidity_abs_outdoor > -1) {
+    if (isPlausibleHumidity(humidity_abs_outdoor)) {
         printNumF(34, 30, humidity_abs_outdoor);
     }
 
@@ -70,17 +71,17 @@ void displayData() {
     display.drawLine(0, 40 + OFFSET, display.width() - 1, 40 + OFFSET, WHITE);
 
     display.setTextSize(2);
-    if (temperature_indoor > -273) {
+    if (isPlausibleTemperature(temperature_indoor)) {
         printNumF(6, 40 + 4, temperature_indoor - TEMP_OFFSET_INDOOR);
     }
 
     display.setTextSize(1);
-    if (humidity_indoor > 0) {
+    if (isPlausibleHumidity(humidity_indoor)) {
         printNumI(46, 20 + 40 + 2, humidity_indoor);
         display.print("%");
     }
 
-    if (humidity_abs_indoor > -1) {
+    if (isPlausibleHumidity(humidity_abs_indoor)) {
         printNumF(34, 30 + 40 + 2, humidity_abs_indoor);
     }
 
@@ -88,7 +89,8 @@ void displayData() {
     display.drawLine(0, 82 + OFFSET, display.width() - 1, 82 + OFFSET, WHITE);
 
     display.setTextSize(2);
-    if (temperature_outdoor > -273 && humidity_outdoor > 0 && temperature_indoor > -273 && humidity_indoor > 0) {
+    if (isPlausibleTemperature(temperature_outdoor) && isPlausibleHumidity(humidity_outdoor) &&
+        isPlausibleTemperature(temperature_indoor) && isPlausibleHumidity(humidity_indoor)) {
         float diff = humidity_abs_indoor - humidity_abs_outdoor;
         if (abs(diff) < 0.05f) {
             diff = 0.0f;
