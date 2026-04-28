@@ -87,16 +87,21 @@ void setup() {
 }
 
 void loop() {
+    static unsigned long lastDisplayUpdate = 0;
     wifi.loop();
-    webServer.handleClient(sensorIndoor, sensorOutdoor);
 
     if (sensorIndoor.isReadyForUpdate()) { sensorIndoor.update(); }
     if (readyForTimeUpdate) { updateTime(); }
     if (sensorOutdoor.isDataAvailable()) { sensorOutdoor.update(); }
 
-    display.renderData(timeClient, sensorIndoor, sensorOutdoor);
+    unsigned long now = millis();
+    if (now - lastDisplayUpdate >= 1000) {
+        display.renderData(timeClient, sensorIndoor, sensorOutdoor);
+        lastDisplayUpdate = now;
+    }
+
+    webServer.handleClient(sensorIndoor, sensorOutdoor);
     MDNS.update();
 
-    delay(1000);
-    yield();
+    delay(50);
 }
