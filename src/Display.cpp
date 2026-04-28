@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
-#include "display.h"
+#include "Display.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
 #include "TimeClient.h"

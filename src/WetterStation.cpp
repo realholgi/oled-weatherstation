@@ -9,7 +9,7 @@
 
 #include "config.h"
 #include "TimeClient.h"
-#include "display.h"
+#include "Display.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
 #include "WebServer.h"

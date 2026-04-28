@@ -3,7 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include "Wifi.h"
-#include "display.h"
+#include "Display.h"
 #include "config.h"
 
 WiFiManager wifiManager;
