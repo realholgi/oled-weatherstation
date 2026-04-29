@@ -10,7 +10,7 @@ public:
     void setup();
     bool isDataAvailable();
     void update();
-    IRAM_ATTR void invalidate();
+    void invalidate();
 
     float humidity() const;
     float temperature() const;
