@@ -6,8 +6,8 @@
 #include <cmath>
 #include <cstdio>
 
-TimeClient::TimeClient(float utcOffset) {
-    myUtcOffset = utcOffset;
+TimeClient::TimeClient(float utcOffset)
+    : myUtcOffset(utcOffset), timezoneOffsetSeconds(lround(3600.0f * utcOffset)) {
 }
 
 void TimeClient::updateTime() {
@@ -18,7 +18,6 @@ void TimeClient::updateTime() {
         return;
     }
 
-    // This will send the request to the server
     client.print(String("GET / HTTP/1.1\r\n") +
                  String("Host: google.com\r\n") +
                  String("Connection: close\r\n\r\n"));
@@ -80,7 +79,6 @@ long TimeClient::getCurrentEpoch() {
 }
 
 long TimeClient::getCurrentEpochWithUtcOffset() {
-    const long timezoneOffsetSeconds = lround(3600.0f * myUtcOffset);
     long adjustedEpoch = getCurrentEpoch() + timezoneOffsetSeconds;
     adjustedEpoch %= 86400L;
     if (adjustedEpoch < 0) {
@@ -89,7 +87,7 @@ long TimeClient::getCurrentEpochWithUtcOffset() {
     return adjustedEpoch;
 }
 
-int TimeClient::convertMonthNameToNumber(String strMonthName) {
+int TimeClient::convertMonthNameToNumber(const String &strMonthName) {
     if (strMonthName == "JAN") { return 1; }
     else if (strMonthName == "FEB") { return 2; }
     else if (strMonthName == "MAR") { return 3; }

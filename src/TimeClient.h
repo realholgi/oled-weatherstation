@@ -5,7 +5,8 @@
 class TimeClient {
 
 private:
-    float myUtcOffset = 0;
+    const float myUtcOffset;
+    const long timezoneOffsetSeconds;
     long localEpoc = 0;
     unsigned long localMillisAtUpdate = 0;
     bool timeSet = false;
@@ -20,5 +21,5 @@ public:
 private:
     long getCurrentEpoch();
     long getCurrentEpochWithUtcOffset();
-    int convertMonthNameToNumber(String strMonthName);
+    int convertMonthNameToNumber(const String &strMonthName);
 };
