@@ -17,14 +17,11 @@ private:
     WiFiManager wifiManager;
     DoubleResetDetector drd;
 
-    static bool shouldSaveConfig;
-    static bool initialConfig;
     static Display *activeDisplay;
 
     static void useDisplay(Display &screen);
     static Display &display();
 
-    static void saveConfigCallback();
     static void configModeCallback(WiFiManager *myWiFiManager);
     static IRAM_ATTR void flash();
 };

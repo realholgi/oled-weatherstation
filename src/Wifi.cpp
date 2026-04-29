@@ -7,8 +7,6 @@
 #include "Display.h"
 #include "config.h"
 
-bool Wifi::shouldSaveConfig = false;
-bool Wifi::initialConfig = false;
 Display *Wifi::activeDisplay = nullptr;
 
 Wifi::Wifi() : drd(DRD_TIMEOUT, DRD_ADDRESS) {
@@ -29,7 +27,6 @@ bool Wifi::shouldStartSetup(Display &screen) {
         DEBUG_MSG("No stored access-point credentials; initiating configuration portal.");
         display().showConfigPortalNoCredentials();
         delay(1000);
-        initialConfig = true;
         return true;
     }
 
@@ -37,7 +34,6 @@ bool Wifi::shouldStartSetup(Display &screen) {
         DEBUG_MSG("Double-reset detected...");
         display().showConfigPortalReset();
         delay(1000);
-        initialConfig = true;
         return true;
     }
     return false;
@@ -46,34 +42,23 @@ bool Wifi::shouldStartSetup(Display &screen) {
 void Wifi::doSetup(Display &screen) {
     useDisplay(screen);
 
-    if (initialConfig) {
-        DEBUG_MSG("Starting configuration portal.");
+    DEBUG_MSG("Starting configuration portal.");
 
-        Ticker flasher;
-        flasher.attach(0.1, flash);
+    Ticker flasher;
+    flasher.attach(0.1, flash);
 
-        wifiManager.setSaveConfigCallback(saveConfigCallback);
-        wifiManager.setAPCallback(configModeCallback);
+    wifiManager.setAPCallback(configModeCallback);
 
-        String hostname = "ESP" + String(ESP.getChipId(), HEX);
-        DEBUG_MSG("Hostname:  ");
-        DEBUG_MSG("%s\n", hostname.c_str());
-
-        if (!wifiManager.startConfigPortal(HOSTNAME)) {
-            DEBUG_MSG("Not connected to WiFi but continuing anyway.");
-        } else {
-            DEBUG_MSG("Connected to WiFi.");
-        }
-        ESP.reset();
+    if (!wifiManager.startConfigPortal(HOSTNAME)) {
+        DEBUG_MSG("Not connected to WiFi but continuing anyway.");
+    } else {
+        DEBUG_MSG("Connected to WiFi.");
     }
+    ESP.reset();
+
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
     WiFi.mode(WIFI_STA);
-}
-
-void Wifi::saveConfigCallback() {
-    DEBUG_MSG("Should save config");
-    shouldSaveConfig = true;
 }
 
 IRAM_ATTR void Wifi::flash() {
