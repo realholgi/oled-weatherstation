@@ -8,8 +8,8 @@ class SensorOutdoor;
 class WebServer {
 public:
     WebServer();
-    void setup();
-    void handleClient(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor);
+    void setup(SensorIndoor &indoor, SensorOutdoor &outdoor);
+    void handleClient();
 
 private:
     ESP8266WebServer server;
@@ -21,7 +21,6 @@ private:
     void handleNotFound();
     void handleJsonData();
 
-    void useSensors(SensorIndoor &indoor, SensorOutdoor &outdoor);
     SensorIndoor &indoorSensor();
     SensorOutdoor &outdoorSensor();
 };

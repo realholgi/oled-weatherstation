@@ -18,12 +18,9 @@ SensorOutdoor &WebServer::outdoorSensor() {
     return *activeOutdoorSensor;
 }
 
-void WebServer::useSensors(SensorIndoor &indoor, SensorOutdoor &outdoor) {
+void WebServer::setup(SensorIndoor &indoor, SensorOutdoor &outdoor) {
     activeIndoorSensor = &indoor;
     activeOutdoorSensor = &outdoor;
-}
-
-void WebServer::setup() {
     server.on("/", [this]() { handleRoot(); });
     server.on("/data.json", HTTP_GET, [this]() {
         server.sendHeader("Connection", "close");
@@ -35,8 +32,7 @@ void WebServer::setup() {
     MDNS.addService("http", "tcp", 80);
 }
 
-void WebServer::handleClient(SensorIndoor &indoor, SensorOutdoor &outdoor) {
-    useSensors(indoor, outdoor);
+void WebServer::handleClient() {
     server.handleClient();
 }
 

@@ -71,7 +71,7 @@ void setup() {
     wifi.setup(display);
 
     display.showStartupHttp();
-    webServer.setup();
+    webServer.setup(sensorIndoor, sensorOutdoor);
 
     display.showStartupTime();
     timeClient.updateTime();
@@ -100,7 +100,7 @@ void loop() {
         lastDisplayUpdate = now;
     }
 
-    webServer.handleClient(sensorIndoor, sensorOutdoor);
+    webServer.handleClient();
     MDNS.update();
 
     delay(50);
