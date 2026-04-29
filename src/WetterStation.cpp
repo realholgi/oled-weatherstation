@@ -102,6 +102,4 @@ void loop() {
 
     webServer.handleClient();
     MDNS.update();
-
-    delay(50);
 }
