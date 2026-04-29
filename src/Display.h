@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <Adafruit_SSD1305.h>
+#include "WetterOLED.h"
 
 class SensorIndoor;
 class SensorOutdoor;
@@ -37,5 +37,5 @@ private:
     void printNumI(int x, int y, int num);
     void printNumF(int x, int y, double num, byte dec = 1, int length = 0);
 
-    Adafruit_SSD1305 oled;
+    WetterOLED oled;
 };
