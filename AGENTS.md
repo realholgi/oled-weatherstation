@@ -32,7 +32,6 @@ pio device monitor               # serial monitor at 115200 baud
 |------|------|
 | `src/WetterStation.cpp` | `setup()` / `loop()`, web server, display rendering |
 | `src/TimeClient.{h,cpp}` | NTP sync, UTC offset, DST delegation |
-| `src/DSTEurope.{h,cpp}` | European DST calculation (only tested class) |
 | `src/globals.h` | All configuration constants and `extern` volatile globals |
 | `src/display.h` | OLED helper functions |
 | `src/PAGE_wetter.h` | HTML/JS web page stored in `PROGMEM` |
@@ -44,7 +43,7 @@ pio device monitor               # serial monitor at 115200 baud
 
 ## Unit Tests
 
-Only `DSTEurope` has tests (`test/test_timeclient/test_main.cpp`). Tests run on the native environment (no ESP8266 hardware needed). Add new testable logic as standalone classes in the same pattern.
+Native PlatformIO tests cover standalone logic such as `HumidityMath` and `SensorSanity`. Tests run on the native environment (no ESP8266 hardware needed). Add new testable logic as standalone classes in the same pattern.
 
 ## Important Constraints
 

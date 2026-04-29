@@ -21,7 +21,7 @@ ESP8266-based weather station with OLED display, indoor/outdoor sensors, online 
 - Displays current time, indoor and outdoor temperature, relative and absolute humidity, and their respective difference
 - Live web interface at `http://weather.local` with auto-updating values
 - WiFi setup via captive portal and on double-reset
-- Online Time sync with European DST handling
+- Online time sync via NTP with timezone/DST handling from the configured POSIX timezone
 
 ## Build & Flash
 
