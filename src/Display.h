@@ -27,13 +27,8 @@ public:
     void renderData(TimeClient &timeClient, const SensorIndoor &indoorSensor, const SensorOutdoor &outdoorSensor);
 
 private:
-    void clear();
-    void setTextSize(uint8_t size);
     void printAt(int x, int y, const char *st, boolean onScreen = true);
     void printAt(int x, int y, const String &st, boolean onScreen = true);
-    void print(const char *st);
-    void flush();
-    void showStartupStage(int y, const char *message);
     void printNumI(int x, int y, int num);
     void printNumF(int x, int y, double num, byte dec = 1, int length = 0);
 

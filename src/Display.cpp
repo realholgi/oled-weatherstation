@@ -20,7 +20,7 @@ void Display::setup() {
 }
 
 void Display::showSensorFailure() {
-    clear();
+    oled.clearDisplay();
     printAt(6, 0, "ERROR:", false);
     printAt(6, 20, "local", false);
     printAt(6, 30, "Sensor", false);
@@ -28,48 +28,48 @@ void Display::showSensorFailure() {
 }
 
 void Display::showStartupConfig() {
-    showStartupStage(0, "Config...");
+    printAt(6, 0, "Config...");
 }
 
 void Display::showStartupWifi() {
-    showStartupStage(10, "WIFI...");
+    printAt(6, 10, "WIFI...");
 }
 
 void Display::showStartupHttp() {
-    showStartupStage(20, "HTTP...");
+    printAt(6, 20, "HTTP...");
 }
 
 void Display::showStartupTime() {
-    showStartupStage(30, "Time...");
+    printAt(6, 30, "Time...");
 }
 
 void Display::showStartupOutdoorSensor() {
-    showStartupStage(40, "433MHz...");
+    printAt(6, 40, "433MHz...");
 }
 
 void Display::showConfigPortalNoCredentials() {
-    clear();
+    oled.clearDisplay();
     printAt(6, 0, "no Cfg", false);
     printAt(6, 10, "Portal");
 }
 
 void Display::showConfigPortalReset() {
-    clear();
+    oled.clearDisplay();
     printAt(6, 0, "RESET", false);
     printAt(6, 10, "Portal");
 }
 
 void Display::showConfigPortalSsid(const String &ssid) {
-    clear();
-    setTextSize(1);
+    oled.clearDisplay();
+    oled.setTextSize(1);
     printAt(6, 0, "SETUP", false);
     printAt(6, 20, "SSID:", false);
     printAt(6, 40, ssid);
 }
 
 void Display::appendWifiProgress() {
-    print(".");
-    flush();
+    oled.print(".");
+    oled.display();
 }
 
 void Display::printAt(int x, int y, const char *st, boolean onScreen) {
@@ -82,26 +82,6 @@ void Display::printAt(int x, int y, const String &st, boolean onScreen) {
     oled.setCursor(x, y + OFFSET);
     oled.print(st);
     if (onScreen) oled.display();
-}
-
-void Display::clear() {
-    oled.clearDisplay();
-}
-
-void Display::setTextSize(uint8_t size) {
-    oled.setTextSize(size);
-}
-
-void Display::print(const char *st) {
-    oled.print(st);
-}
-
-void Display::flush() {
-    oled.display();
-}
-
-void Display::showStartupStage(int y, const char *message) {
-    printAt(6, y, message);
 }
 
 void Display::printNumI(int x, int y, int num) {
