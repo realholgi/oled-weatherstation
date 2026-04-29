@@ -2,6 +2,7 @@
 
 #include <WiFiManager.h>
 #include <DoubleResetDetector.h>
+#include "ConfigStore.h"
 
 class Display;
 
@@ -9,8 +10,8 @@ class Wifi {
 public:
     Wifi();
     bool shouldStartSetup(Display &screen);
-    void doSetup(Display &screen);
-    void setup(Display &screen);
+    void doSetup(Display &screen, AppConfig &config);
+    void setup(Display &screen, AppConfig &config);
     void loop();
 
 private:
@@ -18,10 +19,16 @@ private:
     DoubleResetDetector drd;
 
     static Display *activeDisplay;
+    static AppConfig *activeConfig;
+    static WiFiManagerParameter *ntpParam;
+    static WiFiManagerParameter *tzParam;
 
     static void useDisplay(Display &screen);
     static Display &display();
 
     static void configModeCallback(WiFiManager *myWiFiManager);
+    static void saveParamsCallback();
     static IRAM_ATTR void flash();
+
+    static String buildTimezoneSelectHtml(const String &currentPosix);
 };
