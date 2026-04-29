@@ -20,5 +20,3 @@
 #define DRD_TIMEOUT 2
 #define DRD_ADDRESS 0
 
-#define PORTAL_DEFAULT_PASSWORD "password"
-#define CONFIG_FILE "/config.json"
