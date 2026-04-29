@@ -31,7 +31,7 @@ bool SensorIndoor::isReadyForUpdate() const {
     return readyForUpdateFlag;
 }
 
-ICACHE_RAM_ATTR void SensorIndoor::setReadyForUpdate() {
+IRAM_ATTR void SensorIndoor::setReadyForUpdate() {
     readyForUpdateFlag = true;
 }
 

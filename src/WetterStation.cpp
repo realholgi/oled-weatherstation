@@ -29,15 +29,15 @@ static Ticker tickerForExternalSensorInvalidate;
 
 static volatile bool readyForTimeUpdate = false;
 
-static ICACHE_RAM_ATTR void setReadyForIndoorSensorUpdate() {
+static IRAM_ATTR void setReadyForIndoorSensorUpdate() {
     sensorIndoor.setReadyForUpdate();
 }
 
-static ICACHE_RAM_ATTR void setReadyForTimeUpdate() {
+static IRAM_ATTR void setReadyForTimeUpdate() {
     readyForTimeUpdate = true;
 }
 
-static ICACHE_RAM_ATTR void invalidateOutdoorSensor() {
+static IRAM_ATTR void invalidateOutdoorSensor() {
     sensorOutdoor.invalidate();
 }
 

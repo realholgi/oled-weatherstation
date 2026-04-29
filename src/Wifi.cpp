@@ -76,7 +76,7 @@ void Wifi::saveConfigCallback() {
     shouldSaveConfig = true;
 }
 
-ICACHE_RAM_ATTR void Wifi::flash() {
+IRAM_ATTR void Wifi::flash() {
     int state = digitalRead(LED_BUILTIN);
     digitalWrite(LED_BUILTIN, !state);
 }

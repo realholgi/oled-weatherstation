@@ -26,5 +26,5 @@ private:
 
     static void saveConfigCallback();
     static void configModeCallback(WiFiManager *myWiFiManager);
-    static ICACHE_RAM_ATTR void flash();
+    static IRAM_ATTR void flash();
 };

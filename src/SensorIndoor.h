@@ -10,7 +10,7 @@ public:
     bool setup();
     void update();
     bool isReadyForUpdate() const;
-    ICACHE_RAM_ATTR void setReadyForUpdate();
+    IRAM_ATTR void setReadyForUpdate();
 
     float humidity() const;
     float temperature() const;
