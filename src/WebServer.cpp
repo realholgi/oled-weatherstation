@@ -54,18 +54,24 @@ void WebServer::handleNotFound() {
 void WebServer::handleJsonData() {
     JsonDocument doc;
 
-    doc["t_in"] = indoorSensor().temperature();
-    doc["h_in"] = int(indoorSensor().humidity());
-    doc["f_in"] = indoorSensor().absoluteHumidity();
-    doc["dp_in"] = indoorSensor().dewPoint();
+    const SensorIndoor &in = *activeIndoorSensor;
+    const SensorOutdoor &out = *activeOutdoorSensor;
 
-    doc["t_out"] = outdoorSensor().temperature();
-    doc["h_out"] = int(outdoorSensor().humidity());
-    doc["f_out"] = outdoorSensor().absoluteHumidity();
-    doc["b_out"] = outdoorSensor().battery();
-    doc["last_out"] = outdoorSensor().secondsSinceLastReceived();
+    const float f_in = in.absoluteHumidity();
+    const float f_out = out.absoluteHumidity();
 
-    doc["f_diff"] = indoorSensor().absoluteHumidity() - outdoorSensor().absoluteHumidity();
+    doc["t_in"] = in.temperature();
+    doc["h_in"] = int(in.humidity());
+    doc["f_in"] = f_in;
+    doc["dp_in"] = in.dewPoint();
+
+    doc["t_out"] = out.temperature();
+    doc["h_out"] = int(out.humidity());
+    doc["f_out"] = f_out;
+    doc["b_out"] = out.battery();
+    doc["last_out"] = out.secondsSinceLastReceived();
+
+    doc["f_diff"] = f_in - f_out;
 
     String message = "";
     serializeJson(doc, message);
