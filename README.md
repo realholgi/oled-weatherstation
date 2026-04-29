@@ -4,7 +4,7 @@ ESP8266-based weather station with OLED display, indoor/outdoor sensors, accurat
 The main purpose is to show the absolute humidity between in- and outdoor and if venting is safe.
 
 Outdoor readings come from a 433 MHz wireless sensor. Indoor readings come from an HTU21/SHT21 I2C sensor. 
-The device serves a small web UI at `http://weather.local` and exposes raw readings at `http://weather.local/data.json`.
+The device serves a small web UI at `http://wetter.local` and exposes raw readings at `http://wetter.local/data.json`.
 
 ## Hardware
 
@@ -23,8 +23,8 @@ The device serves a small web UI at `http://weather.local` and exposes raw readi
 ## Features
 
 - Displays current time, indoor and outdoor temperature, relative and absolute humidity, and their respective difference
-- Live web interface at `http://weather.local` with auto-updating values
-- JSON endpoint at `http://weather.local/data.json`
+- Live web interface at `http://wetter.local` with auto-updating values
+- JSON endpoint at `http://wetter.local/data.json`
 - WiFi setup via captive portal and on double-reset
 - Online time sync via NTP with timezone/DST handling from the configured POSIX timezone
 
@@ -53,7 +53,7 @@ pio test --environment native
 
 ## First-Time Setup
 
-On first boot (or after a double-reset within 2 seconds), the device starts a WiFi access point named **AutoConnectAP**. 
+On first boot (or after a double-reset within 2 seconds), the device starts a WiFi access point named **wetter**. 
 Connect to it and open the captive portal to enter your WiFi credentials. The device reboots and connects automatically on subsequent boots.
 
 The captive portal also stores:
@@ -74,6 +74,8 @@ The firmware is organized around a few small components:
 - `WebServer` serves the HTML UI and `/data.json`
 - `Wifi` owns WiFiManager setup, captive portal flow, and mDNS setup
 - `ConfigStore` loads and saves persisted NTP and timezone settings
+- `HumidityMath` calculates absolute humidity and dew point
+- `SensorSanity` provides range-checking and plausibility filters for sensor values
 
 Two `Ticker` instances drive periodic work without blocking:
 
@@ -109,7 +111,7 @@ Managed via PlatformIO (`platformio.ini`):
 - DoubleResetDetector
 - Adafruit HTU21DF Library
 - Adafruit GFX Library
-- modified Adafruit SSD1305 (bundled in `lib/`)
+- Adafruit SSD1305 (subclassed as `WetterOLED` in `src/` for hardware-specific offset)
 - FWS_433_Receiver (bundled in `lib/`)
 
 ## License
