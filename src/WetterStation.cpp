@@ -81,7 +81,7 @@ void setup() {
 
     tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForIndoorSensorUpdate);
     tickerForTimeUpdate.attach(UPDATE_TIME_INTERVAL, setReadyForTimeUpdate);
-    tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT / 1000, invalidateOutdoorSensor);
+    tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT_S, invalidateOutdoorSensor);
 
     DEBUG_MSG("Ready\n");
 }
