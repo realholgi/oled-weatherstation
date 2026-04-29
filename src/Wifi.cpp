@@ -55,10 +55,6 @@ void Wifi::doSetup(Display &screen) {
         DEBUG_MSG("Connected to WiFi.");
     }
     ESP.reset();
-
-    WiFi.setAutoConnect(true);
-    WiFi.setAutoReconnect(true);
-    WiFi.mode(WIFI_STA);
 }
 
 IRAM_ATTR void Wifi::flash() {
