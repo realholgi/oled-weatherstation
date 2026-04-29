@@ -5,7 +5,6 @@
 #include "WebServer.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
-#include "config.h"
 #include "PAGE_wetter.h"
 
 WebServer::WebServer() : server(80) {
@@ -59,7 +58,7 @@ void WebServer::handleNotFound() {
 void WebServer::handleJsonData() {
     JsonDocument doc;
 
-    doc["t_in"] = indoorSensor().temperature() - TEMP_OFFSET_INDOOR;
+    doc["t_in"] = indoorSensor().temperature();
     doc["h_in"] = int(indoorSensor().humidity());
     doc["f_in"] = indoorSensor().absoluteHumidity();
     doc["dp_in"] = indoorSensor().dewPoint();

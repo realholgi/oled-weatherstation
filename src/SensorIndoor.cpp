@@ -3,6 +3,7 @@
 #include "SensorIndoor.h"
 #include "HumidityMath.h"
 #include "SensorSanity.h"
+#include "config.h"
 
 SensorIndoor::SensorIndoor()
     : humidityValue(0),
@@ -17,11 +18,13 @@ bool SensorIndoor::setup() {
 
 void SensorIndoor::update() {
     readyForUpdateFlag = false;
-    humidityValue = htu.readHumidity();
-    temperatureValue = htu.readTemperature();
+    const float rawHumidity = htu.readHumidity();
+    const float rawTemperature = htu.readTemperature();
 
-    if (SensorSanity::isPlausibleTemperature(temperatureValue) &&
-        SensorSanity::isPlausibleHumidity(humidityValue)) {
+    if (SensorSanity::isPlausibleTemperature(rawTemperature) &&
+        SensorSanity::isPlausibleHumidity(rawHumidity)) {
+        humidityValue = rawHumidity;
+        temperatureValue = rawTemperature - TEMP_OFFSET_INDOOR;
         absoluteHumidityValue = HumidityMath::berechneTT(temperatureValue, humidityValue);
         dewPointValue = HumidityMath::RHtoDP(temperatureValue, humidityValue);
     }

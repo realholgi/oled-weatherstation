@@ -149,7 +149,7 @@ void Display::renderData(TimeClient &timeClient, const SensorIndoor &indoorSenso
 
     oled.setTextSize(2);
     if (SensorSanity::isPlausibleTemperature(indoorSensor.temperature())) {
-        printNumF(6, 40 + 4, indoorSensor.temperature() - TEMP_OFFSET_INDOOR);
+        printNumF(6, 40 + 4, indoorSensor.temperature());
     }
 
     oled.setTextSize(1);
