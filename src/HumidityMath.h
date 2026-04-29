@@ -5,7 +5,7 @@
 
 namespace HumidityMath {
 
-double berechneTT(double t, double RH);
-double RHtoDP(double t, double RH);
+double calculateAbsoluteHumidity(double t, double RH);
+double calculateDewPoint(double t, double RH);
 
 }

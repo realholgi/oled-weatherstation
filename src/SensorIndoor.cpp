@@ -25,8 +25,8 @@ void SensorIndoor::update() {
         SensorSanity::isPlausibleHumidity(rawHumidity)) {
         humidityValue = rawHumidity;
         temperatureValue = rawTemperature - TEMP_OFFSET_INDOOR;
-        absoluteHumidityValue = HumidityMath::berechneTT(temperatureValue, humidityValue);
-        dewPointValue = HumidityMath::RHtoDP(temperatureValue, humidityValue);
+        absoluteHumidityValue = HumidityMath::calculateAbsoluteHumidity(temperatureValue, humidityValue);
+        dewPointValue = HumidityMath::calculateDewPoint(temperatureValue, humidityValue);
     }
 }
 

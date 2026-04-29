@@ -36,7 +36,7 @@ void SensorOutdoor::update() {
         }
 
         const uint32_t now = millis();
-        const float absHumidity = HumidityMath::berechneTT(decodedTemperature, result.humidity);
+        const float absHumidity = HumidityMath::calculateAbsoluteHumidity(decodedTemperature, result.humidity);
 
         noInterrupts();
         lastReceivedAtValue = now;
