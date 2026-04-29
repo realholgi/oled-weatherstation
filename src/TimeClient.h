@@ -15,14 +15,10 @@ public:
 
     void updateTime();
 
-    void setUtcOffset(float utcOffset);
-
     void getFormattedTime(char *buffer, size_t bufferSize);
 
-    long getCurrentEpoch();
-
-    long getCurrentEpochWithUtcOffset();
-
 private:
+    long getCurrentEpoch();
+    long getCurrentEpochWithUtcOffset();
     int convertMonthNameToNumber(String strMonthName);
 };

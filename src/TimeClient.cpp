@@ -10,10 +10,6 @@ TimeClient::TimeClient(float utcOffset) {
     myUtcOffset = utcOffset;
 }
 
-void TimeClient::setUtcOffset(float utcOffset) {
-    myUtcOffset = utcOffset;
-}
-
 void TimeClient::updateTime() {
     WiFiClient client;
     const int httpPort = 80;
