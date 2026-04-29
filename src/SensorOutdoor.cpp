@@ -35,13 +35,16 @@ void SensorOutdoor::update() {
             return;
         }
 
-        lastReceivedAtValue = millis();
+        const uint32_t now = millis();
+        const float absHumidity = HumidityMath::berechneTT(decodedTemperature, result.humidity);
 
+        noInterrupts();
+        lastReceivedAtValue = now;
         humidityValue = result.humidity;
         temperatureValue = decodedTemperature;
         batteryValue = result.battery ? 1 : 0;
-
-        absoluteHumidityValue = HumidityMath::berechneTT(temperatureValue, humidityValue);
+        absoluteHumidityValue = absHumidity;
+        interrupts();
 
         DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", result.temperature / 10,
                   abs(result.temperature % 10), result.humidity, result.id);

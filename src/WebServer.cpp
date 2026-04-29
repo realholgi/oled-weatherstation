@@ -46,7 +46,11 @@ void WebServer::handleNotFound() {
     message += server.args();
     message += "\n";
     for (uint8_t i = 0; i < server.args(); i++) {
-        message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+        message += " ";
+        message += server.argName(i);
+        message += ": ";
+        message += server.arg(i);
+        message += "\n";
     }
     server.send(404, "text/plain", message);
 }
@@ -73,10 +77,9 @@ void WebServer::handleJsonData() {
 
     doc["f_diff"] = f_in - f_out;
 
-    String message = "";
-    serializeJson(doc, message);
-
-    server.send(200, "application/json;charset=utf-8", message);
+    server.setContentLength(measureJson(doc));
+    server.send(200, "application/json;charset=utf-8", "");
+    serializeJson(doc, server.client());
 }
 
 void WebServer::handleRoot() {

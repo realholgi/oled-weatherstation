@@ -22,7 +22,7 @@ private:
     FWS433 fws;
     volatile float humidityValue;
     volatile float temperatureValue;
-    volatile int batteryValue;
-    volatile float absoluteHumidityValue;
+    int batteryValue;
+    float absoluteHumidityValue;
     volatile uint32_t lastReceivedAtValue;
 };
