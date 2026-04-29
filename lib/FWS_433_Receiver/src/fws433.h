@@ -52,8 +52,8 @@ class FWS433{
 		static byte _lastBuff[];
 		static byte _pin;
 
-			static ICACHE_RAM_ATTR void _handler();
-			static ICACHE_RAM_ATTR bool _isRepeat();
+			static IRAM_ATTR void _handler();
+			static IRAM_ATTR bool _isRepeat();
 		int _binToDecRev(const volatile byte *binary, int s, int e) const;
 		int _binToDec(const volatile byte *binary, int s, int e) const;
 		int _binToSignedRev(volatile byte *binary, int s, int e);
