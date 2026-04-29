@@ -1,7 +1,7 @@
 //
 // Holgi's Wetterstation
 //
-// Platform: ESP8266 Wemos D1 Mini 1M SPIFFS
+// Platform: ESP8266 Wemos D1 Mini 4M 1M LittleFS
 
 #include <Arduino.h>
 #include <ESP8266mDNS.h>
@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include "WetterDebug.h"
+#include "ConfigStore.h"
 #include "TimeClient.h"
 #include "Display.h"
 #include "SensorIndoor.h"
@@ -16,7 +17,7 @@
 #include "WebServer.h"
 #include "Wifi.h"
 
-static TimeClient timeClient(TIMEZONE);
+static TimeClient timeClient;
 static Display display;
 static SensorIndoor sensorIndoor;
 static SensorOutdoor sensorOutdoor;
@@ -24,26 +25,14 @@ static Wifi wifi;
 static WebServer webServer;
 
 static Ticker tickerForInternalSensorUpdate;
-static Ticker tickerForTimeUpdate;
 static Ticker tickerForExternalSensorInvalidate;
-
-static volatile bool readyForTimeUpdate = false;
 
 static IRAM_ATTR void setReadyForIndoorSensorUpdate() {
     sensorIndoor.setReadyForUpdate();
 }
 
-static IRAM_ATTR void setReadyForTimeUpdate() {
-    readyForTimeUpdate = true;
-}
-
 static IRAM_ATTR void invalidateOutdoorSensor() {
     sensorOutdoor.invalidate();
-}
-
-static void updateTime() {
-    timeClient.updateTime();
-    readyForTimeUpdate = false;
 }
 
 void setup() {
@@ -64,23 +53,24 @@ void setup() {
         while (1) { yield(); }
     }
 
+    AppConfig config = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX);
+
     display.showStartupConfig();
-    if (wifi.shouldStartSetup(display)) { wifi.doSetup(display); }
+    if (wifi.shouldStartSetup(display)) { wifi.doSetup(display, config); }
 
     display.showStartupWifi();
-    wifi.setup(display);
+    wifi.setup(display, config);
 
     display.showStartupHttp();
     webServer.setup(sensorIndoor, sensorOutdoor);
 
     display.showStartupTime();
-    timeClient.updateTime();
+    timeClient.configure(config.timezonePosix.c_str(), config.ntpServer.c_str());
 
     display.showStartupOutdoorSensor();
     sensorOutdoor.setup();
 
     tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForIndoorSensorUpdate);
-    tickerForTimeUpdate.attach(UPDATE_TIME_INTERVAL, setReadyForTimeUpdate);
     tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT_S, invalidateOutdoorSensor);
 
     DEBUG_MSG("Ready\n");
@@ -91,7 +81,6 @@ void loop() {
     wifi.loop();
 
     if (sensorIndoor.isReadyForUpdate()) { sensorIndoor.update(); }
-    if (readyForTimeUpdate) { updateTime(); }
     if (sensorOutdoor.isDataAvailable()) { sensorOutdoor.update(); }
 
     unsigned long now = millis();
