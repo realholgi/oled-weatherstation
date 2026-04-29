@@ -56,8 +56,6 @@ class FWS433{
 			static IRAM_ATTR bool _isRepeat();
 		int _binToDecRev(const volatile byte *binary, int s, int e) const;
 		int _binToDec(const volatile byte *binary, int s, int e) const;
-		int _binToSignedRev(volatile byte *binary, int s, int e);
-		int _binToSigned(volatile byte *binary, int s, int e);
 };
 
 #endif

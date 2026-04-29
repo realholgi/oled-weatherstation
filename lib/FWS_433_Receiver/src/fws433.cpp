@@ -44,42 +44,28 @@ bool FWS433::isDataAvailable() {
 }
 
 IRAM_ATTR void FWS433::_handler() {
-    static unsigned long lastMs = 0, currMs, diffMs;
-    currMs = micros();
-    diffMs = currMs - lastMs;
+    static unsigned long lastMs = 0;
+    unsigned long currMs = micros();
+    unsigned long diffMs = currMs - lastMs;
     lastMs = currMs;
 
-    if (diffMs > FILTER_MIN && diffMs < FILTER_MAX) { //Filter out the too long and too short pulses
-        if (!_avail) { //avail means data available for processing
-            if (diffMs > STOP_MIN) { // INIT/STOP pulse
-                dbg("S");
-                if (_buffEnd == 40) { //There is the right amount of data in buff
-                    if (_isRepeat()) { // promote only packets that were received twice to suppress noisy one-off frames
-                        _avail = true;
-                    } else {
-                        _buffEnd = 0;
-                    }
-                } else {
-                    dbg("S buffEnd:" + String(_buffEnd));
-                    _buffEnd = 0;
-                }
-            } else {
-                if (_buffEnd < _BUFF_SIZE) {  //buffer is not full yet
-                    if (diffMs < MEDIUM_LEN) { //0
-                        _buff[_buffEnd++] = 0;
-                        dbg("0");
-                    } else { //1
-                        _buff[_buffEnd++] = 1;
-                        dbg("1");
-                    }
-                }
+    if (_avail || diffMs <= FILTER_MIN || diffMs >= FILTER_MAX) {
+        return;
+    }
+
+    if (diffMs > STOP_MIN) { // INIT/STOP pulse
+        if (_buffEnd == 40) {
+            if (_isRepeat()) {
+                _avail = true;
             }
         }
+        _buffEnd = 0;
+    } else if (_buffEnd < _BUFF_SIZE) {
+        _buff[_buffEnd++] = (diffMs >= MEDIUM_LEN);
     }
 }
 
 IRAM_ATTR bool FWS433::_isRepeat() {
-    bool result = false;
     for (int i = 0; i < _buffEnd; i++) {
         if (_buff[i] != _lastBuff[i]) {
             for (int j = 0; j < _buffEnd; j++) {
@@ -89,7 +75,7 @@ IRAM_ATTR bool FWS433::_isRepeat() {
             return false;
         }
     }
-    result = (millis() - _lastPackageArrived < 3000);
+    bool result = (millis() - _lastPackageArrived < 3000);
     _lastPackageArrived = millis();
     return result;
 }
@@ -107,34 +93,14 @@ IRAM_ATTR bool FWS433::_isRepeat() {
 
 
 void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, bool &battery) {
-    int crc = 0;
-    int humi1 = 0, humi2 = 0;
+    id = _binToDecRev(_buff, 0, 7);
+    battery = _buff[13] != 1;
+    temperature = _binToDecRev(_buff, 16, 27);
+    temperature = (temperature - 1220) * 5 / 9;
 
-    for (int i = 0; i < 34; i++) {
-        if (_buff[i] != (crc & 1)) {
-            crc = (crc >> 1) ^ 12;
-        } else {
-            crc = (crc >> 1);
-        }
-    }
-
-    dbg("CRCin: " + String(crc));
-
-    crc = _binToDec(_buff, 8, 11);
-    dbg("CRCsoll: " + String(crc));
-
-    //crc ^= _binToDec(_buff, 34, 37);
-    //if (crc != _binToDec(_buff, 38, 41)) {
-    //	dbg("CRC error!");
-    //_buffEnd = 0;
-    //_avail = false;
-    //return;
-    //}
-    //dbg("CRC OK.");
-
-    humi1 = _binToDecRev(_buff, 28, 31);
-    humi2 = _binToDecRev(_buff, 32, 35);
-    humidity = humi1 * 10 + humi2;
+    byte h1 = _binToDecRev(_buff, 28, 31);
+    byte h2 = _binToDecRev(_buff, 32, 35);
+    humidity = h1 * 10 + h2;
 
     if (humidity < 1 || humidity > 100) {
         _buffEnd = 0;
@@ -142,15 +108,7 @@ void FWS433::getData(byte &id, byte &channel, byte &humidity, int &temperature, 
         return;
     }
 
-    id = _binToDecRev(_buff, 0, 7);
     channel = _binToDecRev(_buff, 38, 39);
-
-    temperature = _binToDecRev(_buff, 16, 27);
-
-    const float tempF = temperature / 10.0f - 90.0f;
-    temperature = (int)((tempF - 32.0f) / 1.8f * 10.0f);
-
-    battery = _binToDecRev(_buff, 13, 13) != 1;
     _buffEnd = 0;
     _avail = false;
 }
@@ -163,18 +121,16 @@ fwsResult FWS433::getData() {
 
 int FWS433::_binToDecRev(const volatile byte *binary, int s, int e) const {
     int result = 0;
-    unsigned int mask = 1;
-    for (; e >= 0 && s <= e; mask <<= 1)
-        if (binary[e--] != 0)
-            result |= mask;
+    for (int i = s; i <= e; i++) {
+        result = (result << 1) | (binary[i] & 1);
+    }
     return result;
 }
 
 int FWS433::_binToDec(const volatile byte *binary, int s, int e) const {
-    unsigned int mask = 1;
     int result = 0;
-    for (; s <= e; mask <<= 1)
-        if (binary[s++] != 0)
-            result |= mask;
+    for (int i = e; i >= s; i--) {
+        result = (result << 1) | (binary[i] & 1);
+    }
     return result;
 }
