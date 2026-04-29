@@ -5,7 +5,6 @@
 class TimeClient {
 
 private:
-    const float myUtcOffset;
     const long timezoneOffsetSeconds;
     long localEpoc = 0;
     unsigned long localMillisAtUpdate = 0;

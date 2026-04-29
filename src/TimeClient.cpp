@@ -7,7 +7,7 @@
 #include <cstdio>
 
 TimeClient::TimeClient(float utcOffset)
-    : myUtcOffset(utcOffset), timezoneOffsetSeconds(lround(3600.0f * utcOffset)) {
+    : timezoneOffsetSeconds(lround(3600.0f * utcOffset)) {
 }
 
 void TimeClient::updateTime() {
