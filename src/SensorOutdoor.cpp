@@ -48,7 +48,7 @@ void SensorOutdoor::update() {
     }
 }
 
-void SensorOutdoor::invalidate() {
+IRAM_ATTR void SensorOutdoor::invalidate() {
     if (millis() - lastReceivedAtValue >= MAX_RECEIVE_WAIT_EXT) {
         DEBUG_MSG("No External Sensor Signal received for a long time!");
         temperatureValue = -273;
