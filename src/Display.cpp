@@ -32,7 +32,7 @@ void Display::showStartupConfig() {
 }
 
 void Display::showStartupWifi() {
-    showStartupStage(10, "WIFI");
+    showStartupStage(10, "WIFI...");
 }
 
 void Display::showStartupHttp() {
