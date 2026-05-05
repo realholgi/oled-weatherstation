@@ -15,6 +15,12 @@ It compares indoor and outdoor absolute humidity to show whether airing out the 
   <img src="images/wetterstation.jpeg" alt="Complete WetterStation hardware setup" width="720">
 </p>
 
+## Quick Start
+
+1. Flash the firmware to the Wemos D1 Mini with `pio run --target upload`.
+2. Join the `wetter` captive portal on first boot and save your WiFi settings.
+3. Open `http://wetter.local` to view the live dashboard.
+
 ## Hardware
 
 | Component | Details                                                   |
