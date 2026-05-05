@@ -10,6 +10,8 @@
 #include "config.h"
 #include "Timezones.h"
 
+static const char *PORTAL_TITLE = "Weather Station Setup";
+
 Display *Wifi::activeDisplay = nullptr;
 AppConfig *Wifi::activeConfig = nullptr;
 WiFiManagerParameter *Wifi::ntpParam = nullptr;
@@ -119,6 +121,7 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
 
     wifiManager.setSaveParamsCallback(saveConfigParameters);
     wifiManager.setAPCallback(handleConfigPortalStart);
+    wifiManager.setTitle(PORTAL_TITLE);
 
     DEBUG_MSG("Starting configuration portal.");
     Ticker statusLedTicker;
@@ -211,6 +214,7 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
 
     wifiManager.setSaveParamsCallback(saveConfigParameters);
     wifiManager.setAPCallback(handleConfigPortalStart);
+    wifiManager.setTitle(PORTAL_TITLE);
 
     String hostname(HOSTNAME);
     WiFi.hostname(hostname);
