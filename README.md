@@ -43,7 +43,7 @@ The default outdoor channel is `3`. You can change it in the captive portal, alo
 ### Interface Gallery
 
 <p align="center">
-  <img src="images/webpage-shot.png" alt="Screenshot of the live weather webpage" width="60%">
+  <img src="images/webpage-shot.jpeg" alt="Screenshot of the live weather webpage" width="50%">
 </p>
 
 ## Features
