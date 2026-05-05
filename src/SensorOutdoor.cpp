@@ -11,7 +11,8 @@ SensorOutdoor::SensorOutdoor()
       temperatureValue(-273),
       batteryValue(0),
       absoluteHumidityValue(-1),
-      lastPacketReceivedAtMillis(0) {}
+      lastPacketReceivedAtMillis(0),
+      staleReadingCheckDue(false) {}
 
 void SensorOutdoor::begin() {
     receiver.start(RECEIVER_PIN);
@@ -52,6 +53,13 @@ void SensorOutdoor::refreshMeasurements() {
 }
 
 IRAM_ATTR void SensorOutdoor::markReadingStale() {
+    staleReadingCheckDue = true;
+}
+
+void SensorOutdoor::applyPendingUpdates() {
+    if (!staleReadingCheckDue) return;
+
+    staleReadingCheckDue = false;
     if (millis() - lastPacketReceivedAtMillis >= MAX_RECEIVE_WAIT_EXT) {
         DEBUG_MSG("No External Sensor Signal received for a long time!");
         temperatureValue = -273;

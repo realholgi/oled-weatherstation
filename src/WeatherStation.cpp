@@ -108,6 +108,7 @@ void loop() {
 
     if (indoorSensor.isMeasurementDue()) { indoorSensor.refreshMeasurements(); }
     if (outdoorSensor.hasPendingPacket()) { outdoorSensor.refreshMeasurements(); }
+    outdoorSensor.applyPendingUpdates();
 
     unsigned long now = millis();
     if (now - lastDisplayUpdate >= 1000) {

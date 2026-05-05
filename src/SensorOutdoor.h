@@ -11,6 +11,7 @@ public:
     bool hasPendingPacket();
     void refreshMeasurements();
     IRAM_ATTR void markReadingStale();
+    void applyPendingUpdates();
 
     float humidity() const;
     float temperature() const;
@@ -25,4 +26,5 @@ private:
     int batteryValue;
     float absoluteHumidityValue;
     volatile uint32_t lastPacketReceivedAtMillis;
+    volatile bool staleReadingCheckDue;
 };
