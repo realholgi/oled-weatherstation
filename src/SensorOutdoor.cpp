@@ -16,7 +16,7 @@ SensorOutdoor::SensorOutdoor()
 
 void SensorOutdoor::begin() {
     receiver.start(RECEIVER_PIN);
-    lastPacketReceivedAtMillis = millis() + MIN_RECEIVE_WAIT_EXT + 1;
+    lastPacketReceivedAtMillis = millis();
 }
 
 bool SensorOutdoor::hasPendingPacket() {
@@ -85,5 +85,7 @@ float SensorOutdoor::absoluteHumidity() const {
 }
 
 uint32_t SensorOutdoor::secondsSinceLastPacket() const {
-    return (millis() - lastPacketReceivedAtMillis) / 1000;
+    const uint32_t now = millis();
+    if (now < lastPacketReceivedAtMillis) return 0;
+    return (now - lastPacketReceivedAtMillis) / 1000;
 }

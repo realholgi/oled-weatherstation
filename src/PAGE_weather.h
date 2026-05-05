@@ -523,8 +523,6 @@ const char PAGE_Weather[] PROGMEM = R"=====(
   </main>
 
   <script>
-    var MAX_OUTDOOR_READING_AGE_SECONDS = 120;
-
     function formatRounded(value, suffix) {
       if (typeof value !== "number" || !isFinite(value)) {
         return "--";
@@ -543,32 +541,12 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       document.getElementById(id).textContent = value;
     }
 
-    function isPlausibleTemperature(value) {
-      return typeof value === "number" && isFinite(value) && value > -40 && value < 60;
-    }
-
-    function isPlausibleHumidity(value) {
-      return typeof value === "number" && isFinite(value) && value > 0 && value < 100;
-    }
-
-    function isPlausibleAbsoluteHumidity(value) {
-      return typeof value === "number" && isFinite(value) && value > 0;
-    }
-
     function hasMeaningfulIndoorReading(data) {
-      return isPlausibleTemperature(data.indoorTemperatureCelsius) &&
-             isPlausibleHumidity(data.indoorHumidityPercent) &&
-             isPlausibleAbsoluteHumidity(data.indoorAbsoluteHumidityGm3);
+      return data.indoorValid === true;
     }
 
     function hasMeaningfulOutdoorReading(data) {
-      return isPlausibleTemperature(data.outdoorTemperatureCelsius) &&
-             isPlausibleHumidity(data.outdoorHumidityPercent) &&
-             isPlausibleAbsoluteHumidity(data.outdoorAbsoluteHumidityGm3) &&
-             typeof data.outdoorSecondsSinceLastReading === "number" &&
-             isFinite(data.outdoorSecondsSinceLastReading) &&
-             data.outdoorSecondsSinceLastReading >= 0 &&
-             data.outdoorSecondsSinceLastReading <= MAX_OUTDOOR_READING_AGE_SECONDS;
+      return data.outdoorValid === true && data.outdoorStale === false;
     }
 
     function setRecommendationState(headline, headlineClass, title, note, label, fillPercent) {

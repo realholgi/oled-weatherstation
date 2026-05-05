@@ -5,6 +5,8 @@
 #include "WebServer.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
+#include "SensorSanity.h"
+#include "config.h"
 #include "PAGE_weather.h"
 
 WebServer::WebServer() : server(80) {
@@ -59,19 +61,52 @@ void WebServer::handleDataJson() {
 
     const float indoorAbsoluteHumidity = indoorSensor.absoluteHumidity();
     const float outdoorAbsoluteHumidity = outdoorSensor.absoluteHumidity();
+    const uint32_t outdoorSecondsSinceLastReading = outdoorSensor.secondsSinceLastPacket();
+    const bool indoorValid =
+        SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
+        SensorSanity::isPlausibleHumidity(indoorSensor.humidity()) &&
+        SensorSanity::isPlausibleHumidity(indoorAbsoluteHumidity);
+    const bool outdoorValid =
+        SensorSanity::isPlausibleTemperature(outdoorSensor.temperature()) &&
+        SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
+        SensorSanity::isPlausibleHumidity(outdoorAbsoluteHumidity) &&
+        outdoorSecondsSinceLastReading <= MAX_RECEIVE_WAIT_EXT_S;
+    const bool outdoorStale = !outdoorValid;
 
-    jsonDocument["indoorTemperatureCelsius"] = indoorSensor.temperature();
-    jsonDocument["indoorHumidityPercent"] = int(indoorSensor.humidity());
-    jsonDocument["indoorAbsoluteHumidityGm3"] = indoorAbsoluteHumidity;
-    jsonDocument["indoorDewPointCelsius"] = indoorSensor.dewPoint();
+    jsonDocument["indoorValid"] = indoorValid;
+    jsonDocument["outdoorValid"] = outdoorValid;
+    jsonDocument["outdoorStale"] = outdoorStale;
 
-    jsonDocument["outdoorTemperatureCelsius"] = outdoorSensor.temperature();
-    jsonDocument["outdoorHumidityPercent"] = int(outdoorSensor.humidity());
-    jsonDocument["outdoorAbsoluteHumidityGm3"] = outdoorAbsoluteHumidity;
-    jsonDocument["outdoorBatteryOk"] = outdoorSensor.batteryStatus();
-    jsonDocument["outdoorSecondsSinceLastReading"] = outdoorSensor.secondsSinceLastPacket();
+    if (indoorValid) {
+        jsonDocument["indoorTemperatureCelsius"] = indoorSensor.temperature();
+        jsonDocument["indoorHumidityPercent"] = int(indoorSensor.humidity());
+        jsonDocument["indoorAbsoluteHumidityGm3"] = indoorAbsoluteHumidity;
+        jsonDocument["indoorDewPointCelsius"] = indoorSensor.dewPoint();
+    } else {
+        jsonDocument["indoorTemperatureCelsius"] = nullptr;
+        jsonDocument["indoorHumidityPercent"] = nullptr;
+        jsonDocument["indoorAbsoluteHumidityGm3"] = nullptr;
+        jsonDocument["indoorDewPointCelsius"] = nullptr;
+    }
 
-    jsonDocument["absoluteHumidityDifferenceGm3"] = indoorAbsoluteHumidity - outdoorAbsoluteHumidity;
+    if (outdoorValid) {
+        jsonDocument["outdoorTemperatureCelsius"] = outdoorSensor.temperature();
+        jsonDocument["outdoorHumidityPercent"] = int(outdoorSensor.humidity());
+        jsonDocument["outdoorAbsoluteHumidityGm3"] = outdoorAbsoluteHumidity;
+        jsonDocument["outdoorBatteryOk"] = outdoorSensor.batteryStatus();
+    } else {
+        jsonDocument["outdoorTemperatureCelsius"] = nullptr;
+        jsonDocument["outdoorHumidityPercent"] = nullptr;
+        jsonDocument["outdoorAbsoluteHumidityGm3"] = nullptr;
+        jsonDocument["outdoorBatteryOk"] = nullptr;
+    }
+    jsonDocument["outdoorSecondsSinceLastReading"] = outdoorSecondsSinceLastReading;
+
+    if (indoorValid && outdoorValid) {
+        jsonDocument["absoluteHumidityDifferenceGm3"] = indoorAbsoluteHumidity - outdoorAbsoluteHumidity;
+    } else {
+        jsonDocument["absoluteHumidityDifferenceGm3"] = nullptr;
+    }
 
     server.setContentLength(measureJson(jsonDocument));
     server.send(200, "application/json;charset=utf-8", "");
