@@ -11,6 +11,7 @@ public:
     void update();
     bool isReadyForUpdate() const;
     IRAM_ATTR void setReadyForUpdate();
+    void setTemperatureOffset(float offset);
 
     float humidity() const;
     float temperature() const;
@@ -23,5 +24,6 @@ private:
     float temperatureValue;
     float absoluteHumidityValue;
     float dewPointValue;
+    float temperatureOffset;
     volatile bool readyForUpdateFlag;
 };

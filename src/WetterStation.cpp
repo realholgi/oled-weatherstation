@@ -75,7 +75,8 @@ void setup() {
         while (1) { yield(); }
     }
 
-    AppConfig config = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX);
+    AppConfig config = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR);
+    sensorIndoor.setTemperatureOffset(config.tempOffsetIndoor);
 
     display.showStartupConfig();
     if (wifi.shouldStartSetup(display)) { wifi.doSetup(display, config); }

@@ -2,6 +2,7 @@
 #include <Ticker.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <stdlib.h>
 #include "Wifi.h"
 #include "WetterDebug.h"
 #include "Display.h"
@@ -13,6 +14,7 @@ Display *Wifi::activeDisplay = nullptr;
 AppConfig *Wifi::activeConfig = nullptr;
 WiFiManagerParameter *Wifi::ntpParam = nullptr;
 WiFiManagerParameter *Wifi::tzParam = nullptr;
+WiFiManagerParameter *Wifi::tempOffsetIndoorParam = nullptr;
 
 Wifi::Wifi() : drd(DRD_TIMEOUT, DRD_ADDRESS) {
 }
@@ -41,6 +43,10 @@ String Wifi::buildTimezoneSelectHtml(const String &currentPosix) {
     return html;
 }
 
+String Wifi::formatFloat(float value, uint8_t decimals) {
+    return String(value, decimals);
+}
+
 bool Wifi::shouldStartSetup(Display &screen) {
     useDisplay(screen);
 
@@ -65,16 +71,20 @@ void Wifi::doSetup(Display &screen, AppConfig &config) {
     activeConfig = &config;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
+    String tempOffsetIndoorValue = formatFloat(config.tempOffsetIndoor, 2);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
     WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
+    WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
 
     tzParam  = &tzHidden;
     ntpParam = &ntpServer;
+    tempOffsetIndoorParam = &tempOffsetIndoor;
 
     wifiManager.addParameter(&tzSelectRaw);
     wifiManager.addParameter(&tzHidden);
     wifiManager.addParameter(&ntpServer);
+    wifiManager.addParameter(&tempOffsetIndoor);
 
     wifiManager.setSaveParamsCallback(saveParamsCallback);
     wifiManager.setAPCallback(configModeCallback);
@@ -92,11 +102,19 @@ void Wifi::doSetup(Display &screen, AppConfig &config) {
 }
 
 void Wifi::saveParamsCallback() {
-    if (!activeConfig || !ntpParam || !tzParam) return;
+    if (!activeConfig || !ntpParam || !tzParam || !tempOffsetIndoorParam) return;
     const char *ntp = ntpParam->getValue();
     const char *tz  = tzParam->getValue();
+    const char *tempOffsetIndoor = tempOffsetIndoorParam->getValue();
     if (ntp && strlen(ntp) > 0) activeConfig->ntpServer     = ntp;
     if (tz  && strlen(tz)  > 0) activeConfig->timezonePosix = tz;
+    if (tempOffsetIndoor && strlen(tempOffsetIndoor) > 0) {
+        char *end = nullptr;
+        const float parsedTempOffsetIndoor = strtof(tempOffsetIndoor, &end);
+        if (end != tempOffsetIndoor && *end == '\0' && isfinite(parsedTempOffsetIndoor)) {
+            activeConfig->tempOffsetIndoor = parsedTempOffsetIndoor;
+        }
+    }
     ConfigStore::save(*activeConfig);
 }
 
@@ -118,16 +136,20 @@ void Wifi::setup(Display &screen, AppConfig &config) {
     activeConfig = &config;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
+    String tempOffsetIndoorValue = formatFloat(config.tempOffsetIndoor, 2);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
     WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
+    WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
 
     tzParam  = &tzHidden;
     ntpParam = &ntpServer;
+    tempOffsetIndoorParam = &tempOffsetIndoor;
 
     wifiManager.addParameter(&tzSelectRaw);
     wifiManager.addParameter(&tzHidden);
     wifiManager.addParameter(&ntpServer);
+    wifiManager.addParameter(&tempOffsetIndoor);
 
     wifiManager.setSaveParamsCallback(saveParamsCallback);
     wifiManager.setAPCallback(configModeCallback);

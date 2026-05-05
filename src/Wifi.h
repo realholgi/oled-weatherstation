@@ -22,6 +22,7 @@ private:
     static AppConfig *activeConfig;
     static WiFiManagerParameter *ntpParam;
     static WiFiManagerParameter *tzParam;
+    static WiFiManagerParameter *tempOffsetIndoorParam;
 
     static void useDisplay(Display &screen);
     static Display &display();
@@ -31,4 +32,5 @@ private:
     static IRAM_ATTR void flash();
 
     static String buildTimezoneSelectHtml(const String &currentPosix);
+    static String formatFloat(float value, uint8_t decimals);
 };

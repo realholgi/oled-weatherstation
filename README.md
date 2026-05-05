@@ -72,6 +72,7 @@ The captive portal also stores:
 
 - the NTP server
 - the POSIX timezone string used by `configTzTime()`
+- the indoor temperature calibration offset
 
 Configuration is persisted in LittleFS as `/config.json`.
 
@@ -85,7 +86,7 @@ The firmware is organized around a few small components:
 - `Display` renders the current readings to the SSD1305 OLED
 - `WebServer` serves the HTML UI and `/data.json`
 - `Wifi` owns WiFiManager setup, captive portal flow, and mDNS setup
-- `ConfigStore` loads and saves persisted NTP and timezone settings
+- `ConfigStore` loads and saves persisted NTP, timezone, and indoor temperature offset settings
 - `HumidityMath` calculates absolute humidity and dew point
 - `SensorSanity` provides range-checking and plausibility filters for sensor values
 

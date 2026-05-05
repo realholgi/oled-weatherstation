@@ -10,6 +10,7 @@ SensorIndoor::SensorIndoor()
       temperatureValue(-273),
       absoluteHumidityValue(-1),
       dewPointValue(-273),
+      temperatureOffset(DEFAULT_TEMP_OFFSET_INDOOR),
       readyForUpdateFlag(true) {}
 
 bool SensorIndoor::setup() {
@@ -24,7 +25,7 @@ void SensorIndoor::update() {
     if (SensorSanity::isPlausibleTemperature(rawTemperature) &&
         SensorSanity::isPlausibleHumidity(rawHumidity)) {
         humidityValue = rawHumidity;
-        temperatureValue = rawTemperature - TEMP_OFFSET_INDOOR;
+        temperatureValue = rawTemperature - temperatureOffset;
         absoluteHumidityValue = HumidityMath::calculateAbsoluteHumidity(temperatureValue, humidityValue);
         dewPointValue = HumidityMath::calculateDewPoint(temperatureValue, humidityValue);
     }
@@ -36,6 +37,10 @@ bool SensorIndoor::isReadyForUpdate() const {
 
 IRAM_ATTR void SensorIndoor::setReadyForUpdate() {
     readyForUpdateFlag = true;
+}
+
+void SensorIndoor::setTemperatureOffset(float offset) {
+    temperatureOffset = offset;
 }
 
 float SensorIndoor::humidity() const {
