@@ -7,10 +7,10 @@ class SensorIndoor {
 public:
     SensorIndoor();
 
-    bool setup();
-    void update();
-    bool isReadyForUpdate() const;
-    IRAM_ATTR void setReadyForUpdate();
+    bool begin();
+    void refreshMeasurements();
+    bool isMeasurementDue() const;
+    IRAM_ATTR void markMeasurementDue();
     void setTemperatureOffset(float offset);
 
     float humidity() const;
@@ -19,11 +19,11 @@ public:
     float dewPoint() const;
 
 private:
-    Adafruit_HTU21DF htu;
+    Adafruit_HTU21DF sensorChip;
     float humidityValue;
     float temperatureValue;
     float absoluteHumidityValue;
     float dewPointValue;
     float temperatureOffset;
-    volatile bool readyForUpdateFlag;
+    volatile bool measurementDueFlag;
 };

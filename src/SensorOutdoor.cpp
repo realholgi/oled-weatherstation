@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <fws433.h>
 #include "SensorOutdoor.h"
-#include "WetterDebug.h"
+#include "WeatherDebug.h"
 #include "HumidityMath.h"
 #include "SensorSanity.h"
 #include "config.h"
@@ -11,48 +11,48 @@ SensorOutdoor::SensorOutdoor()
       temperatureValue(-273),
       batteryValue(0),
       absoluteHumidityValue(-1),
-      lastReceivedAtValue(0) {}
+      lastPacketReceivedAtMillis(0) {}
 
-void SensorOutdoor::setup() {
-    fws.start(RECEIVER_PIN);
-    lastReceivedAtValue = millis() + MIN_RECEIVE_WAIT_EXT + 1;
+void SensorOutdoor::begin() {
+    receiver.start(RECEIVER_PIN);
+    lastPacketReceivedAtMillis = millis() + MIN_RECEIVE_WAIT_EXT + 1;
 }
 
-bool SensorOutdoor::isDataAvailable() {
-    return fws.isDataAvailable();
+bool SensorOutdoor::hasPendingPacket() {
+    return receiver.isDataAvailable();
 }
 
-void SensorOutdoor::update() {
-    fwsResult result = fws.getData();
+void SensorOutdoor::refreshMeasurements() {
+    fwsResult receivedPacket = receiver.getData();
 
-    if (result.channel == 3) {
-        const float decodedTemperature = result.temperature / 10.0f;
+    if (receivedPacket.channel == 3) {
+        const float decodedTemperature = receivedPacket.temperature / 10.0f;
 
         if (!SensorSanity::isPlausibleTemperature(decodedTemperature) ||
-            !SensorSanity::isPlausibleHumidity(result.humidity)) {
-            DEBUG_MSG("Ignoring implausible external reading: %d.%d deg, %u%% REL, ID: %u\n", result.temperature / 10,
-                      abs(result.temperature % 10), result.humidity, result.id);
+            !SensorSanity::isPlausibleHumidity(receivedPacket.humidity)) {
+            DEBUG_MSG("Ignoring implausible external reading: %d.%d deg, %u%% REL, ID: %u\n", receivedPacket.temperature / 10,
+                      abs(receivedPacket.temperature % 10), receivedPacket.humidity, receivedPacket.id);
             return;
         }
 
-        const uint32_t now = millis();
-        const float absHumidity = HumidityMath::calculateAbsoluteHumidity(decodedTemperature, result.humidity);
+        const uint32_t receivedAtMillis = millis();
+        const float absoluteHumidity = HumidityMath::calculateAbsoluteHumidity(decodedTemperature, receivedPacket.humidity);
 
         noInterrupts();
-        lastReceivedAtValue = now;
-        humidityValue = result.humidity;
+        lastPacketReceivedAtMillis = receivedAtMillis;
+        humidityValue = receivedPacket.humidity;
         temperatureValue = decodedTemperature;
-        batteryValue = result.battery ? 1 : 0;
-        absoluteHumidityValue = absHumidity;
+        batteryValue = receivedPacket.battery ? 1 : 0;
+        absoluteHumidityValue = absoluteHumidity;
         interrupts();
 
-        DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", result.temperature / 10,
-                  abs(result.temperature % 10), result.humidity, result.id);
+        DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", receivedPacket.temperature / 10,
+                  abs(receivedPacket.temperature % 10), receivedPacket.humidity, receivedPacket.id);
     }
 }
 
-IRAM_ATTR void SensorOutdoor::invalidate() {
-    if (millis() - lastReceivedAtValue >= MAX_RECEIVE_WAIT_EXT) {
+IRAM_ATTR void SensorOutdoor::markReadingStale() {
+    if (millis() - lastPacketReceivedAtMillis >= MAX_RECEIVE_WAIT_EXT) {
         DEBUG_MSG("No External Sensor Signal received for a long time!");
         temperatureValue = -273;
         humidityValue = 0;
@@ -67,7 +67,7 @@ float SensorOutdoor::temperature() const {
     return temperatureValue;
 }
 
-int SensorOutdoor::battery() const {
+int SensorOutdoor::batteryStatus() const {
     return batteryValue;
 }
 
@@ -75,6 +75,6 @@ float SensorOutdoor::absoluteHumidity() const {
     return absoluteHumidityValue;
 }
 
-uint32_t SensorOutdoor::secondsSinceLastReceived() const {
-    return (millis() - lastReceivedAtValue) / 1000;
+uint32_t SensorOutdoor::secondsSinceLastPacket() const {
+    return (millis() - lastPacketReceivedAtMillis) / 1000;
 }

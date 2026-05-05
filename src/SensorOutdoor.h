@@ -7,22 +7,22 @@ class SensorOutdoor {
 public:
     SensorOutdoor();
 
-    void setup();
-    bool isDataAvailable();
-    void update();
-    IRAM_ATTR void invalidate();
+    void begin();
+    bool hasPendingPacket();
+    void refreshMeasurements();
+    IRAM_ATTR void markReadingStale();
 
     float humidity() const;
     float temperature() const;
-    int battery() const;
+    int batteryStatus() const;
     float absoluteHumidity() const;
-    uint32_t secondsSinceLastReceived() const;
+    uint32_t secondsSinceLastPacket() const;
 
 private:
-    FWS433 fws;
+    FWS433 receiver;
     volatile float humidityValue;
     volatile float temperatureValue;
     int batteryValue;
     float absoluteHumidityValue;
-    volatile uint32_t lastReceivedAtValue;
+    volatile uint32_t lastPacketReceivedAtMillis;
 };

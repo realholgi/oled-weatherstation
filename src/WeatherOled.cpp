@@ -1,12 +1,12 @@
 #include <Wire.h>
-#include "WetterOLED.h"
+#include "WeatherOled.h"
 #include "config.h"
 
-WetterOLED::WetterOLED(int8_t rst) : Adafruit_SSD1305(128, 64, &Wire, rst) {}
+WeatherOled::WeatherOled(int8_t rst) : Adafruit_SSD1305(128, 64, &Wire, rst) {}
 
 // Sends all 8 pages via I2C with column start = 2 (hardware-specific offset).
 // The official library defaults to column 0, which misaligns this display.
-void WetterOLED::display() {
+void WeatherOled::display() {
     const uint8_t prefix = 0x40; // I2C data control byte
     i2c_dev->setSpeed(i2c_preclk);   // boost to 400 kHz for pixel writes
     for (uint8_t page = 0; page < 8; page++) {

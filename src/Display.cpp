@@ -9,7 +9,7 @@
 
 Display::Display() : oled(OLED_RESET) {}
 
-void Display::setup() {
+void Display::begin() {
     oled.begin();
     oled.setRotation(3);
     oled.clearDisplay();
@@ -21,89 +21,89 @@ void Display::setup() {
 
 void Display::showSensorFailure() {
     oled.clearDisplay();
-    printAt(6, 0, "ERROR:", false);
-    printAt(6, 20, "local", false);
-    printAt(6, 30, "Sensor", false);
-    printAt(6, 40, "failing!");
+    drawTextAt(6, 0, "ERROR:", false);
+    drawTextAt(6, 20, "local", false);
+    drawTextAt(6, 30, "Sensor", false);
+    drawTextAt(6, 40, "failing!");
 }
 
 void Display::showStartupConfig() {
-    printAt(6, 0, "Config...");
+    drawTextAt(6, 0, "Config...");
 }
 
 void Display::showStartupWifi() {
-    printAt(6, 10, "WIFI...");
+    drawTextAt(6, 10, "WIFI...");
 }
 
 void Display::showStartupHttp() {
-    printAt(6, 20, "HTTP...");
+    drawTextAt(6, 20, "HTTP...");
 }
 
 void Display::showStartupTime() {
-    printAt(6, 30, "Time...");
+    drawTextAt(6, 30, "Time...");
 }
 
 void Display::showStartupOutdoorSensor() {
-    printAt(6, 40, "433MHz...");
+    drawTextAt(6, 40, "433MHz...");
 }
 
 void Display::showConfigPortalNoCredentials() {
     oled.clearDisplay();
-    printAt(6, 0, "no Cfg", false);
-    printAt(6, 10, "Portal");
+    drawTextAt(6, 0, "no Cfg", false);
+    drawTextAt(6, 10, "Portal");
 }
 
 void Display::showConfigPortalReset() {
     oled.clearDisplay();
-    printAt(6, 0, "RESET", false);
-    printAt(6, 10, "Portal");
+    drawTextAt(6, 0, "RESET", false);
+    drawTextAt(6, 10, "Portal");
 }
 
 void Display::showConfigPortalSsid(const String &ssid) {
     oled.clearDisplay();
     oled.setTextSize(1);
-    printAt(6, 0, "SETUP", false);
-    printAt(6, 20, "SSID:", false);
-    printAt(6, 40, ssid);
+    drawTextAt(6, 0, "SETUP", false);
+    drawTextAt(6, 20, "SSID:", false);
+    drawTextAt(6, 40, ssid);
 }
 
-void Display::appendWifiProgress() {
+void Display::appendWifiConnectionProgress() {
     oled.print(".");
     oled.display();
 }
 
-void Display::printAt(int x, int y, const char *st, boolean onScreen) {
+void Display::drawTextAt(int x, int y, const char *text, boolean updateDisplay) {
     oled.setCursor(x, y + OFFSET);
-    oled.print(st);
-    if (onScreen) oled.display();
+    oled.print(text);
+    if (updateDisplay) oled.display();
 }
 
-void Display::printAt(int x, int y, const String &st, boolean onScreen) {
+void Display::drawTextAt(int x, int y, const String &text, boolean updateDisplay) {
     oled.setCursor(x, y + OFFSET);
-    oled.print(st);
-    if (onScreen) oled.display();
+    oled.print(text);
+    if (updateDisplay) oled.display();
 }
 
-void Display::printNumI(int x, int y, int num) {
-    char st[27];
+void Display::drawIntegerAt(int x, int y, int value) {
+    char textBuffer[27];
     oled.setCursor(x, y + OFFSET);
-    snprintf(st, sizeof(st), "%i", num);
-    if (strlen(st) == 1) oled.print(" ");
-    oled.print(st);
+    snprintf(textBuffer, sizeof(textBuffer), "%i", value);
+    if (strlen(textBuffer) == 1) oled.print(" ");
+    oled.print(textBuffer);
 }
 
-void Display::printNumF(int x, int y, double num, byte dec, int length) {
-    char st[27];
+void Display::drawFloatAt(int x, int y, double value, byte decimals, int minimumWidth) {
+    char textBuffer[27];
     oled.setCursor(x, y + OFFSET);
-    dtostrf(num, length, dec, st);
-    int l = strlen(st);
-    if (l == 3) oled.print(F("  "));
-    if (l == 4) oled.print(F(" "));
-    oled.print(st);
+    dtostrf(value, minimumWidth, decimals, textBuffer);
+    int textLength = strlen(textBuffer);
+    if (textLength == 3) oled.print(F("  "));
+    if (textLength == 4) oled.print(F(" "));
+    oled.print(textBuffer);
 }
 
-void Display::renderData(TimeClient &timeClient, const SensorIndoor &indoorSensor,
-                         const SensorOutdoor &outdoorSensor) {
+void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &indoorSensor,
+                                 const SensorOutdoor &outdoorSensor) {
     char formattedTime[6];
     timeClient.getFormattedTime(formattedTime, sizeof(formattedTime));
 
@@ -111,17 +111,17 @@ void Display::renderData(TimeClient &timeClient, const SensorIndoor &indoorSenso
     oled.setTextSize(2);
 
     if (SensorSanity::isPlausibleTemperature(outdoorSensor.temperature())) {
-        printNumF(6, 0, outdoorSensor.temperature());
+        drawFloatAt(6, 0, outdoorSensor.temperature());
     }
 
     oled.setTextSize(1);
     if (SensorSanity::isPlausibleHumidity(outdoorSensor.humidity())) {
-        printNumI(46, 20, outdoorSensor.humidity());
+        drawIntegerAt(46, 20, outdoorSensor.humidity());
         oled.print("%");
     }
 
     if (SensorSanity::isPlausibleHumidity(outdoorSensor.absoluteHumidity())) {
-        printNumF(34, 30, outdoorSensor.absoluteHumidity());
+        drawFloatAt(34, 30, outdoorSensor.absoluteHumidity());
     }
 
     oled.drawBitmap(2, 20 + OFFSET, sun_icon16x16, 16, 16, WHITE);
@@ -129,17 +129,17 @@ void Display::renderData(TimeClient &timeClient, const SensorIndoor &indoorSenso
 
     oled.setTextSize(2);
     if (SensorSanity::isPlausibleTemperature(indoorSensor.temperature())) {
-        printNumF(6, 40 + 4, indoorSensor.temperature());
+        drawFloatAt(6, 40 + 4, indoorSensor.temperature());
     }
 
     oled.setTextSize(1);
     if (SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
-        printNumI(46, 20 + 40 + 2, indoorSensor.humidity());
+        drawIntegerAt(46, 20 + 40 + 2, indoorSensor.humidity());
         oled.print("%");
     }
 
     if (SensorSanity::isPlausibleHumidity(indoorSensor.absoluteHumidity())) {
-        printNumF(34, 30 + 40 + 2, indoorSensor.absoluteHumidity());
+        drawFloatAt(34, 30 + 40 + 2, indoorSensor.absoluteHumidity());
     }
 
     oled.drawBitmap(2, 20 + 40 + 2 + OFFSET, home_icon16x16, 16, 16, WHITE);
@@ -150,15 +150,15 @@ void Display::renderData(TimeClient &timeClient, const SensorIndoor &indoorSenso
         SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
         SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
-        float diff = indoorSensor.absoluteHumidity() - outdoorSensor.absoluteHumidity();
-        if (abs(diff) < 0.05f) {
-            diff = 0.0f;
+        float absoluteHumidityDifference = indoorSensor.absoluteHumidity() - outdoorSensor.absoluteHumidity();
+        if (abs(absoluteHumidityDifference) < 0.05f) {
+            absoluteHumidityDifference = 0.0f;
         }
-        printNumF(6, 82 + 4, diff);
+        drawFloatAt(6, 82 + 4, absoluteHumidityDifference);
         int color = WHITE;
-        if (diff > 0.0 && abs(diff) < MIN_DIFF) color = BLACK;
+        if (absoluteHumidityDifference > 0.0 && abs(absoluteHumidityDifference) < MIN_DIFF) color = BLACK;
         oled.drawBitmap(0, 3 + 82 + OFFSET, warning_icon16x16, 16, 16, color);
     }
 
-    printAt(6, 82 + 4 + 22, formattedTime);
+    drawTextAt(6, 82 + 4 + 22, formattedTime);
 }

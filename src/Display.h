@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "WetterOLED.h"
+#include "WeatherOled.h"
 
 class SensorIndoor;
 class SensorOutdoor;
@@ -13,7 +13,7 @@ public:
     Display(const Display &) = delete;
     Display &operator=(const Display &) = delete;
 
-    void setup();
+    void begin();
     void showSensorFailure();
     void showStartupConfig();
     void showStartupWifi();
@@ -23,14 +23,14 @@ public:
     void showConfigPortalNoCredentials();
     void showConfigPortalReset();
     void showConfigPortalSsid(const String &ssid);
-    void appendWifiProgress();
-    void renderData(TimeClient &timeClient, const SensorIndoor &indoorSensor, const SensorOutdoor &outdoorSensor);
+    void appendWifiConnectionProgress();
+    void renderMeasurements(TimeClient &timeClient, const SensorIndoor &indoorSensor, const SensorOutdoor &outdoorSensor);
 
 private:
-    void printAt(int x, int y, const char *st, boolean onScreen = true);
-    void printAt(int x, int y, const String &st, boolean onScreen = true);
-    void printNumI(int x, int y, int num);
-    void printNumF(int x, int y, double num, byte dec = 1, int length = 0);
+    void drawTextAt(int x, int y, const char *text, boolean updateDisplay = true);
+    void drawTextAt(int x, int y, const String &text, boolean updateDisplay = true);
+    void drawIntegerAt(int x, int y, int value);
+    void drawFloatAt(int x, int y, double value, byte decimals = 1, int minimumWidth = 0);
 
-    WetterOLED oled;
+    WeatherOled oled;
 };

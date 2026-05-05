@@ -4,7 +4,7 @@
 #include <ESP8266mDNS.h>
 #include <stdlib.h>
 #include "Wifi.h"
-#include "WetterDebug.h"
+#include "WeatherDebug.h"
 #include "Display.h"
 #include "ConfigStore.h"
 #include "config.h"
@@ -16,62 +16,62 @@ WiFiManagerParameter *Wifi::ntpParam = nullptr;
 WiFiManagerParameter *Wifi::tzParam = nullptr;
 WiFiManagerParameter *Wifi::tempOffsetIndoorParam = nullptr;
 
-Wifi::Wifi() : drd(DRD_TIMEOUT, DRD_ADDRESS) {
+Wifi::Wifi() : doubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS) {
 }
 
-void Wifi::useDisplay(Display &screen) {
+void Wifi::setActiveDisplay(Display &screen) {
     activeDisplay = &screen;
 }
 
-Display &Wifi::display() {
+Display &Wifi::activeDisplayRef() {
     return *activeDisplay;
 }
 
 String Wifi::buildTimezoneSelectHtml(const String &currentPosix) {
-    String html = "<br/><label>Timezone</label>"
-                  "<select onchange=\"document.getElementById('timezone').value=this.value\">";
+    String selectMarkup = "<br/><label>Timezone</label>"
+                          "<select onchange=\"document.getElementById('timezone').value=this.value\">";
     for (size_t i = 0; i < TZ_COUNT; i++) {
-        html += "<option value='";
-        html += TIMEZONES[i].posix;
-        html += "'";
-        if (currentPosix == TIMEZONES[i].posix) html += " selected";
-        html += ">";
-        html += TIMEZONES[i].name;
-        html += "</option>";
+        selectMarkup += "<option value='";
+        selectMarkup += TIMEZONES[i].posix;
+        selectMarkup += "'";
+        if (currentPosix == TIMEZONES[i].posix) selectMarkup += " selected";
+        selectMarkup += ">";
+        selectMarkup += TIMEZONES[i].name;
+        selectMarkup += "</option>";
     }
-    html += "</select>";
-    return html;
+    selectMarkup += "</select>";
+    return selectMarkup;
 }
 
-String Wifi::formatFloat(float value, uint8_t decimals) {
+String Wifi::formatFloatValue(float value, uint8_t decimals) {
     return String(value, decimals);
 }
 
-bool Wifi::shouldStartSetup(Display &screen) {
-    useDisplay(screen);
+bool Wifi::shouldStartConfigPortal(Display &screen) {
+    setActiveDisplay(screen);
 
     if (WiFi.SSID() == "") {
         DEBUG_MSG("No stored access-point credentials; initiating configuration portal.");
-        display().showConfigPortalNoCredentials();
+        activeDisplayRef().showConfigPortalNoCredentials();
         delay(1000);
         return true;
     }
 
-    if (drd.detectDoubleReset()) {
+    if (doubleResetDetector.detectDoubleReset()) {
         DEBUG_MSG("Double-reset detected...");
-        display().showConfigPortalReset();
+        activeDisplayRef().showConfigPortalReset();
         delay(1000);
         return true;
     }
     return false;
 }
 
-void Wifi::doSetup(Display &screen, AppConfig &config) {
-    useDisplay(screen);
+void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
+    setActiveDisplay(screen);
     activeConfig = &config;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
-    String tempOffsetIndoorValue = formatFloat(config.tempOffsetIndoor, 2);
+    String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
     WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
@@ -86,12 +86,12 @@ void Wifi::doSetup(Display &screen, AppConfig &config) {
     wifiManager.addParameter(&ntpServer);
     wifiManager.addParameter(&tempOffsetIndoor);
 
-    wifiManager.setSaveParamsCallback(saveParamsCallback);
-    wifiManager.setAPCallback(configModeCallback);
+    wifiManager.setSaveParamsCallback(saveConfigParameters);
+    wifiManager.setAPCallback(handleConfigPortalStart);
 
     DEBUG_MSG("Starting configuration portal.");
-    Ticker flasher;
-    flasher.attach(0.1, flash);
+    Ticker statusLedTicker;
+    statusLedTicker.attach(0.1, toggleStatusLed);
 
     if (!wifiManager.startConfigPortal(HOSTNAME)) {
         DEBUG_MSG("Not connected to WiFi but continuing anyway.");
@@ -101,42 +101,42 @@ void Wifi::doSetup(Display &screen, AppConfig &config) {
     ESP.reset();
 }
 
-void Wifi::saveParamsCallback() {
+void Wifi::saveConfigParameters() {
     if (!activeConfig || !ntpParam || !tzParam || !tempOffsetIndoorParam) return;
-    const char *ntp = ntpParam->getValue();
-    const char *tz  = tzParam->getValue();
-    const char *tempOffsetIndoor = tempOffsetIndoorParam->getValue();
-    if (ntp && strlen(ntp) > 0) activeConfig->ntpServer     = ntp;
-    if (tz  && strlen(tz)  > 0) activeConfig->timezonePosix = tz;
-    if (tempOffsetIndoor && strlen(tempOffsetIndoor) > 0) {
+    const char *ntpServerValue = ntpParam->getValue();
+    const char *timezoneValue = tzParam->getValue();
+    const char *tempOffsetValue = tempOffsetIndoorParam->getValue();
+    if (ntpServerValue && strlen(ntpServerValue) > 0) activeConfig->ntpServer     = ntpServerValue;
+    if (timezoneValue && strlen(timezoneValue) > 0) activeConfig->timezonePosix = timezoneValue;
+    if (tempOffsetValue && strlen(tempOffsetValue) > 0) {
         char *end = nullptr;
-        const float parsedTempOffsetIndoor = strtof(tempOffsetIndoor, &end);
-        if (end != tempOffsetIndoor && *end == '\0' && isfinite(parsedTempOffsetIndoor)) {
-            activeConfig->tempOffsetIndoor = parsedTempOffsetIndoor;
+        const float parsedIndoorTemperatureOffset = strtof(tempOffsetValue, &end);
+        if (end != tempOffsetValue && *end == '\0' && isfinite(parsedIndoorTemperatureOffset)) {
+            activeConfig->tempOffsetIndoor = parsedIndoorTemperatureOffset;
         }
     }
     ConfigStore::save(*activeConfig);
 }
 
-IRAM_ATTR void Wifi::flash() {
-    int state = digitalRead(LED_BUILTIN);
-    digitalWrite(LED_BUILTIN, !state);
+IRAM_ATTR void Wifi::toggleStatusLed() {
+    int ledState = digitalRead(LED_BUILTIN);
+    digitalWrite(LED_BUILTIN, !ledState);
 }
 
-void Wifi::configModeCallback(WiFiManager *myWiFiManager) {
+void Wifi::handleConfigPortalStart(WiFiManager *wifiManagerInstance) {
     DEBUG_MSG("Entered config mode");
     DEBUG_MSG(WiFi.softAPIP().toString().c_str());
-    DEBUG_MSG(myWiFiManager->getConfigPortalSSID().c_str());
+    DEBUG_MSG(wifiManagerInstance->getConfigPortalSSID().c_str());
 
-    display().showConfigPortalSsid(myWiFiManager->getConfigPortalSSID());
+    activeDisplayRef().showConfigPortalSsid(wifiManagerInstance->getConfigPortalSSID());
 }
 
-void Wifi::setup(Display &screen, AppConfig &config) {
-    useDisplay(screen);
+void Wifi::connect(Display &screen, AppConfig &config) {
+    setActiveDisplay(screen);
     activeConfig = &config;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
-    String tempOffsetIndoorValue = formatFloat(config.tempOffsetIndoor, 2);
+    String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
     WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
@@ -151,8 +151,8 @@ void Wifi::setup(Display &screen, AppConfig &config) {
     wifiManager.addParameter(&ntpServer);
     wifiManager.addParameter(&tempOffsetIndoor);
 
-    wifiManager.setSaveParamsCallback(saveParamsCallback);
-    wifiManager.setAPCallback(configModeCallback);
+    wifiManager.setSaveParamsCallback(saveConfigParameters);
+    wifiManager.setAPCallback(handleConfigPortalStart);
 
     String hostname(HOSTNAME);
     WiFi.hostname(hostname);
@@ -164,12 +164,12 @@ void Wifi::setup(Display &screen, AppConfig &config) {
     while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
         delay(500);
         DEBUG_MSG(".");
-        display().appendWifiProgress();
+        activeDisplayRef().appendWifiConnectionProgress();
     }
     DEBUG_MSG("\n");
     MDNS.begin(HOSTNAME);
 }
 
-void Wifi::loop() {
-    drd.loop();
+void Wifi::poll() {
+    doubleResetDetector.loop();
 }

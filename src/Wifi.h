@@ -9,14 +9,14 @@ class Display;
 class Wifi {
 public:
     Wifi();
-    bool shouldStartSetup(Display &screen);
-    void doSetup(Display &screen, AppConfig &config);
-    void setup(Display &screen, AppConfig &config);
-    void loop();
+    bool shouldStartConfigPortal(Display &screen);
+    void startConfigPortal(Display &screen, AppConfig &config);
+    void connect(Display &screen, AppConfig &config);
+    void poll();
 
 private:
     WiFiManager wifiManager;
-    DoubleResetDetector drd;
+    DoubleResetDetector doubleResetDetector;
 
     static Display *activeDisplay;
     static AppConfig *activeConfig;
@@ -24,13 +24,13 @@ private:
     static WiFiManagerParameter *tzParam;
     static WiFiManagerParameter *tempOffsetIndoorParam;
 
-    static void useDisplay(Display &screen);
-    static Display &display();
+    static void setActiveDisplay(Display &screen);
+    static Display &activeDisplayRef();
 
-    static void configModeCallback(WiFiManager *myWiFiManager);
-    static void saveParamsCallback();
-    static IRAM_ATTR void flash();
+    static void handleConfigPortalStart(WiFiManager *wifiManagerInstance);
+    static void saveConfigParameters();
+    static IRAM_ATTR void toggleStatusLed();
 
     static String buildTimezoneSelectHtml(const String &currentPosix);
-    static String formatFloat(float value, uint8_t decimals);
+    static String formatFloatValue(float value, uint8_t decimals);
 };

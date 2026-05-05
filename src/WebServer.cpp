@@ -5,27 +5,19 @@
 #include "WebServer.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
-#include "PAGE_wetter.h"
+#include "PAGE_weather.h"
 
 WebServer::WebServer() : server(80) {
 }
 
-SensorIndoor &WebServer::indoorSensor() {
-    return *activeIndoorSensor;
-}
-
-SensorOutdoor &WebServer::outdoorSensor() {
-    return *activeOutdoorSensor;
-}
-
-void WebServer::setup(SensorIndoor &indoor, SensorOutdoor &outdoor) {
-    activeIndoorSensor = &indoor;
-    activeOutdoorSensor = &outdoor;
+void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor) {
+    indoorSensorRef = &indoorSensor;
+    outdoorSensorRef = &outdoorSensor;
     server.on("/", [this]() { handleRoot(); });
     server.on("/data.json", HTTP_GET, [this]() {
         server.sendHeader("Connection", "close");
         server.sendHeader("Access-Control-Allow-Origin", "*");
-        handleJsonData();
+        handleDataJson();
     });
     server.onNotFound([this]() { handleNotFound(); });
     server.begin();
@@ -55,33 +47,33 @@ void WebServer::handleNotFound() {
     server.send(404, "text/plain", message);
 }
 
-void WebServer::handleJsonData() {
-    JsonDocument doc;
+void WebServer::handleDataJson() {
+    JsonDocument jsonDocument;
 
-    const SensorIndoor &in = *activeIndoorSensor;
-    const SensorOutdoor &out = *activeOutdoorSensor;
+    const SensorIndoor &indoorSensor = *indoorSensorRef;
+    const SensorOutdoor &outdoorSensor = *outdoorSensorRef;
 
-    const float f_in = in.absoluteHumidity();
-    const float f_out = out.absoluteHumidity();
+    const float indoorAbsoluteHumidity = indoorSensor.absoluteHumidity();
+    const float outdoorAbsoluteHumidity = outdoorSensor.absoluteHumidity();
 
-    doc["t_in"] = in.temperature();
-    doc["h_in"] = int(in.humidity());
-    doc["f_in"] = f_in;
-    doc["dp_in"] = in.dewPoint();
+    jsonDocument["indoorTemperatureCelsius"] = indoorSensor.temperature();
+    jsonDocument["indoorHumidityPercent"] = int(indoorSensor.humidity());
+    jsonDocument["indoorAbsoluteHumidityGm3"] = indoorAbsoluteHumidity;
+    jsonDocument["indoorDewPointCelsius"] = indoorSensor.dewPoint();
 
-    doc["t_out"] = out.temperature();
-    doc["h_out"] = int(out.humidity());
-    doc["f_out"] = f_out;
-    doc["b_out"] = out.battery();
-    doc["last_out"] = out.secondsSinceLastReceived();
+    jsonDocument["outdoorTemperatureCelsius"] = outdoorSensor.temperature();
+    jsonDocument["outdoorHumidityPercent"] = int(outdoorSensor.humidity());
+    jsonDocument["outdoorAbsoluteHumidityGm3"] = outdoorAbsoluteHumidity;
+    jsonDocument["outdoorBatteryOk"] = outdoorSensor.batteryStatus();
+    jsonDocument["outdoorSecondsSinceLastReading"] = outdoorSensor.secondsSinceLastPacket();
 
-    doc["f_diff"] = f_in - f_out;
+    jsonDocument["absoluteHumidityDifferenceGm3"] = indoorAbsoluteHumidity - outdoorAbsoluteHumidity;
 
-    server.setContentLength(measureJson(doc));
+    server.setContentLength(measureJson(jsonDocument));
     server.send(200, "application/json;charset=utf-8", "");
-    serializeJson(doc, server.client());
+    serializeJson(jsonDocument, server.client());
 }
 
 void WebServer::handleRoot() {
-    server.send_P(200, "text/html", PAGE_Wetter);
+    server.send_P(200, "text/html", PAGE_Weather);
 }

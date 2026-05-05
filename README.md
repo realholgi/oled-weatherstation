@@ -124,7 +124,7 @@ Managed via PlatformIO (`platformio.ini`):
 - DoubleResetDetector
 - Adafruit HTU21DF Library
 - Adafruit GFX Library
-- Adafruit SSD1305 (subclassed as `WetterOLED` in `src/` for hardware-specific offset)
+- Adafruit SSD1305 (subclassed as `WeatherOled` in `src/` for hardware-specific offset)
 - FWS_433_Receiver (bundled in `lib/`)
 
 ## License

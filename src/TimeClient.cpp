@@ -3,8 +3,8 @@
 #include <time.h>
 #include <cstdio>
 
-void TimeClient::configure(const char *tzPosix, const char *ntpServer) {
-    configTzTime(tzPosix, ntpServer);
+void TimeClient::configure(const char *timezonePosix, const char *ntpServer) {
+    configTzTime(timezonePosix, ntpServer);
 }
 
 bool TimeClient::isTimeSet() const {
@@ -17,7 +17,7 @@ void TimeClient::getFormattedTime(char *buffer, size_t bufferSize) const {
         snprintf(buffer, bufferSize, "--:--");
         return;
     }
-    time_t now = time(nullptr);
-    struct tm *t = localtime(&now);
-    snprintf(buffer, bufferSize, "%02d:%02d", t->tm_hour, t->tm_min);
+    time_t currentTime = time(nullptr);
+    struct tm *localTimeInfo = localtime(&currentTime);
+    snprintf(buffer, bufferSize, "%02d:%02d", localTimeInfo->tm_hour, localTimeInfo->tm_min);
 }

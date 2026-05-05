@@ -5,23 +5,23 @@
 
 static const char *CONFIG_FILE = "/config.json";
 
-AppConfig ConfigStore::load(const char *defaultNtp, const char *defaultTz, float defaultTempOffsetIndoor) {
-    AppConfig cfg{String(defaultNtp), String(defaultTz), defaultTempOffsetIndoor};
-    if (!LittleFS.begin()) return cfg;
-    File f = LittleFS.open(CONFIG_FILE, "r");
-    if (!f) { LittleFS.end(); return cfg; }
-    JsonDocument doc;
-    if (deserializeJson(doc, f) == DeserializationError::Ok) {
-        const char *ntp = doc["ntp_server"] | "";
-        const char *tz  = doc["timezone"]   | "";
-        const float tempOffsetIndoor = doc["temp_offset_indoor"] | defaultTempOffsetIndoor;
-        if (strlen(ntp) > 0) cfg.ntpServer     = ntp;
-        if (strlen(tz)  > 0) cfg.timezonePosix = tz;
-        if (isfinite(tempOffsetIndoor)) cfg.tempOffsetIndoor = tempOffsetIndoor;
+AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor) {
+    AppConfig config{String(defaultNtpServer), String(defaultTimezonePosix), defaultTempOffsetIndoor};
+    if (!LittleFS.begin()) return config;
+    File configFile = LittleFS.open(CONFIG_FILE, "r");
+    if (!configFile) { LittleFS.end(); return config; }
+    JsonDocument jsonDocument;
+    if (deserializeJson(jsonDocument, configFile) == DeserializationError::Ok) {
+        const char *ntpServerValue = jsonDocument["ntp_server"] | "";
+        const char *timezoneValue  = jsonDocument["timezone"]   | "";
+        const float tempOffsetIndoor = jsonDocument["temp_offset_indoor"] | defaultTempOffsetIndoor;
+        if (strlen(ntpServerValue) > 0) config.ntpServer     = ntpServerValue;
+        if (strlen(timezoneValue)  > 0) config.timezonePosix = timezoneValue;
+        if (isfinite(tempOffsetIndoor)) config.tempOffsetIndoor = tempOffsetIndoor;
     }
-    f.close();
+    configFile.close();
     LittleFS.end();
-    return cfg;
+    return config;
 }
 
 void ConfigStore::save(const AppConfig &config) {
@@ -29,13 +29,13 @@ void ConfigStore::save(const AppConfig &config) {
         LittleFS.format();
         if (!LittleFS.begin()) return;
     }
-    File f = LittleFS.open(CONFIG_FILE, "w");
-    if (!f) { LittleFS.end(); return; }
-    JsonDocument doc;
-    doc["ntp_server"] = config.ntpServer;
-    doc["timezone"]   = config.timezonePosix;
-    doc["temp_offset_indoor"] = config.tempOffsetIndoor;
-    serializeJson(doc, f);
-    f.close();
+    File configFile = LittleFS.open(CONFIG_FILE, "w");
+    if (!configFile) { LittleFS.end(); return; }
+    JsonDocument jsonDocument;
+    jsonDocument["ntp_server"] = config.ntpServer;
+    jsonDocument["timezone"]   = config.timezonePosix;
+    jsonDocument["temp_offset_indoor"] = config.tempOffsetIndoor;
+    serializeJson(jsonDocument, configFile);
+    configFile.close();
     LittleFS.end();
 }

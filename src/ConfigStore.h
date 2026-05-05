@@ -10,6 +10,6 @@ struct AppConfig {
 
 class ConfigStore {
 public:
-    static AppConfig load(const char *defaultNtp, const char *defaultTz, float defaultTempOffsetIndoor);
+    static AppConfig load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor);
     static void save(const AppConfig &config);
 };

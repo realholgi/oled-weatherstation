@@ -11,16 +11,16 @@ SensorIndoor::SensorIndoor()
       absoluteHumidityValue(-1),
       dewPointValue(-273),
       temperatureOffset(DEFAULT_TEMP_OFFSET_INDOOR),
-      readyForUpdateFlag(true) {}
+      measurementDueFlag(true) {}
 
-bool SensorIndoor::setup() {
-    return htu.begin();
+bool SensorIndoor::begin() {
+    return sensorChip.begin();
 }
 
-void SensorIndoor::update() {
-    readyForUpdateFlag = false;
-    const float rawHumidity = htu.readHumidity();
-    const float rawTemperature = htu.readTemperature();
+void SensorIndoor::refreshMeasurements() {
+    measurementDueFlag = false;
+    const float rawHumidity = sensorChip.readHumidity();
+    const float rawTemperature = sensorChip.readTemperature();
 
     if (SensorSanity::isPlausibleTemperature(rawTemperature) &&
         SensorSanity::isPlausibleHumidity(rawHumidity)) {
@@ -31,12 +31,12 @@ void SensorIndoor::update() {
     }
 }
 
-bool SensorIndoor::isReadyForUpdate() const {
-    return readyForUpdateFlag;
+bool SensorIndoor::isMeasurementDue() const {
+    return measurementDueFlag;
 }
 
-IRAM_ATTR void SensorIndoor::setReadyForUpdate() {
-    readyForUpdateFlag = true;
+IRAM_ATTR void SensorIndoor::markMeasurementDue() {
+    measurementDueFlag = true;
 }
 
 void SensorIndoor::setTemperatureOffset(float offset) {
