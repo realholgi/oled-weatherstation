@@ -47,6 +47,14 @@ void Display::showStartupOutdoorSensor() {
     drawTextAt(6, 40, "433MHz...");
 }
 
+void Display::showWifiFailure() {
+    oled.clearDisplay();
+    drawTextAt(6, 0, "WIFI", false);
+    drawTextAt(6, 10, "failed", false);
+    drawTextAt(6, 30, "running", false);
+    drawTextAt(6, 40, "offline");
+}
+
 void Display::showConfigPortalNoCredentials() {
     oled.clearDisplay();
     drawTextAt(6, 0, "no Cfg", false);

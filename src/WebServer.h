@@ -8,11 +8,12 @@ class SensorOutdoor;
 class WebServer {
 public:
     WebServer();
-    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor);
+    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns);
     void handleClient();
 
 private:
     ESP8266WebServer server;
+    bool started = false;
 
     SensorIndoor *indoorSensorRef = nullptr;
     SensorOutdoor *outdoorSensorRef = nullptr;

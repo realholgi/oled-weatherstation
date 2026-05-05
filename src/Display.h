@@ -20,6 +20,7 @@ public:
     void showStartupHttp();
     void showStartupTime();
     void showStartupOutdoorSensor();
+    void showWifiFailure();
     void showConfigPortalNoCredentials();
     void showConfigPortalReset();
     void showConfigPortalSsid(const String &ssid);

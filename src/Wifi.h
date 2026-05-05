@@ -11,12 +11,14 @@ public:
     Wifi();
     bool shouldStartConfigPortal(Display &screen);
     void startConfigPortal(Display &screen, AppConfig &config);
-    void connect(Display &screen, AppConfig &config);
+    bool connect(Display &screen, AppConfig &config);
+    bool isMdnsReady() const;
     void poll();
 
 private:
     WiFiManager wifiManager;
     DoubleResetDetector doubleResetDetector;
+    bool mdnsReady = false;
 
     static Display *activeDisplay;
     static AppConfig *activeConfig;

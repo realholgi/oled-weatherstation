@@ -133,9 +133,10 @@ void Wifi::handleConfigPortalStart(WiFiManager *wifiManagerInstance) {
     activeDisplayRef().showConfigPortalSsid(wifiManagerInstance->getConfigPortalSSID());
 }
 
-void Wifi::connect(Display &screen, AppConfig &config) {
+bool Wifi::connect(Display &screen, AppConfig &config) {
     setActiveDisplay(screen);
     activeConfig = &config;
+    mdnsReady = false;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
     String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
@@ -159,7 +160,10 @@ void Wifi::connect(Display &screen, AppConfig &config) {
     String hostname(HOSTNAME);
     WiFi.hostname(hostname);
 
-    wifiManager.autoConnect();
+    if (!wifiManager.autoConnect(HOSTNAME)) {
+        DEBUG_MSG("WiFiManager failed to establish a connection.\n");
+        return false;
+    }
 
     DEBUG_MSG("Enabling WIFI...\n");
     unsigned long startTime = millis();
@@ -169,7 +173,22 @@ void Wifi::connect(Display &screen, AppConfig &config) {
         activeDisplayRef().appendWifiConnectionProgress();
     }
     DEBUG_MSG("\n");
-    MDNS.begin(HOSTNAME);
+
+    if (WiFi.status() != WL_CONNECTED) {
+        DEBUG_MSG("WiFi did not reach WL_CONNECTED within the startup window.\n");
+        return false;
+    }
+
+    mdnsReady = MDNS.begin(HOSTNAME);
+    if (!mdnsReady) {
+        DEBUG_MSG("mDNS responder failed to start.\n");
+    }
+
+    return true;
+}
+
+bool Wifi::isMdnsReady() const {
+    return mdnsReady;
 }
 
 void Wifi::poll() {

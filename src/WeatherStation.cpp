@@ -24,6 +24,7 @@ static SensorIndoor indoorSensor;
 static SensorOutdoor outdoorSensor;
 static Wifi wifiController;
 static WebServer webServer;
+static bool otaReady = false;
 
 static Ticker indoorMeasurementTicker;
 static Ticker outdoorReadingExpiryTicker;
@@ -54,6 +55,7 @@ static void configureOta() {
     });
 
     ArduinoOTA.begin();
+    otaReady = true;
     DEBUG_MSG("OTA ready at %s.local\n", HOSTNAME);
 }
 
@@ -82,18 +84,23 @@ void setup() {
     if (wifiController.shouldStartConfigPortal(displayScreen)) { wifiController.startConfigPortal(displayScreen, appConfig); }
 
     displayScreen.showStartupWifi();
-    wifiController.connect(displayScreen, appConfig);
+    const bool wifiConnected = wifiController.connect(displayScreen, appConfig);
+    if (wifiConnected) {
+        displayScreen.showStartupHttp();
+        webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady());
 
-    displayScreen.showStartupHttp();
-    webServer.begin(indoorSensor, outdoorSensor);
-
-    displayScreen.showStartupTime();
-    timeClient.configure(appConfig.timezonePosix.c_str(), appConfig.ntpServer.c_str());
+        displayScreen.showStartupTime();
+        timeClient.configure(appConfig.timezonePosix.c_str(), appConfig.ntpServer.c_str());
+    } else {
+        displayScreen.showWifiFailure();
+    }
 
     displayScreen.showStartupOutdoorSensor();
     outdoorSensor.begin();
 
-    configureOta();
+    if (wifiConnected) {
+        configureOta();
+    }
 
     indoorMeasurementTicker.attach(MIN_RECEIVE_WAIT_INT, markIndoorMeasurementDue);
     outdoorReadingExpiryTicker.attach(MAX_RECEIVE_WAIT_EXT_S, markOutdoorReadingStale);
@@ -104,7 +111,9 @@ void setup() {
 void loop() {
     static unsigned long lastDisplayUpdate = 0;
     wifiController.poll();
-    ArduinoOTA.handle();
+    if (otaReady) {
+        ArduinoOTA.handle();
+    }
 
     if (indoorSensor.isMeasurementDue()) { indoorSensor.refreshMeasurements(); }
     if (outdoorSensor.hasPendingPacket()) { outdoorSensor.refreshMeasurements(); }
@@ -117,5 +126,7 @@ void loop() {
     }
 
     webServer.handleClient();
-    MDNS.update();
+    if (wifiController.isMdnsReady()) {
+        MDNS.update();
+    }
 }

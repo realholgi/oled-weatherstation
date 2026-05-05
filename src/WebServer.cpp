@@ -10,7 +10,7 @@
 WebServer::WebServer() : server(80) {
 }
 
-void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor) {
+void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns) {
     indoorSensorRef = &indoorSensor;
     outdoorSensorRef = &outdoorSensor;
     server.on("/", [this]() { handleRoot(); });
@@ -21,10 +21,14 @@ void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor) 
     });
     server.onNotFound([this]() { handleNotFound(); });
     server.begin();
-    MDNS.addService("http", "tcp", 80);
+    started = true;
+    if (advertiseMdns) {
+        MDNS.addService("http", "tcp", 80);
+    }
 }
 
 void WebServer::handleClient() {
+    if (!started) return;
     server.handleClient();
 }
 
