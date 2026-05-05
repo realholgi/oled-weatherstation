@@ -611,7 +611,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
           "Lüften gut",
           "status-good",
           "Jetzt ist Lüften sinnvoll",
-          "Die Außenluft ist deutlich trockener als innen und kann Feuchtigkeit wirksam abführen.",
+          "Die Außenluft ist deutlich trockener als innen und kann die Feuchtigkeit wirksam abführen.",
           "Außen trockener",
           clampedFill
         );
@@ -619,7 +619,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
         setRecommendationState(
           "Knapp positiv",
           "status-neutral",
-          "Lüften bringt etwas, aber nicht stark",
+          "Lüften bringt etwas, aber nicht viel",
           "Die Außenluft ist trockener, der Vorteil ist im Moment aber noch relativ klein.",
           "Leichter Vorteil",
           clampedFill
