@@ -19,7 +19,7 @@ The device serves a small web UI at `http://wetter.local` and exposes raw readin
 | Indoor sensor | HTU21 / SHT21 (temperature + humidity)                    |
 | Outdoor sensor | ALDI FWS 433 MHz wireless sensor (temperature + humidity) |
 
-The firmware listens for outdoor packets on channel `3` by default. If your sensor is paired to a different channel, override `OUTDOOR_SENSOR_CHANNEL` via `build_flags` in `platformio.ini`.
+The firmware listens for outdoor packets on channel `3` by default. The active outdoor sensor channel can be changed in the captive portal and is persisted in `/config.json`.
 
 **Pin assignments:**
 
@@ -39,12 +39,19 @@ The firmware listens for outdoor packets on channel `3` by default. If your sens
   <img src="images/fws433-back.png" alt="Back side of the 433 MHz outdoor sensor" width="30%">
 </p>
 
+### Interface Gallery
+
+<p align="center">
+  <img src="images/webpage-shot.png" alt="Screenshot of the live weather webpage" width="60%">
+</p>
+
 ## Features
 
 - Displays current time, indoor and outdoor temperature, relative and absolute humidity, and their respective difference
 - Live web interface at `http://wetter.local` with auto-updating values
 - JSON endpoint at `http://wetter.local/data.json`
 - WiFi setup via captive portal and on double-reset
+- Configurable outdoor sensor channel (`1`-`3`) via captive portal
 - Online time sync via NTP with timezone/DST handling from the configured POSIX timezone
 
 ## Build & Flash
@@ -92,6 +99,7 @@ The captive portal also stores:
 - the NTP server
 - the POSIX timezone string used by `configTzTime()`
 - the indoor temperature calibration offset
+- the outdoor sensor channel (`1`-`3`)
 
 Configuration is persisted in LittleFS as `/config.json`.
 
@@ -105,7 +113,7 @@ The firmware is organized around a few small components:
 - `Display` renders the current readings to the SSD1305 OLED
 - `WebServer` serves the HTML UI and `/data.json`
 - `Wifi` owns WiFiManager setup, captive portal flow, and mDNS setup
-- `ConfigStore` loads and saves persisted NTP, timezone, and indoor temperature offset settings
+- `ConfigStore` loads and saves persisted NTP, timezone, indoor temperature offset, and outdoor sensor channel settings
 - `HumidityMath` calculates absolute humidity and dew point
 - `SensorSanity` provides range-checking and plausibility filters for sensor values
 
