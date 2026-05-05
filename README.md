@@ -1,5 +1,9 @@
 # WetterStation
 
+[![CI](https://github.com/realholgi/oled-weatherstation/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/realholgi/oled-weatherstation/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/realholgi/oled-weatherstation/blob/main/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/realholgi/oled-weatherstation)](https://github.com/realholgi/oled-weatherstation/releases)
+
 ESP8266 weather station with OLED display, indoor/outdoor sensors, NTP time, and a live web UI in German or English.
 
 It compares indoor and outdoor absolute humidity to show whether airing out the room currently makes sense.
