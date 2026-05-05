@@ -6,6 +6,9 @@
 #define HOSTNAME "wetter"
 #define OLED_RESET D3
 #define RECEIVER_PIN D6
+#ifndef OUTDOOR_SENSOR_CHANNEL
+#define OUTDOOR_SENSOR_CHANNEL 3
+#endif
 
 #define MIN_DIFF 3.0f
 #define MIN_RECEIVE_WAIT_INT 2

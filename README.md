@@ -15,6 +15,8 @@ The device serves a small web UI at `http://wetter.local` and exposes raw readin
 | Indoor sensor | HTU21 / SHT21 (temperature + humidity)                    |
 | Outdoor sensor | ALDI FWS 433 MHz wireless sensor (temperature + humidity) |
 
+The firmware listens for outdoor packets on channel `3` by default. If your sensor is paired to a different channel, override `OUTDOOR_SENSOR_CHANNEL` via `build_flags` in `platformio.ini`.
+
 **Pin assignments:**
 
 - OLED reset: D3

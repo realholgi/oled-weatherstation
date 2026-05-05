@@ -26,7 +26,7 @@ bool SensorOutdoor::hasPendingPacket() {
 void SensorOutdoor::refreshMeasurements() {
     fwsResult receivedPacket = receiver.getData();
 
-    if (receivedPacket.channel == 3) {
+    if (receivedPacket.channel == OUTDOOR_SENSOR_CHANNEL) {
         const float decodedTemperature = receivedPacket.temperature / 10.0f;
 
         if (!SensorSanity::isPlausibleTemperature(decodedTemperature) ||
