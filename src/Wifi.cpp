@@ -115,7 +115,9 @@ void Wifi::saveConfigParameters() {
             activeConfig->tempOffsetIndoor = parsedIndoorTemperatureOffset;
         }
     }
-    ConfigStore::save(*activeConfig);
+    if (!ConfigStore::save(*activeConfig)) {
+        DEBUG_MSG("Failed to persist configuration to LittleFS.\n");
+    }
 }
 
 IRAM_ATTR void Wifi::toggleStatusLed() {

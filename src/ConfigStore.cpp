@@ -24,18 +24,20 @@ AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTim
     return config;
 }
 
-void ConfigStore::save(const AppConfig &config) {
-    if (!LittleFS.begin()) {
-        LittleFS.format();
-        if (!LittleFS.begin()) return;
-    }
+bool ConfigStore::save(const AppConfig &config) {
+    if (!LittleFS.begin()) return false;
     File configFile = LittleFS.open(CONFIG_FILE, "w");
-    if (!configFile) { LittleFS.end(); return; }
+    if (!configFile) { LittleFS.end(); return false; }
     JsonDocument jsonDocument;
     jsonDocument["ntp_server"] = config.ntpServer;
     jsonDocument["timezone"]   = config.timezonePosix;
     jsonDocument["temp_offset_indoor"] = config.tempOffsetIndoor;
-    serializeJson(jsonDocument, configFile);
+    if (serializeJson(jsonDocument, configFile) == 0) {
+        configFile.close();
+        LittleFS.end();
+        return false;
+    }
     configFile.close();
     LittleFS.end();
+    return true;
 }

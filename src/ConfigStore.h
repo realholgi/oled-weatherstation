@@ -11,5 +11,5 @@ struct AppConfig {
 class ConfigStore {
 public:
     static AppConfig load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor);
-    static void save(const AppConfig &config);
+    static bool save(const AppConfig &config);
 };
