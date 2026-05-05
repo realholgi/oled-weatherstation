@@ -39,6 +39,9 @@ pio run
 # Flash to Wemos D1 Mini
 pio run --target upload
 
+# Upload over Wi-Fi after the first USB flash
+pio run -e d1_mini_ota -t upload
+
 # Clean build artifacts
 pio run --target clean
 
@@ -50,6 +53,15 @@ pio test --environment native
 ```
 
 `platformio.ini` is the authoritative build configuration. `CMakeLists.txt` is only present for IDE integration.
+
+## OTA Uploads
+
+The firmware exposes Arduino OTA on the hostname `wetter.local` after it has connected to WiFi.
+
+- The first flash must still be done over USB.
+- After that, use `pio run -e d1_mini_ota -t upload`.
+- If mDNS resolution is unreliable on your network, replace `upload_port` with the device IP address for the upload.
+- To require an OTA password, add a build flag such as `"-D OTA_PASSWORD=\\\"secret\\\""` to the OTA environment.
 
 ## First-Time Setup
 

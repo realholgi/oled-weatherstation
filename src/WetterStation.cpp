@@ -4,6 +4,7 @@
 // Platform: ESP8266 Wemos D1 Mini 4M 1M LittleFS
 
 #include <Arduino.h>
+#include <ArduinoOTA.h>
 #include <ESP8266mDNS.h>
 #include <Ticker.h>
 
@@ -33,6 +34,27 @@ static IRAM_ATTR void setReadyForIndoorSensorUpdate() {
 
 static IRAM_ATTR void invalidateOutdoorSensor() {
     sensorOutdoor.invalidate();
+}
+
+static void setupOta() {
+    ArduinoOTA.setHostname(HOSTNAME);
+
+#ifdef OTA_PASSWORD
+    ArduinoOTA.setPassword(OTA_PASSWORD);
+#endif
+
+    ArduinoOTA.onStart([]() {
+        DEBUG_MSG("OTA update started\n");
+    });
+    ArduinoOTA.onEnd([]() {
+        DEBUG_MSG("OTA update finished\n");
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+        DEBUG_MSG("OTA error %u\n", error);
+    });
+
+    ArduinoOTA.begin();
+    DEBUG_MSG("OTA ready at %s.local\n", HOSTNAME);
 }
 
 void setup() {
@@ -70,6 +92,8 @@ void setup() {
     display.showStartupOutdoorSensor();
     sensorOutdoor.setup();
 
+    setupOta();
+
     tickerForInternalSensorUpdate.attach(MIN_RECEIVE_WAIT_INT, setReadyForIndoorSensorUpdate);
     tickerForExternalSensorInvalidate.attach(MAX_RECEIVE_WAIT_EXT_S, invalidateOutdoorSensor);
 
@@ -79,6 +103,7 @@ void setup() {
 void loop() {
     static unsigned long lastDisplayUpdate = 0;
     wifi.loop();
+    ArduinoOTA.handle();
 
     if (sensorIndoor.isReadyForUpdate()) { sensorIndoor.update(); }
     if (sensorOutdoor.isDataAvailable()) { sensorOutdoor.update(); }
