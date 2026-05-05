@@ -23,12 +23,13 @@ It compares indoor and outdoor absolute humidity to show whether airing out the 
 
 ## Hardware
 
-| Component | Details                                                   |
-|---|-----------------------------------------------------------|
-| Microcontroller | Wemos D1 Mini (ESP8266)                                   |
-| Display | 2.42" SSD1305 128×64 OLED                                 |
-| Indoor sensor | HTU21 / SHT21 (temperature + humidity)                    |
-| Outdoor sensor | ALDI FWS 433 MHz wireless sensor (temperature + humidity) |
+| Component        | Details                                                                                                                                                                       |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Microcontroller  | Wemos D1 Mini (ESP8266)                                                                                                                                                       |
+| Display          | 2.42" SSD1305 128×64 OLED                                                                                                                                                     |
+| Indoor sensor    | HTU21 / SHT21 [GY-21] (temperature + humidity)                                                                                                                                |
+| Outdoor sensor   | [Pearl FWS 433 MHz wireless sensor](https://www.amazon.de/infactory-Zubeh%C3%B6r-Temperatur-Logger-Funk-Au%C3%9Fensensor-Thermometer/dp/B07784YJRW/) (temperature + humidity) |
+| 433 MHz receiver | RXB6 433Mhz Superheterodyne Wireless Receiver                                                                                                                                 |
 
 The default outdoor channel is `3`. You can change it in the captive portal, along with the default webpage language.
 
