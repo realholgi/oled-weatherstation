@@ -6,6 +6,10 @@ The main purpose is to show the absolute humidity between in- and outdoor and if
 Outdoor readings come from a 433 MHz wireless sensor. Indoor readings come from an HTU21/SHT21 I2C sensor. 
 The device serves a small web UI at `http://wetter.local` and exposes raw readings at `http://wetter.local/data.json`.
 
+<p align="center">
+  <img src="images/wetterstation.jpeg" alt="Complete WetterStation hardware setup" width="720">
+</p>
+
 ## Hardware
 
 | Component | Details                                                   |
@@ -21,6 +25,19 @@ The firmware listens for outdoor packets on channel `3` by default. If your sens
 
 - OLED reset: D3
 - 433 MHz receiver: D6
+
+### Hardware Gallery
+
+<p align="center">
+  <img src="images/oled.png" alt="Back side of the OLED display" width="30%">
+  <img src="images/board-front.png" alt="Front side of the WetterStation control board" width="30%">
+  <img src="images/board-back.png" alt="Back side of the WetterStation control board" width="30%">
+</p>
+
+<p align="center">
+  <img src="images/fws433-front.png" alt="Front side of the 433 MHz outdoor sensor" width="30%">
+  <img src="images/fws433-back.png" alt="Back side of the 433 MHz outdoor sensor" width="30%">
+</p>
 
 ## Features
 
