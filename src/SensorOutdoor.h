@@ -7,7 +7,7 @@ class SensorOutdoor {
 public:
     SensorOutdoor();
 
-    void begin();
+    void begin(uint8_t expectedChannel);
     bool hasPendingPacket();
     void refreshMeasurements();
     IRAM_ATTR void markReadingStale();
@@ -21,6 +21,7 @@ public:
 
 private:
     FWS433 receiver;
+    uint8_t expectedChannelValue;
     volatile float humidityValue;
     volatile float temperatureValue;
     int batteryValue;

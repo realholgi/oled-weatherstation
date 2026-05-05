@@ -7,14 +7,16 @@
 #include "config.h"
 
 SensorOutdoor::SensorOutdoor()
-    : humidityValue(0),
+    : expectedChannelValue(OUTDOOR_SENSOR_CHANNEL),
+      humidityValue(0),
       temperatureValue(-273),
       batteryValue(0),
       absoluteHumidityValue(-1),
       lastPacketReceivedAtMillis(0),
       staleReadingCheckDue(false) {}
 
-void SensorOutdoor::begin() {
+void SensorOutdoor::begin(uint8_t expectedChannel) {
+    expectedChannelValue = expectedChannel;
     receiver.start(RECEIVER_PIN);
     lastPacketReceivedAtMillis = millis();
 }
@@ -26,7 +28,7 @@ bool SensorOutdoor::hasPendingPacket() {
 void SensorOutdoor::refreshMeasurements() {
     fwsResult receivedPacket = receiver.getData();
 
-    if (receivedPacket.channel == OUTDOOR_SENSOR_CHANNEL) {
+    if (receivedPacket.channel == expectedChannelValue) {
         const float decodedTemperature = receivedPacket.temperature / 10.0f;
 
         if (!SensorSanity::isPlausibleTemperature(decodedTemperature) ||

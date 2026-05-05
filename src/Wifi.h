@@ -25,6 +25,7 @@ private:
     static WiFiManagerParameter *ntpParam;
     static WiFiManagerParameter *tzParam;
     static WiFiManagerParameter *tempOffsetIndoorParam;
+    static WiFiManagerParameter *outdoorSensorChannelParam;
 
     static void setActiveDisplay(Display &screen);
     static Display &activeDisplayRef();
@@ -35,4 +36,5 @@ private:
 
     static String buildTimezoneSelectHtml(const String &currentPosix);
     static String formatFloatValue(float value, uint8_t decimals);
+    static String formatIntegerValue(uint8_t value);
 };

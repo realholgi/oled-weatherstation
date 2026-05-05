@@ -77,7 +77,8 @@ void setup() {
         while (1) { yield(); }
     }
 
-    AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR);
+    AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
+                                            OUTDOOR_SENSOR_CHANNEL);
     indoorSensor.setTemperatureOffset(appConfig.tempOffsetIndoor);
 
     displayScreen.showStartupConfig();
@@ -96,7 +97,7 @@ void setup() {
     }
 
     displayScreen.showStartupOutdoorSensor();
-    outdoorSensor.begin();
+    outdoorSensor.begin(appConfig.outdoorSensorChannel);
 
     if (wifiConnected) {
         configureOta();
