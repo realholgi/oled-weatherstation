@@ -56,6 +56,7 @@ IRAM_ATTR void SensorOutdoor::markReadingStale() {
         DEBUG_MSG("No External Sensor Signal received for a long time!");
         temperatureValue = -273;
         humidityValue = 0;
+        absoluteHumidityValue = -1;
     }
 }
 
