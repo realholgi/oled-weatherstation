@@ -1,6 +1,6 @@
 const char PAGE_Weather[] PROGMEM = R"=====(
 <!DOCTYPE html>
-<html lang="de">
+<html lang="__DEFAULT_LANG__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -106,6 +106,13 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       line-height: 1.5;
     }
 
+    .hero-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
     .live-pill {
       display: inline-flex;
       align-items: center;
@@ -118,6 +125,33 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       font-size: 0.9rem;
       font-weight: 700;
       white-space: nowrap;
+    }
+
+    .language-switch {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 95, 138, 0.15);
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 10px 24px rgba(16, 43, 66, 0.06);
+    }
+
+    .language-button {
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--accent-strong);
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .language-button.is-active {
+      background: var(--accent-strong);
+      color: #f4fbff;
     }
 
     .live-dot {
@@ -389,6 +423,10 @@ const char PAGE_Weather[] PROGMEM = R"=====(
         grid-template-columns: 1fr;
       }
 
+      .hero-side {
+        align-items: flex-start;
+      }
+
       .sensor-card,
       .insight-card {
         grid-column: span 12;
@@ -405,29 +443,35 @@ const char PAGE_Weather[] PROGMEM = R"=====(
     <section class="hero fade">
       <div class="hero-top">
         <div>
-          <p class="eyebrow">Lokal · Live · Klima</p>
-          <h1>Wetterstation</h1>
-          <p class="hero-copy">
+          <p id="eyebrow" class="eyebrow">Lokal · Live · Klima</p>
+          <h1 id="pageTitle">Wetterstation</h1>
+          <p id="heroCopy" class="hero-copy">
             Live-Ansicht der Innen- und Außendaten. Die Karte unten bewertet, ob trockenere Außenluft gerade für sinnvolleres Lüften spricht.
           </p>
         </div>
-        <div class="live-pill">
-          <span class="live-dot"></span>
-          <span id="connectionState">Aktualisiert</span>
+        <div class="hero-side">
+          <div class="live-pill">
+            <span class="live-dot"></span>
+            <span id="connectionState">Aktualisiert</span>
+          </div>
+          <div id="languageSwitch" class="language-switch" role="group" aria-label="Language">
+            <button id="langButtonDe" class="language-button" type="button" onclick="switchLanguage('de')">DE</button>
+            <button id="langButtonEn" class="language-button" type="button" onclick="switchLanguage('en')">EN</button>
+          </div>
         </div>
       </div>
 
       <div class="hero-metrics">
         <div class="hero-stat">
-          <span class="hero-stat-label">Lüftung</span>
+          <span id="ventingLabel" class="hero-stat-label">Lüftung</span>
           <span id="ventingHeadline" class="hero-stat-value status-neutral">Prüfe Daten</span>
         </div>
         <div class="hero-stat">
-          <span class="hero-stat-label">Differenz</span>
+          <span id="differenceHeroLabel" class="hero-stat-label">Differenz</span>
           <span id="heroDifference" class="hero-stat-value">--</span>
         </div>
         <div class="hero-stat">
-          <span class="hero-stat-label">Stand</span>
+          <span id="snapshotLabel" class="hero-stat-label">Stand</span>
           <span id="lastRefreshTime" class="hero-stat-value">--:--</span>
         </div>
       </div>
@@ -438,22 +482,22 @@ const char PAGE_Weather[] PROGMEM = R"=====(
     <section class="grid">
       <article class="card sensor-card fade">
         <div class="sensor-head">
-          <h2 class="sensor-title">Innen</h2>
-          <span class="sensor-badge">Raumklima</span>
+          <h2 id="indoorTitle" class="sensor-title">Innen</h2>
+          <span id="indoorBadge" class="sensor-badge">Raumklima</span>
         </div>
         <div id="indoorTemperatureCelsius" class="sensor-temp">--</div>
-        <p class="sensor-temp-sub">Temperatur im Innenraum</p>
+        <p id="indoorTempSub" class="sensor-temp-sub">Temperatur im Innenraum</p>
         <div class="rows">
           <div class="row">
-            <span class="row-label">Relative Feuchtigkeit</span>
+            <span id="indoorHumidityLabel" class="row-label">Relative Feuchtigkeit</span>
             <span id="indoorHumidityPercent" class="row-value">--</span>
           </div>
           <div class="row">
-            <span class="row-label">Absolute Feuchtigkeit</span>
+            <span id="indoorAbsoluteHumidityLabel" class="row-label">Absolute Feuchtigkeit</span>
             <span id="indoorAbsoluteHumidityGm3" class="row-value">--</span>
           </div>
           <div class="row">
-            <span class="row-label">Taupunkt</span>
+            <span id="indoorDewPointLabel" class="row-label">Taupunkt</span>
             <span id="indoorDewPointCelsius" class="row-value">--</span>
           </div>
         </div>
@@ -461,26 +505,26 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 
       <article class="card sensor-card fade">
         <div class="sensor-head">
-          <h2 class="sensor-title">Außen</h2>
-          <span class="sensor-badge">Funksensor</span>
+          <h2 id="outdoorTitle" class="sensor-title">Außen</h2>
+          <span id="outdoorBadge" class="sensor-badge">Funksensor</span>
         </div>
         <div id="outdoorTemperatureCelsius" class="sensor-temp">--</div>
-        <p class="sensor-temp-sub">Temperatur ausserhalb des Hauses</p>
+        <p id="outdoorTempSub" class="sensor-temp-sub">Temperatur ausserhalb des Hauses</p>
         <div class="rows">
           <div class="row">
-            <span class="row-label">Relative Feuchtigkeit</span>
+            <span id="outdoorHumidityLabel" class="row-label">Relative Feuchtigkeit</span>
             <span id="outdoorHumidityPercent" class="row-value">--</span>
           </div>
           <div class="row">
-            <span class="row-label">Absolute Feuchtigkeit</span>
+            <span id="outdoorAbsoluteHumidityLabel" class="row-label">Absolute Feuchtigkeit</span>
             <span id="outdoorAbsoluteHumidityGm3" class="row-value">--</span>
           </div>
           <div class="row">
-            <span class="row-label">Batterie</span>
+            <span id="outdoorBatteryLabel" class="row-label">Batterie</span>
             <span id="outdoorBatteryOk" class="row-value">--</span>
           </div>
           <div class="row">
-            <span class="row-label">Letzte Aktualisierung</span>
+            <span id="outdoorUpdatedLabel" class="row-label">Letzte Aktualisierung</span>
             <span id="outdoorSecondsSinceLastReading" class="row-value">--</span>
           </div>
         </div>
@@ -488,16 +532,16 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 
       <article class="card insight-card fade">
         <div class="insight-head">
-          <h2 class="insight-title">Lüftungsempfehlung</h2>
+          <h2 id="insightTitle" class="insight-title">Lüftungsempfehlung</h2>
         </div>
-        <p class="insight-copy">
+        <p id="insightCopy" class="insight-copy">
           Die Entscheidung basiert auf der absoluten Feuchtigkeit innen gegen außen. Je deutlicher
           die Außenluft trockener ist, desto sinnvoller ist Lüften.
         </p>
 
         <div class="insight-grid">
           <div class="recommendation">
-            <span class="recommendation-label">Aktuelle Einschätzung</span>
+            <span id="currentAssessmentLabel" class="recommendation-label">Aktuelle Einschätzung</span>
             <div id="ventingRecommendation" class="recommendation-value">Warte auf Daten</div>
             <div id="ventingNote" class="recommendation-note">
               Die Seite aktualisiert sich automatisch alle 5 Sekunden.
@@ -506,7 +550,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 
           <div class="difference-box">
             <div>
-              <span class="recommendation-label">Absolute Differenz</span>
+              <span id="absoluteDifferenceLabel" class="recommendation-label">Absolute Differenz</span>
               <div id="absoluteHumidityDifferenceGm3" class="difference-value">--</div>
             </div>
             <div class="difference-scale">
@@ -514,7 +558,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
             </div>
             <div class="difference-meta">
               <span id="differenceLabel">Neutral</span>
-              <span>Schwelle: 3.0 g/m³</span>
+              <span id="differenceThresholdLabel">Schwelle: 3.0 g/m³</span>
             </div>
           </div>
         </div>
@@ -523,6 +567,149 @@ const char PAGE_Weather[] PROGMEM = R"=====(
   </main>
 
   <script>
+    var DEFAULT_LANGUAGE = "__DEFAULT_LANG__";
+    var LANGUAGE_STORAGE_KEY = "wetterstation_web_language";
+    var lastWeatherData = null;
+    var lastErrorMessage = "";
+    var translations = {
+      de: {
+        documentTitle: "Wetterstation",
+        eyebrow: "Lokal · Live · Klima",
+        pageTitle: "Wetterstation",
+        heroCopy: "Live-Ansicht der Innen- und Außendaten. Die Karte unten bewertet, ob trockenere Außenluft gerade für sinnvolleres Lüften spricht.",
+        connectionUpdated: "Aktualisiert",
+        connectionError: "Verbindung gestört",
+        errorPrefix: "Verbindungsfehler",
+        languageSwitcherLabel: "Sprache",
+        ventingLabel: "Lüftung",
+        differenceHeroLabel: "Differenz",
+        snapshotLabel: "Stand",
+        indoorTitle: "Innen",
+        indoorBadge: "Raumklima",
+        indoorTempSub: "Temperatur im Innenraum",
+        humidityLabel: "Relative Feuchtigkeit",
+        absoluteHumidityLabel: "Absolute Feuchtigkeit",
+        dewPointLabel: "Taupunkt",
+        outdoorTitle: "Außen",
+        outdoorBadge: "Funksensor",
+        outdoorTempSub: "Temperatur ausserhalb des Hauses",
+        batteryLabel: "Batterie",
+        lastUpdateLabel: "Letzte Aktualisierung",
+        insightTitle: "Lüftungsempfehlung",
+        insightCopy: "Die Entscheidung basiert auf der absoluten Feuchtigkeit innen gegen außen. Je deutlicher die Außenluft trockener ist, desto sinnvoller ist Lüften.",
+        currentAssessmentLabel: "Aktuelle Einschätzung",
+        absoluteDifferenceLabel: "Absolute Differenz",
+        differenceThresholdLabel: "Schwelle: 3.0 g/m³",
+        checkingData: "Prüfe Daten",
+        waitingForData: "Warte auf Daten",
+        recommendationAutorefresh: "Die Seite aktualisiert sich automatisch alle 5 Sekunden.",
+        meaningfulOutdoorMissing: "Noch kein sinnvoller Außenwert",
+        meaningfulOutdoorMissingNote: "Die Lüftungsempfehlung erscheint erst, wenn der Außensensor wieder einen plausiblen und frischen Wert liefert.",
+        noReliableStatement: "Noch keine belastbare Aussage",
+        noReliableStatementNote: "Sobald beide Sensoren plausible Werte liefern, erscheint hier die Bewertung.",
+        ventingGoodHeadline: "Lüften gut",
+        ventingGoodTitle: "Jetzt ist Lüften sinnvoll",
+        ventingGoodNote: "Die Außenluft ist deutlich trockener als innen und kann die Feuchtigkeit wirksam abführen.",
+        outsideDrier: "Außen trockener",
+        slightlyPositiveHeadline: "Knapp positiv",
+        slightlyPositiveTitle: "Lüften bringt etwas, aber nicht viel",
+        slightlyPositiveNote: "Die Außenluft ist trockener, der Vorteil ist im Moment aber noch relativ klein.",
+        slightAdvantage: "Leichter Vorteil",
+        waitHeadline: "Eher warten",
+        waitTitle: "Lüften lohnt sich derzeit kaum",
+        waitNote: "Die Außenluft ist nicht trockener als innen. Warten auf günstigere Bedingungen ist sinnvoller.",
+        noAdvantage: "Kein Vorteil",
+        neutral: "Neutral",
+        batteryOk: "OK",
+        batteryLow: "Niedrig"
+      },
+      en: {
+        documentTitle: "Weather Station",
+        eyebrow: "Local · Live · Climate",
+        pageTitle: "Weather Station",
+        heroCopy: "Live view of indoor and outdoor readings. The card below evaluates whether drier outside air currently makes venting worthwhile.",
+        connectionUpdated: "Updated",
+        connectionError: "Connection issue",
+        errorPrefix: "Connection error",
+        languageSwitcherLabel: "Language",
+        ventingLabel: "Venting",
+        differenceHeroLabel: "Difference",
+        snapshotLabel: "Snapshot",
+        indoorTitle: "Indoor",
+        indoorBadge: "Room climate",
+        indoorTempSub: "Indoor temperature",
+        humidityLabel: "Relative humidity",
+        absoluteHumidityLabel: "Absolute humidity",
+        dewPointLabel: "Dew point",
+        outdoorTitle: "Outdoor",
+        outdoorBadge: "Wireless sensor",
+        outdoorTempSub: "Temperature outside the house",
+        batteryLabel: "Battery",
+        lastUpdateLabel: "Last update",
+        insightTitle: "Venting recommendation",
+        insightCopy: "The recommendation compares indoor and outdoor absolute humidity. The more clearly the outside air is drier, the more worthwhile venting becomes.",
+        currentAssessmentLabel: "Current assessment",
+        absoluteDifferenceLabel: "Absolute difference",
+        differenceThresholdLabel: "Threshold: 3.0 g/m³",
+        checkingData: "Checking data",
+        waitingForData: "Waiting for data",
+        recommendationAutorefresh: "The page refreshes automatically every 5 seconds.",
+        meaningfulOutdoorMissing: "No useful outdoor reading yet",
+        meaningfulOutdoorMissingNote: "The venting recommendation appears once the outdoor sensor reports a fresh and plausible reading again.",
+        noReliableStatement: "No reliable assessment yet",
+        noReliableStatementNote: "As soon as both sensors provide plausible readings, the assessment will appear here.",
+        ventingGoodHeadline: "Good to vent",
+        ventingGoodTitle: "Now is a good time to vent",
+        ventingGoodNote: "The outside air is clearly drier than indoors and can remove humidity effectively.",
+        outsideDrier: "Outside is drier",
+        slightlyPositiveHeadline: "Slightly positive",
+        slightlyPositiveTitle: "Venting helps, but only a little",
+        slightlyPositiveNote: "The outside air is drier, but the advantage is still relatively small right now.",
+        slightAdvantage: "Small advantage",
+        waitHeadline: "Better wait",
+        waitTitle: "Venting is hardly worth it right now",
+        waitNote: "The outside air is not drier than indoors. Waiting for better conditions is the better choice.",
+        noAdvantage: "No advantage",
+        neutral: "Neutral",
+        batteryOk: "OK",
+        batteryLow: "Low"
+      }
+    };
+    var currentLanguage = getInitialLanguage();
+
+    function t(key) {
+      return translations[currentLanguage][key] || translations.de[key] || key;
+    }
+
+    function isSupportedLanguage(language) {
+      return language === "de" || language === "en";
+    }
+
+    function getInitialLanguage() {
+      try {
+        var searchParams = new URLSearchParams(window.location.search);
+        var queryLanguage = searchParams.get("lang");
+        if (isSupportedLanguage(queryLanguage)) {
+          return queryLanguage;
+        }
+      } catch (error) {}
+
+      try {
+        var storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (isSupportedLanguage(storedLanguage)) {
+          return storedLanguage;
+        }
+      } catch (error) {}
+
+      return DEFAULT_LANGUAGE === "en" ? "en" : "de";
+    }
+
+    function persistLanguage(language) {
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+      } catch (error) {}
+    }
+
     function formatRounded(value, suffix) {
       if (typeof value !== "number" || !isFinite(value)) {
         return "--";
@@ -541,6 +728,75 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       document.getElementById(id).textContent = value;
     }
 
+    function updateLanguageControls() {
+      var switchNode = document.getElementById("languageSwitch");
+      var germanButton = document.getElementById("langButtonDe");
+      var englishButton = document.getElementById("langButtonEn");
+      switchNode.setAttribute("aria-label", t("languageSwitcherLabel"));
+      germanButton.classList.toggle("is-active", currentLanguage === "de");
+      englishButton.classList.toggle("is-active", currentLanguage === "en");
+      germanButton.setAttribute("aria-pressed", currentLanguage === "de" ? "true" : "false");
+      englishButton.setAttribute("aria-pressed", currentLanguage === "en" ? "true" : "false");
+    }
+
+    function applyDynamicTranslations() {
+      if (lastErrorMessage) {
+        showError(lastErrorMessage);
+        return;
+      }
+
+      if (lastWeatherData) {
+        updateWeatherData(lastWeatherData);
+        clearError();
+        return;
+      }
+
+      setRecommendationState("checkingData", "status-neutral", "waitingForData", "recommendationAutorefresh", "neutral", 0);
+      setText("connectionState", t("connectionUpdated"));
+    }
+
+    function applyStaticTranslations() {
+      document.documentElement.lang = currentLanguage;
+      document.title = t("documentTitle");
+      setText("eyebrow", t("eyebrow"));
+      setText("pageTitle", t("pageTitle"));
+      setText("heroCopy", t("heroCopy"));
+      setText("connectionState", t("connectionUpdated"));
+      setText("ventingLabel", t("ventingLabel"));
+      setText("differenceHeroLabel", t("differenceHeroLabel"));
+      setText("snapshotLabel", t("snapshotLabel"));
+      setText("indoorTitle", t("indoorTitle"));
+      setText("indoorBadge", t("indoorBadge"));
+      setText("indoorTempSub", t("indoorTempSub"));
+      setText("indoorHumidityLabel", t("humidityLabel"));
+      setText("indoorAbsoluteHumidityLabel", t("absoluteHumidityLabel"));
+      setText("indoorDewPointLabel", t("dewPointLabel"));
+      setText("outdoorTitle", t("outdoorTitle"));
+      setText("outdoorBadge", t("outdoorBadge"));
+      setText("outdoorTempSub", t("outdoorTempSub"));
+      setText("outdoorHumidityLabel", t("humidityLabel"));
+      setText("outdoorAbsoluteHumidityLabel", t("absoluteHumidityLabel"));
+      setText("outdoorBatteryLabel", t("batteryLabel"));
+      setText("outdoorUpdatedLabel", t("lastUpdateLabel"));
+      setText("insightTitle", t("insightTitle"));
+      setText("insightCopy", t("insightCopy"));
+      setText("currentAssessmentLabel", t("currentAssessmentLabel"));
+      setText("absoluteDifferenceLabel", t("absoluteDifferenceLabel"));
+      setText("differenceThresholdLabel", t("differenceThresholdLabel"));
+      updateLanguageControls();
+      applyDynamicTranslations();
+    }
+
+    function switchLanguage(language) {
+      if (!isSupportedLanguage(language) || language === currentLanguage) {
+        return;
+      }
+
+      currentLanguage = language;
+      persistLanguage(language);
+      applyStaticTranslations();
+    }
+
     function hasMeaningfulIndoorReading(data) {
       return data.indoorValid === true;
     }
@@ -549,26 +805,28 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       return data.outdoorValid === true && data.outdoorStale === false;
     }
 
-    function setRecommendationState(headline, headlineClass, title, note, label, fillPercent) {
+    function setRecommendationState(headlineKey, headlineClass, titleKey, noteKey, labelKey, fillPercent) {
       var headlineNode = document.getElementById("ventingHeadline");
-      headlineNode.textContent = headline;
+      headlineNode.textContent = t(headlineKey);
       headlineNode.className = "hero-stat-value " + headlineClass;
-      setText("ventingRecommendation", title);
-      setText("ventingNote", note);
-      setText("differenceLabel", label);
+      setText("ventingRecommendation", t(titleKey));
+      setText("ventingNote", t(noteKey));
+      setText("differenceLabel", t(labelKey));
       document.getElementById("differenceFill").style.width = fillPercent + "%";
     }
 
     function showError(message) {
+      lastErrorMessage = message;
       var errorBox = document.getElementById("error");
-      errorBox.textContent = message;
+      errorBox.textContent = t("errorPrefix") + ": " + message;
       errorBox.style.display = "block";
-      setText("connectionState", "Verbindung gestört");
+      setText("connectionState", t("connectionError"));
     }
 
     function clearError() {
+      lastErrorMessage = "";
       document.getElementById("error").style.display = "none";
-      setText("connectionState", "Aktualisiert");
+      setText("connectionState", t("connectionUpdated"));
     }
 
     function updateRefreshTime() {
@@ -581,11 +839,11 @@ const char PAGE_Weather[] PROGMEM = R"=====(
     function updateRecommendation(data) {
       if (!hasMeaningfulIndoorReading(data) || !hasMeaningfulOutdoorReading(data)) {
         setRecommendationState(
-          "Prüfe Daten",
+          "checkingData",
           "status-neutral",
-          "Noch kein sinnvoller Außenwert",
-          "Die Lüftungsempfehlung erscheint erst, wenn der Außensensor wieder einen plausiblen und frischen Wert liefert.",
-          "Neutral",
+          "meaningfulOutdoorMissing",
+          "meaningfulOutdoorMissingNote",
+          "neutral",
           0
         );
         return;
@@ -594,11 +852,11 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       var difference = data.absoluteHumidityDifferenceGm3;
       if (typeof difference !== "number" || !isFinite(difference)) {
         setRecommendationState(
-          "Prüfe Daten",
+          "checkingData",
           "status-neutral",
-          "Noch keine belastbare Aussage",
-          "Sobald beide Sensoren plausible Werte liefern, erscheint hier die Bewertung.",
-          "Neutral",
+          "noReliableStatement",
+          "noReliableStatementNote",
+          "neutral",
           0
         );
         return;
@@ -608,35 +866,36 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 
       if (difference >= 3.0) {
         setRecommendationState(
-          "Lüften gut",
+          "ventingGoodHeadline",
           "status-good",
-          "Jetzt ist Lüften sinnvoll",
-          "Die Außenluft ist deutlich trockener als innen und kann die Feuchtigkeit wirksam abführen.",
-          "Außen trockener",
+          "ventingGoodTitle",
+          "ventingGoodNote",
+          "outsideDrier",
           clampedFill
         );
       } else if (difference > 0.0) {
         setRecommendationState(
-          "Knapp positiv",
+          "slightlyPositiveHeadline",
           "status-neutral",
-          "Lüften bringt etwas, aber nicht viel",
-          "Die Außenluft ist trockener, der Vorteil ist im Moment aber noch relativ klein.",
-          "Leichter Vorteil",
+          "slightlyPositiveTitle",
+          "slightlyPositiveNote",
+          "slightAdvantage",
           clampedFill
         );
       } else {
         setRecommendationState(
-          "Eher warten",
+          "waitHeadline",
           "status-warn",
-          "Lüften lohnt sich derzeit kaum",
-          "Die Außenluft ist nicht trockener als innen. Warten auf günstigere Bedingungen ist sinnvoller.",
-          "Kein Vorteil",
+          "waitTitle",
+          "waitNote",
+          "noAdvantage",
           clampedFill
         );
       }
     }
 
     function updateWeatherData(data) {
+      lastWeatherData = data;
       var hasIndoorReading = hasMeaningfulIndoorReading(data);
       var hasOutdoorReading = hasMeaningfulOutdoorReading(data);
 
@@ -647,7 +906,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       setText("outdoorTemperatureCelsius", hasOutdoorReading ? formatRounded(data.outdoorTemperatureCelsius, " °C") : "--");
       setText("outdoorHumidityPercent", hasOutdoorReading ? formatInteger(data.outdoorHumidityPercent, " %") : "--");
       setText("outdoorAbsoluteHumidityGm3", hasOutdoorReading ? formatRounded(data.outdoorAbsoluteHumidityGm3, " g/m³") : "--");
-      setText("outdoorBatteryOk", hasOutdoorReading ? (data.outdoorBatteryOk ? "OK" : "Niedrig") : "--");
+      setText("outdoorBatteryOk", hasOutdoorReading ? (data.outdoorBatteryOk ? t("batteryOk") : t("batteryLow")) : "--");
       setText("outdoorSecondsSinceLastReading", hasOutdoorReading ? formatInteger(data.outdoorSecondsSinceLastReading, " s") : "--");
 
       if (hasIndoorReading && hasOutdoorReading) {
@@ -679,6 +938,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
         });
     }
 
+    applyStaticTranslations();
     refreshWeatherData();
     setInterval(refreshWeatherData, 5000);
   </script>

@@ -6,9 +6,9 @@
 static const char *CONFIG_FILE = "/config.json";
 
 AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor,
-                            uint8_t defaultOutdoorSensorChannel) {
+                            uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage) {
     AppConfig config{String(defaultNtpServer), String(defaultTimezonePosix), defaultTempOffsetIndoor,
-                     defaultOutdoorSensorChannel};
+                     defaultOutdoorSensorChannel, String(defaultWebLanguage)};
     if (!LittleFS.begin()) return config;
     File configFile = LittleFS.open(CONFIG_FILE, "r");
     if (!configFile) { LittleFS.end(); return config; }
@@ -16,10 +16,14 @@ AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTim
     if (deserializeJson(jsonDocument, configFile) == DeserializationError::Ok) {
         const char *ntpServerValue = jsonDocument["ntp_server"] | "";
         const char *timezoneValue  = jsonDocument["timezone"]   | "";
+        const char *webLanguageValue = jsonDocument["web_language"] | "";
         const float tempOffsetIndoor = jsonDocument["temp_offset_indoor"] | defaultTempOffsetIndoor;
         const int outdoorSensorChannel = jsonDocument["outdoor_sensor_channel"] | int(defaultOutdoorSensorChannel);
         if (strlen(ntpServerValue) > 0) config.ntpServer     = ntpServerValue;
         if (strlen(timezoneValue)  > 0) config.timezonePosix = timezoneValue;
+        if (strcmp(webLanguageValue, "en") == 0 || strcmp(webLanguageValue, "de") == 0) {
+            config.webLanguage = webLanguageValue;
+        }
         if (isfinite(tempOffsetIndoor)) config.tempOffsetIndoor = tempOffsetIndoor;
         if (outdoorSensorChannel >= 1 && outdoorSensorChannel <= 3) {
             config.outdoorSensorChannel = outdoorSensorChannel;
@@ -39,6 +43,7 @@ bool ConfigStore::save(const AppConfig &config) {
     jsonDocument["timezone"]   = config.timezonePosix;
     jsonDocument["temp_offset_indoor"] = config.tempOffsetIndoor;
     jsonDocument["outdoor_sensor_channel"] = config.outdoorSensorChannel;
+    jsonDocument["web_language"] = config.webLanguage;
     if (serializeJson(jsonDocument, configFile) == 0) {
         configFile.close();
         LittleFS.end();

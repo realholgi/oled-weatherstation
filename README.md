@@ -1,6 +1,6 @@
 # WetterStation
 
-ESP8266 weather station with OLED display, indoor/outdoor sensors, NTP time, and a live web UI.
+ESP8266 weather station with OLED display, indoor/outdoor sensors, NTP time, and a live web UI in German or English.
 
 It compares indoor and outdoor absolute humidity to show whether airing out the room currently makes sense.
 
@@ -20,7 +20,7 @@ It compares indoor and outdoor absolute humidity to show whether airing out the 
 | Indoor sensor | HTU21 / SHT21 (temperature + humidity)                    |
 | Outdoor sensor | ALDI FWS 433 MHz wireless sensor (temperature + humidity) |
 
-The default outdoor channel is `3`. You can change it in the captive portal.
+The default outdoor channel is `3`. You can change it in the captive portal, along with the default webpage language.
 
 **Pin assignments:**
 
@@ -49,9 +49,9 @@ The default outdoor channel is `3`. You can change it in the captive portal.
 ## Features
 
 - OLED view with time, indoor/outdoor temperature, relative humidity, absolute humidity, and humidity difference
-- Live web interface plus JSON endpoint
+- Live web interface in German or English plus JSON endpoint
 - WiFi captive portal on first boot or double-reset
-- Configurable NTP server, timezone, indoor temperature offset, and outdoor sensor channel
+- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, and webpage language
 - OTA updates after the initial USB flash
 
 ## Setup
@@ -66,6 +66,7 @@ Connect to it and enter:
 - POSIX timezone
 - indoor temperature offset
 - outdoor sensor channel (`1`-`3`)
+- webpage language (`Deutsch` or `English`)
 
 The configuration is stored in LittleFS as `/config.json`.
 

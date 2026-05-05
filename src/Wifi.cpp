@@ -16,6 +16,7 @@ WiFiManagerParameter *Wifi::ntpParam = nullptr;
 WiFiManagerParameter *Wifi::tzParam = nullptr;
 WiFiManagerParameter *Wifi::tempOffsetIndoorParam = nullptr;
 WiFiManagerParameter *Wifi::outdoorSensorChannelParam = nullptr;
+WiFiManagerParameter *Wifi::webLanguageParam = nullptr;
 
 Wifi::Wifi() : doubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS) {
 }
@@ -40,6 +41,20 @@ String Wifi::buildTimezoneSelectHtml(const String &currentPosix) {
         selectMarkup += TIMEZONES[i].name;
         selectMarkup += "</option>";
     }
+    selectMarkup += "</select>";
+    return selectMarkup;
+}
+
+String Wifi::buildLanguageSelectHtml(const String &currentLanguage) {
+    const bool isEnglish = currentLanguage == "en";
+    String selectMarkup = "<br/><label>Webpage Language</label>"
+                          "<select onchange=\"document.getElementById('web_language').value=this.value\">";
+    selectMarkup += "<option value='de'";
+    if (!isEnglish) selectMarkup += " selected";
+    selectMarkup += ">Deutsch</option>";
+    selectMarkup += "<option value='en'";
+    if (isEnglish) selectMarkup += " selected";
+    selectMarkup += ">English</option>";
     selectMarkup += "</select>";
     return selectMarkup;
 }
@@ -76,22 +91,28 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
     activeConfig = &config;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
+    String languageSelectHtml = buildLanguageSelectHtml(config.webLanguage);
     String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
     String outdoorSensorChannelValue = formatIntegerValue(config.outdoorSensorChannel);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
+    WiFiManagerParameter languageSelectRaw(languageSelectHtml.c_str());
     WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
+    WiFiManagerParameter webLanguage("web_language", "", config.webLanguage.c_str(), 8, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
     WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
     WiFiManagerParameter outdoorSensorChannel("outdoor_sensor_channel", "Outdoor Sensor Channel",
                                               outdoorSensorChannelValue.c_str(), 4, "type='number' min='1' max='3' step='1'");
 
     tzParam  = &tzHidden;
+    webLanguageParam = &webLanguage;
     ntpParam = &ntpServer;
     tempOffsetIndoorParam = &tempOffsetIndoor;
     outdoorSensorChannelParam = &outdoorSensorChannel;
 
     wifiManager.addParameter(&tzSelectRaw);
+    wifiManager.addParameter(&languageSelectRaw);
     wifiManager.addParameter(&tzHidden);
+    wifiManager.addParameter(&webLanguage);
     wifiManager.addParameter(&ntpServer);
     wifiManager.addParameter(&tempOffsetIndoor);
     wifiManager.addParameter(&outdoorSensorChannel);
@@ -112,13 +133,17 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
 }
 
 void Wifi::saveConfigParameters() {
-    if (!activeConfig || !ntpParam || !tzParam || !tempOffsetIndoorParam || !outdoorSensorChannelParam) return;
+    if (!activeConfig || !ntpParam || !tzParam || !tempOffsetIndoorParam || !outdoorSensorChannelParam || !webLanguageParam) return;
     const char *ntpServerValue = ntpParam->getValue();
     const char *timezoneValue = tzParam->getValue();
+    const char *webLanguageValue = webLanguageParam->getValue();
     const char *tempOffsetValue = tempOffsetIndoorParam->getValue();
     const char *outdoorSensorChannelValue = outdoorSensorChannelParam->getValue();
     if (ntpServerValue && strlen(ntpServerValue) > 0) activeConfig->ntpServer     = ntpServerValue;
     if (timezoneValue && strlen(timezoneValue) > 0) activeConfig->timezonePosix = timezoneValue;
+    if (webLanguageValue && (strcmp(webLanguageValue, "de") == 0 || strcmp(webLanguageValue, "en") == 0)) {
+        activeConfig->webLanguage = webLanguageValue;
+    }
     if (tempOffsetValue && strlen(tempOffsetValue) > 0) {
         char *end = nullptr;
         const float parsedIndoorTemperatureOffset = strtof(tempOffsetValue, &end);
@@ -158,22 +183,28 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
     mdnsReady = false;
 
     String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
+    String languageSelectHtml = buildLanguageSelectHtml(config.webLanguage);
     String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
     String outdoorSensorChannelValue = formatIntegerValue(config.outdoorSensorChannel);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
+    WiFiManagerParameter languageSelectRaw(languageSelectHtml.c_str());
     WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
+    WiFiManagerParameter webLanguage("web_language", "", config.webLanguage.c_str(), 8, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
     WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
     WiFiManagerParameter outdoorSensorChannel("outdoor_sensor_channel", "Outdoor Sensor Channel",
                                               outdoorSensorChannelValue.c_str(), 4, "type='number' min='1' max='3' step='1'");
 
     tzParam  = &tzHidden;
+    webLanguageParam = &webLanguage;
     ntpParam = &ntpServer;
     tempOffsetIndoorParam = &tempOffsetIndoor;
     outdoorSensorChannelParam = &outdoorSensorChannel;
 
     wifiManager.addParameter(&tzSelectRaw);
+    wifiManager.addParameter(&languageSelectRaw);
     wifiManager.addParameter(&tzHidden);
+    wifiManager.addParameter(&webLanguage);
     wifiManager.addParameter(&ntpServer);
     wifiManager.addParameter(&tempOffsetIndoor);
     wifiManager.addParameter(&outdoorSensorChannel);

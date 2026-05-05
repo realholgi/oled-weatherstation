@@ -12,9 +12,10 @@
 WebServer::WebServer() : server(80) {
 }
 
-void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns) {
+void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage) {
     indoorSensorRef = &indoorSensor;
     outdoorSensorRef = &outdoorSensor;
+    pageLanguage = (webLanguage == "en") ? "en" : "de";
     server.on("/", [this]() { handleRoot(); });
     server.on("/data.json", HTTP_GET, [this]() {
         server.sendHeader("Connection", "close");
@@ -114,5 +115,7 @@ void WebServer::handleDataJson() {
 }
 
 void WebServer::handleRoot() {
-    server.send_P(200, "text/html", PAGE_Weather);
+    String page = FPSTR(PAGE_Weather);
+    page.replace("__DEFAULT_LANG__", pageLanguage);
+    server.send(200, "text/html", page);
 }

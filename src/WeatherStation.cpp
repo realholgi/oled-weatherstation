@@ -78,7 +78,7 @@ void setup() {
     }
 
     AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
-                                            OUTDOOR_SENSOR_CHANNEL);
+                                            OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE);
     indoorSensor.setTemperatureOffset(appConfig.tempOffsetIndoor);
 
     displayScreen.showStartupConfig();
@@ -88,7 +88,7 @@ void setup() {
     const bool wifiConnected = wifiController.connect(displayScreen, appConfig);
     if (wifiConnected) {
         displayScreen.showStartupHttp();
-        webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady());
+        webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady(), appConfig.webLanguage);
 
         displayScreen.showStartupTime();
         timeClient.configure(appConfig.timezonePosix.c_str(), appConfig.ntpServer.c_str());
