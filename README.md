@@ -1,10 +1,11 @@
 # WetterStation
 
-ESP8266-based weather station with OLED display, indoor/outdoor sensors, accurate time, and a live web interface.
-The main purpose is to show the absolute humidity between in- and outdoor and if venting is safe.
+ESP8266 weather station with OLED display, indoor/outdoor sensors, NTP time, and a live web UI.
 
-Outdoor readings come from a 433 MHz wireless sensor. Indoor readings come from an HTU21/SHT21 I2C sensor. 
-The device serves a small web UI at `http://wetter.local` and exposes raw readings at `http://wetter.local/data.json`.
+It compares indoor and outdoor absolute humidity to show whether airing out the room currently makes sense.
+
+- Web UI: `http://wetter.local`
+- JSON: `http://wetter.local/data.json`
 
 <p align="center">
   <img src="images/wetterstation.jpeg" alt="Complete WetterStation hardware setup" width="720">
@@ -19,7 +20,7 @@ The device serves a small web UI at `http://wetter.local` and exposes raw readin
 | Indoor sensor | HTU21 / SHT21 (temperature + humidity)                    |
 | Outdoor sensor | ALDI FWS 433 MHz wireless sensor (temperature + humidity) |
 
-The firmware listens for outdoor packets on channel `3` by default. The active outdoor sensor channel can be changed in the captive portal and is persisted in `/config.json`.
+The default outdoor channel is `3`. You can change it in the captive portal.
 
 **Pin assignments:**
 
@@ -47,16 +48,28 @@ The firmware listens for outdoor packets on channel `3` by default. The active o
 
 ## Features
 
-- Displays current time, indoor and outdoor temperature, relative and absolute humidity, and their respective difference
-- Live web interface at `http://wetter.local` with auto-updating values
-- JSON endpoint at `http://wetter.local/data.json`
-- WiFi setup via captive portal and on double-reset
-- Configurable outdoor sensor channel (`1`-`3`) via captive portal
-- Online time sync via NTP with timezone/DST handling from the configured POSIX timezone
+- OLED view with time, indoor/outdoor temperature, relative humidity, absolute humidity, and humidity difference
+- Live web interface plus JSON endpoint
+- WiFi captive portal on first boot or double-reset
+- Configurable NTP server, timezone, indoor temperature offset, and outdoor sensor channel
+- OTA updates after the initial USB flash
 
-## Build & Flash
+## Setup
 
 Requires [PlatformIO](https://platformio.org/).
+
+On first boot, or after a double-reset within 2 seconds, the device starts a WiFi access point named **wetter**.
+Connect to it and enter:
+
+- WiFi credentials
+- NTP server
+- POSIX timezone
+- indoor temperature offset
+- outdoor sensor channel (`1`-`3`)
+
+The configuration is stored in LittleFS as `/config.json`.
+
+## Build & Flash
 
 ```bash
 # Build firmware
@@ -65,12 +78,6 @@ pio run
 # Flash to Wemos D1 Mini
 pio run --target upload
 
-# Upload over Wi-Fi after the first USB flash
-pio run -e d1_mini_ota -t upload
-
-# Clean build artifacts
-pio run --target clean
-
 # Open serial monitor (115200 baud)
 pio device monitor
 
@@ -78,81 +85,25 @@ pio device monitor
 pio test --environment native
 ```
 
-`platformio.ini` is the authoritative build configuration. `CMakeLists.txt` is only present for IDE integration.
-
 ## OTA Uploads
 
-The firmware exposes Arduino OTA on the hostname `wetter.local` after it has connected to WiFi.
+After the first USB flash, the firmware exposes Arduino OTA on `wetter.local`.
 
-- The first flash must still be done over USB.
-- After that, use `pio run -e d1_mini_ota -t upload`.
+- Upload with:
+
+```bash
+pio run -e d1_mini_ota -t upload
+```
+
 - If mDNS resolution is unreliable on your network, replace `upload_port` with the device IP address for the upload.
 - To require an OTA password, add a build flag such as `"-D OTA_PASSWORD=\\\"secret\\\""` to the OTA environment.
 
-## First-Time Setup
-
-On first boot (or after a double-reset within 2 seconds), the device starts a WiFi access point named **wetter**. 
-Connect to it and open the captive portal to enter your WiFi credentials. The device reboots and connects automatically on subsequent boots.
-
-The captive portal also stores:
-
-- the NTP server
-- the POSIX timezone string used by `configTzTime()`
-- the indoor temperature calibration offset
-- the outdoor sensor channel (`1`-`3`)
-
-Configuration is persisted in LittleFS as `/config.json`.
-
-## Architecture
-
-The firmware is organized around a few small components:
-
-- `TimeClient` configures NTP and local time formatting
-- `SensorIndoor` reads the onboard temperature and humidity sensor
-- `SensorOutdoor` decodes the 433 MHz receiver data and applies plausibility checks
-- `Display` renders the current readings to the SSD1305 OLED
-- `WebServer` serves the HTML UI and `/data.json`
-- `Wifi` owns WiFiManager setup, captive portal flow, and mDNS setup
-- `ConfigStore` loads and saves persisted NTP, timezone, indoor temperature offset, and outdoor sensor channel settings
-- `HumidityMath` calculates absolute humidity and dew point
-- `SensorSanity` provides range-checking and plausibility filters for sensor values
-
-Two `Ticker` instances drive periodic work without blocking:
-
-- `tickerForInternalSensorUpdate` triggers indoor sensor updates every 2 seconds
-- `tickerForExternalSensorInvalidate` marks outdoor data stale after 120 seconds without a fresh packet
-
-Time sync uses the ESP8266 time stack directly through `configTzTime()` and `localtime()`. DST handling therefore comes from the configured POSIX timezone.
-
-The 433 MHz receiver path is interrupt-driven. Functions that run on that boundary must stay in IRAM and use `IRAM_ATTR`.
-
-## Testing
-
-Native PlatformIO tests cover standalone logic that does not require ESP8266 hardware:
-
-- `test/test_humidity`
-- `test/test_sensor_sanity`
-
-When adding testable logic, keep it in small standalone units that can run in the `native` environment.
-
 ## Development Notes
 
+- Keep large HTML strings in `PROGMEM`.
 - Use `StaticJsonDocument` or `JsonDocument`; do not reintroduce deprecated `DynamicJsonDocument` patterns.
-- Keep large HTML strings and bitmap assets in `PROGMEM` to preserve RAM.
 - The board uses `eagle.flash.4m1m.ld`: 4 MB flash with 1 MB reserved for LittleFS.
-- If you change ISR-adjacent code, keep it short, non-blocking, and safe for interrupt context.
-
-## Dependencies
-
-Managed via PlatformIO (`platformio.ini`):
-
-- ArduinoJson
-- WiFiManager
-- DoubleResetDetector
-- Adafruit HTU21DF Library
-- Adafruit GFX Library
-- Adafruit SSD1305 (subclassed as `WeatherOled` in `src/` for hardware-specific offset)
-- FWS_433_Receiver (bundled in `lib/`)
+- `platformio.ini` is the authoritative build configuration.
 
 ## License
 
