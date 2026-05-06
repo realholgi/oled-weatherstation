@@ -3,7 +3,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 <html lang="__DEFAULT_LANG__">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wetterstation</title>
   <style>
     :root {
@@ -32,6 +32,10 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       min-height: 100%;
     }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
     body {
       font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       color: var(--text);
@@ -39,6 +43,11 @@ const char PAGE_Weather[] PROGMEM = R"=====(
         radial-gradient(circle at top left, rgba(15, 127, 155, 0.18), transparent 32%),
         radial-gradient(circle at top right, rgba(225, 126, 57, 0.16), transparent 28%),
         linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      padding:
+        env(safe-area-inset-top, 0px)
+        env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px)
+        env(safe-area-inset-left, 0px);
     }
 
     .page {
@@ -279,8 +288,8 @@ const char PAGE_Weather[] PROGMEM = R"=====(
     }
 
     .row {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 14px;
       align-items: center;
       padding: 12px 0;
@@ -412,7 +421,6 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       .hero-top,
       .sensor-head,
       .insight-head,
-      .row,
       .difference-meta {
         flex-direction: column;
         align-items: flex-start;
@@ -434,6 +442,127 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 
       .row-value {
         text-align: left;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        width: min(100%, calc(100% - 18px));
+        padding: 12px 0 22px;
+      }
+
+      .hero,
+      .card {
+        border-radius: 20px;
+      }
+
+      .hero {
+        padding: 18px 16px 16px;
+        margin-bottom: 14px;
+      }
+
+      .hero-top {
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .hero-copy {
+        margin-top: 10px;
+        font-size: 0.92rem;
+      }
+
+      .hero-side {
+        width: 100%;
+        gap: 10px;
+      }
+
+      .live-pill,
+      .language-switch {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .language-button {
+        flex: 1 1 0;
+        min-height: 40px;
+      }
+
+      .hero-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-stat {
+        padding: 12px 14px;
+      }
+
+      .hero-stat:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .grid {
+        gap: 14px;
+      }
+
+      .sensor-card,
+      .insight-card {
+        padding: 18px 16px;
+      }
+
+      .sensor-temp {
+        margin-top: 16px;
+        font-size: clamp(2.1rem, 11vw, 3rem);
+      }
+
+      .sensor-temp-sub,
+      .recommendation-note,
+      .insight-copy {
+        font-size: 0.9rem;
+      }
+
+      .rows {
+        gap: 8px;
+      }
+
+      .row {
+        gap: 8px;
+        padding: 10px 0;
+      }
+
+      .row-label {
+        font-size: 0.88rem;
+      }
+
+      .row-value {
+        font-size: 0.95rem;
+      }
+
+      .recommendation,
+      .difference-box {
+        padding: 16px;
+        border-radius: 18px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      h1 {
+        font-size: clamp(1.8rem, 11vw, 2.4rem);
+      }
+
+      .hero-metrics,
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-stat:last-child {
+        grid-column: auto;
+      }
+
+      .difference-meta {
+        gap: 4px;
+      }
+
+      .live-pill {
+        white-space: normal;
       }
     }
   </style>
