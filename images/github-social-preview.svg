@@ -1,0 +1,52 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="72" y1="48" x2="1180" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF6FB"/>
+      <stop offset="0.5" stop-color="#D7E7F2"/>
+      <stop offset="1" stop-color="#BFD8E8"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="876" y1="80" x2="1222" y2="580" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F5574"/>
+      <stop offset="1" stop-color="#0A2D47"/>
+    </linearGradient>
+    <linearGradient id="shotFade" x1="52" y1="100" x2="784" y2="572" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0A2D47" stop-opacity="0.10"/>
+    </linearGradient>
+    <clipPath id="shotClip">
+      <rect x="496" y="72" width="732" height="496" rx="28"/>
+    </clipPath>
+    <clipPath id="deviceClip">
+      <rect x="64" y="280" width="392" height="260" rx="24"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <circle cx="1080" cy="120" r="148" fill="#FFFFFF" fill-opacity="0.28"/>
+  <circle cx="1188" cy="604" r="162" fill="#FFFFFF" fill-opacity="0.18"/>
+  <circle cx="96" cy="592" r="110" fill="#8CC5DD" fill-opacity="0.18"/>
+
+  <rect x="488" y="64" width="748" height="512" rx="32" fill="#FFFFFF" fill-opacity="0.84"/>
+  <g clip-path="url(#shotClip)">
+    <image href="webpage-shot.jpeg" x="496" y="72" width="732" height="496" preserveAspectRatio="xMidYMid meet"/>
+    <rect x="496" y="72" width="732" height="496" fill="url(#shotFade)"/>
+  </g>
+
+  <rect x="44" y="48" width="420" height="544" rx="34" fill="url(#panel)"/>
+  <rect x="72" y="78" width="180" height="34" rx="17" fill="#8EE3F5" fill-opacity="0.24"/>
+  <text x="162" y="100" text-anchor="middle" font-family="Helvetica" font-size="17" font-weight="700" fill="#DDF8FF">ESP8266 + OLED</text>
+
+  <text x="72" y="170" font-family="Helvetica" font-size="58" font-weight="800" fill="#FFFFFF">WetterStation</text>
+  <text x="72" y="220" font-family="Helvetica" font-size="24" font-weight="600" fill="#9FDBF0">ESP8266 weather station with OLED display and live web UI.</text>
+
+  <text x="72" y="266" font-family="Helvetica" font-size="19" font-weight="500" fill="#D7EEF7">Compares indoor and outdoor absolute humidity to show when airing out the room makes sense.</text>
+
+  <rect x="64" y="280" width="392" height="260" rx="24" fill="#FFFFFF" fill-opacity="0.12"/>
+  <g clip-path="url(#deviceClip)">
+    <image href="wetterstation.jpeg" x="70" y="292" width="380" height="220" preserveAspectRatio="xMidYMid slice"/>
+  </g>
+  <rect x="64" y="280" width="392" height="260" rx="24" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="2"/>
+
+  <rect x="72" y="544" width="132" height="1" fill="#C9E6F0" fill-opacity="0.35"/>
+  <text x="72" y="580" font-family="Helvetica" font-size="18" font-weight="700" letter-spacing="0.18em" fill="#D7EEF7">LOCAL • LIVE • CLIMATE</text>
+</svg>
