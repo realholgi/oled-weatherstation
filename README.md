@@ -4,16 +4,36 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/realholgi/oled-weatherstation/blob/main/LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/realholgi/oled-weatherstation)](https://github.com/realholgi/oled-weatherstation/releases)
 
-ESP8266 weather station with OLED display, indoor/outdoor sensors, NTP time, and a live web UI in German or English.
+ESP8266 weather station that compares indoor and outdoor absolute humidity to show whether airing out the room currently makes sense.
 
-It compares indoor and outdoor absolute humidity to show whether airing out the room currently makes sense.
+It includes an OLED display, indoor and outdoor sensors, NTP time, and a live web UI in German or English.
 
 - Web UI: `http://wetter.local`
 - JSON: `http://wetter.local/data.json`
 
+## Why This Project
+
+- Gives a practical venting recommendation instead of only showing raw readings
+- Works directly on the device and in a live browser dashboard
+- Uses an inexpensive ESP8266 plus 433 MHz outdoor sensor setup
+
 <p align="center">
   <img src="images/wetterstation.jpeg" alt="Complete WetterStation hardware setup" width="720">
 </p>
+
+## Features
+
+- OLED view with time, indoor/outdoor temperature, relative humidity, absolute humidity, and humidity difference
+- Live web interface in German or English plus JSON endpoint
+- WiFi captive portal on first boot or double-reset
+- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, and webpage language
+- OTA updates after the initial USB flash
+
+## How The Venting Recommendation Works
+
+The station compares indoor and outdoor absolute humidity, not just relative humidity.
+
+If the outdoor air contains less water than the indoor air, opening the windows helps dry the room. If the difference is small, the recommendation is weak. If the outdoor air is more humid, airing out is not recommended.
 
 ## Quick Start
 
@@ -21,7 +41,7 @@ It compares indoor and outdoor absolute humidity to show whether airing out the 
 2. Join the `wetter` captive portal on first boot and save your WiFi settings.
 3. Open `http://wetter.local` to view the live dashboard.
 
-## Hardware
+## Bill Of Materials
 
 | Component        | Details                                                                                                                                                                       |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -33,12 +53,12 @@ It compares indoor and outdoor absolute humidity to show whether airing out the 
 
 The default outdoor channel is `3`. You can change it in the captive portal, along with the default webpage language.
 
-**Pin assignments:**
+## Pinout
 
 - OLED reset: D3
 - 433 MHz receiver: D6
 
-### Hardware Gallery
+## Hardware Gallery
 
 <p align="center">
   <img src="images/oled.png" alt="Back side of the OLED display" width="30%">
@@ -51,19 +71,11 @@ The default outdoor channel is `3`. You can change it in the captive portal, alo
   <img src="images/fws433-back.png" alt="Back side of the 433 MHz outdoor sensor" width="30%">
 </p>
 
-### Interface Gallery
+## Interface Gallery
 
 <p align="center">
   <img src="images/webpage-shot.jpeg" alt="Screenshot of the live weather webpage" width="50%">
 </p>
-
-## Features
-
-- OLED view with time, indoor/outdoor temperature, relative humidity, absolute humidity, and humidity difference
-- Live web interface in German or English plus JSON endpoint
-- WiFi captive portal on first boot or double-reset
-- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, and webpage language
-- OTA updates after the initial USB flash
 
 ## Setup
 
