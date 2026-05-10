@@ -11,7 +11,7 @@ bool isPlausibleHumidity(float humidity) {
 }
 
 bool isPlausibleAbsoluteHumidity(float absoluteHumidityGm3) {
-    return absoluteHumidityGm3 > 0.0f && absoluteHumidityGm3 < 200.0f;
+    return absoluteHumidityGm3 > 0.0f && absoluteHumidityGm3 < 150.0f;
 }
 
 }
