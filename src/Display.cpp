@@ -93,8 +93,7 @@ void Display::drawTextAt(int x, int y, const String &text, boolean updateDisplay
 void Display::drawIntegerAt(int x, int y, int value) {
     char textBuffer[27];
     oled.setCursor(x, y + OFFSET);
-    snprintf(textBuffer, sizeof(textBuffer), "%i", value);
-    if (strlen(textBuffer) == 1) oled.print(" ");
+    snprintf(textBuffer, sizeof(textBuffer), "%2i", value);
     oled.print(textBuffer);
 }
 
