@@ -22,10 +22,10 @@ public:
 private:
     FWS433 receiver;
     uint8_t expectedChannelValue;
-    volatile float humidityValue;
-    volatile float temperatureValue;
+    float humidityValue;
+    float temperatureValue;
     int batteryValue;
     float absoluteHumidityValue;
-    volatile uint32_t lastPacketReceivedAtMillis;
+    uint32_t lastPacketReceivedAtMillis;
     volatile bool staleReadingCheckDue;
 };

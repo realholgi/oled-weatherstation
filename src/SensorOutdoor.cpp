@@ -38,16 +38,11 @@ void SensorOutdoor::refreshMeasurements() {
             return;
         }
 
-        const uint32_t receivedAtMillis = millis();
-        const float absoluteHumidity = HumidityMath::calculateAbsoluteHumidity(decodedTemperature, receivedPacket.humidity);
-
-        noInterrupts();
-        lastPacketReceivedAtMillis = receivedAtMillis;
+        lastPacketReceivedAtMillis = millis();
         humidityValue = receivedPacket.humidity;
         temperatureValue = decodedTemperature;
         batteryValue = receivedPacket.battery ? 1 : 0;
-        absoluteHumidityValue = absoluteHumidity;
-        interrupts();
+        absoluteHumidityValue = HumidityMath::calculateAbsoluteHumidity(decodedTemperature, receivedPacket.humidity);
 
         DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", receivedPacket.temperature / 10,
                   abs(receivedPacket.temperature % 10), receivedPacket.humidity, receivedPacket.id);
