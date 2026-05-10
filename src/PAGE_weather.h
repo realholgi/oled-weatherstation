@@ -931,7 +931,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
     }
 
     function hasMeaningfulOutdoorReading(data) {
-      return data.outdoorValid === true && data.outdoorStale === false;
+      return data.outdoorValid === true;
     }
 
     function setRecommendationState(headlineKey, headlineClass, titleKey, noteKey, labelKey, fillPercent) {

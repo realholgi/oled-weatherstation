@@ -72,11 +72,9 @@ void WebServer::handleDataJson() {
         SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
         SensorSanity::isPlausibleAbsoluteHumidity(outdoorAbsoluteHumidity) &&
         outdoorSecondsSinceLastReading <= MAX_RECEIVE_WAIT_EXT_S;
-    const bool outdoorStale = !outdoorValid;
 
     jsonDocument["indoorValid"] = indoorValid;
     jsonDocument["outdoorValid"] = outdoorValid;
-    jsonDocument["outdoorStale"] = outdoorStale;
 
     if (indoorValid) {
         jsonDocument["indoorTemperatureCelsius"] = indoorSensor.temperature();
