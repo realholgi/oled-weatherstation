@@ -15,7 +15,7 @@ public:
 
     float humidity() const;
     float temperature() const;
-    int batteryStatus() const;
+    bool batteryStatus() const;
     float absoluteHumidity() const;
     uint32_t secondsSinceLastPacket() const;
 
@@ -24,7 +24,7 @@ private:
     uint8_t expectedChannelValue;
     float humidityValue;
     float temperatureValue;
-    int batteryValue;
+    bool batteryValue;
     float absoluteHumidityValue;
     uint32_t lastPacketReceivedAtMillis;
     volatile bool staleReadingCheckDue;

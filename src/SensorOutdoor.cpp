@@ -41,7 +41,7 @@ void SensorOutdoor::refreshMeasurements() {
         lastPacketReceivedAtMillis = millis();
         humidityValue = receivedPacket.humidity;
         temperatureValue = decodedTemperature;
-        batteryValue = receivedPacket.battery ? 1 : 0;
+        batteryValue = receivedPacket.battery;
         absoluteHumidityValue = HumidityMath::calculateAbsoluteHumidity(decodedTemperature, receivedPacket.humidity);
 
         DEBUG_MSG("Temperature: %d.%d deg, Humidity: %u%% REL, ID: %u\n", receivedPacket.temperature / 10,
@@ -73,7 +73,7 @@ float SensorOutdoor::temperature() const {
     return temperatureValue;
 }
 
-int SensorOutdoor::batteryStatus() const {
+bool SensorOutdoor::batteryStatus() const {
     return batteryValue;
 }
 
