@@ -979,7 +979,8 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       }
 
       var difference = data.absoluteHumidityDifferenceGm3;
-      if (typeof difference !== "number" || !isFinite(difference)) {
+      var recommendation = data.ventingRecommendation;
+      if (typeof difference !== "number" || !isFinite(difference) || !recommendation) {
         setRecommendationState(
           "checkingData",
           "status-neutral",
@@ -993,7 +994,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
 
       var clampedFill = Math.min(Math.abs(difference) / 6.0, 1) * 100;
 
-      if (difference >= 3.0) {
+      if (recommendation === "vent") {
         setRecommendationState(
           "ventingGoodHeadline",
           "status-good",
@@ -1002,7 +1003,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
           "outsideDrier",
           clampedFill
         );
-      } else if (difference > 0.0) {
+      } else if (recommendation === "marginal") {
         setRecommendationState(
           "slightlyPositiveHeadline",
           "status-neutral",

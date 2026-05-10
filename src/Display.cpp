@@ -4,6 +4,7 @@
 #include "SensorOutdoor.h"
 #include "SensorSanity.h"
 #include "TimeClient.h"
+#include "VentingAdvice.h"
 #include "config.h"
 #include "icons.h"
 
@@ -152,14 +153,10 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
         SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
         SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
-        float absoluteHumidityDifference = indoorSensor.absoluteHumidity() - outdoorSensor.absoluteHumidity();
-        if (abs(absoluteHumidityDifference) < 0.05f) {
-            absoluteHumidityDifference = 0.0f;
-        }
-        drawFloatAt(6, 82 + 4, absoluteHumidityDifference);
-        int color = WHITE;
-        if (absoluteHumidityDifference > 0.0 && abs(absoluteHumidityDifference) < MIN_DIFF) color = BLACK;
-        oled.drawBitmap(0, 3 + 82 + OFFSET, warning_icon16x16, 16, 16, color);
+        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity());
+        drawFloatAt(6, 82 + 4, advice.difference);
+        oled.drawBitmap(0, 3 + 82 + OFFSET, warning_icon16x16, 16, 16,
+                       advice.recommendation == VentingAdvice::Recommendation::VENT ? WHITE : BLACK);
     }
 
     drawTextAt(6, 82 + 4 + 22, formattedTime);

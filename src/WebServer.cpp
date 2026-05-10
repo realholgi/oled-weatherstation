@@ -6,6 +6,7 @@
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
 #include "SensorSanity.h"
+#include "VentingAdvice.h"
 #include "config.h"
 #include "PAGE_weather.h"
 
@@ -102,9 +103,15 @@ void WebServer::handleDataJson() {
     jsonDocument["outdoorSecondsSinceLastReading"] = outdoorSecondsSinceLastReading;
 
     if (indoorValid && outdoorValid) {
-        jsonDocument["absoluteHumidityDifferenceGm3"] = indoorAbsoluteHumidity - outdoorAbsoluteHumidity;
+        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorAbsoluteHumidity, outdoorAbsoluteHumidity);
+        jsonDocument["absoluteHumidityDifferenceGm3"] = advice.difference;
+        jsonDocument["ventingRecommendation"] =
+            advice.recommendation == VentingAdvice::Recommendation::VENT     ? "vent"
+          : advice.recommendation == VentingAdvice::Recommendation::MARGINAL ? "marginal"
+                                                                              : "wait";
     } else {
         jsonDocument["absoluteHumidityDifferenceGm3"] = nullptr;
+        jsonDocument["ventingRecommendation"] = nullptr;
     }
 
     server.setContentLength(measureJson(jsonDocument));
