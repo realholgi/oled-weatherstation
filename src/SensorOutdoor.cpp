@@ -87,7 +87,5 @@ float SensorOutdoor::absoluteHumidity() const {
 }
 
 uint32_t SensorOutdoor::secondsSinceLastPacket() const {
-    const uint32_t now = millis();
-    if (now < lastPacketReceivedAtMillis) return 0;
-    return (now - lastPacketReceivedAtMillis) / 1000;
+    return (millis() - lastPacketReceivedAtMillis) / 1000;
 }
