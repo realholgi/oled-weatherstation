@@ -128,7 +128,7 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
         oled.print("%");
     }
 
-    if (SensorSanity::isPlausibleHumidity(outdoorSensor.absoluteHumidity())) {
+    if (SensorSanity::isPlausibleAbsoluteHumidity(outdoorSensor.absoluteHumidity())) {
         drawFloatAt(34, 30, outdoorSensor.absoluteHumidity());
     }
 
@@ -146,7 +146,7 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
         oled.print("%");
     }
 
-    if (SensorSanity::isPlausibleHumidity(indoorSensor.absoluteHumidity())) {
+    if (SensorSanity::isPlausibleAbsoluteHumidity(indoorSensor.absoluteHumidity())) {
         drawFloatAt(34, 30 + 40 + 2, indoorSensor.absoluteHumidity());
     }
 

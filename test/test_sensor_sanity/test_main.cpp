@@ -34,6 +34,21 @@ void test_rejects_humidity_at_or_above_upper_limit(void) {
     TEST_ASSERT_FALSE(SensorSanity::isPlausibleHumidity(100.1f));
 }
 
+void test_accepts_absolute_humidity_inside_limits(void) {
+    TEST_ASSERT_TRUE(SensorSanity::isPlausibleAbsoluteHumidity(0.1f));
+    TEST_ASSERT_TRUE(SensorSanity::isPlausibleAbsoluteHumidity(199.9f));
+}
+
+void test_rejects_absolute_humidity_at_or_below_lower_limit(void) {
+    TEST_ASSERT_FALSE(SensorSanity::isPlausibleAbsoluteHumidity(0.0f));
+    TEST_ASSERT_FALSE(SensorSanity::isPlausibleAbsoluteHumidity(-1.0f));
+}
+
+void test_rejects_absolute_humidity_at_or_above_upper_limit(void) {
+    TEST_ASSERT_FALSE(SensorSanity::isPlausibleAbsoluteHumidity(200.0f));
+    TEST_ASSERT_FALSE(SensorSanity::isPlausibleAbsoluteHumidity(200.1f));
+}
+
 int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
@@ -44,5 +59,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_accepts_humidity_inside_limits);
     RUN_TEST(test_rejects_humidity_at_or_below_lower_limit);
     RUN_TEST(test_rejects_humidity_at_or_above_upper_limit);
+    RUN_TEST(test_accepts_absolute_humidity_inside_limits);
+    RUN_TEST(test_rejects_absolute_humidity_at_or_below_lower_limit);
+    RUN_TEST(test_rejects_absolute_humidity_at_or_above_upper_limit);
     return UNITY_END();
 }
