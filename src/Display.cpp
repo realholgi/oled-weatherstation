@@ -87,9 +87,7 @@ void Display::drawTextAt(int x, int y, const char *text, boolean updateDisplay) 
 }
 
 void Display::drawTextAt(int x, int y, const String &text, boolean updateDisplay) {
-    oled.setCursor(x, y + OFFSET);
-    oled.print(text);
-    if (updateDisplay) oled.display();
+    drawTextAt(x, y, text.c_str(), updateDisplay);
 }
 
 void Display::drawIntegerAt(int x, int y, int value) {
