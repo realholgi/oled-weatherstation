@@ -31,7 +31,7 @@ private:
     void drawTextAt(int x, int y, const char *text, boolean updateDisplay = true);
     void drawTextAt(int x, int y, const String &text, boolean updateDisplay = true);
     void drawIntegerAt(int x, int y, int value);
-    void drawFloatAt(int x, int y, double value, byte decimals = 1, int minimumWidth = 0);
+    void drawFloatAt(int x, int y, double value, byte decimals = 1, int minimumWidth = 5);
 
     WeatherOled oled;
 };

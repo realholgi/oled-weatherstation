@@ -102,9 +102,6 @@ void Display::drawFloatAt(int x, int y, double value, byte decimals, int minimum
     char textBuffer[27];
     oled.setCursor(x, y + OFFSET);
     dtostrf(value, minimumWidth, decimals, textBuffer);
-    int textLength = strlen(textBuffer);
-    if (textLength == 3) oled.print(F("  "));
-    if (textLength == 4) oled.print(F(" "));
     oled.print(textBuffer);
 }
 
