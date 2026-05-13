@@ -687,7 +687,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
             </div>
             <div class="difference-meta">
               <span id="differenceLabel">Neutral</span>
-              <span id="differenceThresholdLabel">Schwelle: 3.0 g/m³</span>
+              <span id="differenceThresholdLabel">Schwelle:</span>
             </div>
           </div>
         </div>
@@ -728,7 +728,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
         insightCopy: "Die Entscheidung basiert auf der absoluten Feuchtigkeit innen gegen außen. Je deutlicher die Außenluft trockener ist, desto sinnvoller ist Lüften.",
         currentAssessmentLabel: "Aktuelle Einschätzung",
         absoluteDifferenceLabel: "Absolute Differenz",
-        differenceThresholdLabel: "Schwelle: 3.0 g/m³",
+        differenceThresholdLabel: "Schwelle:",
         checkingData: "Prüfe Daten",
         waitingForData: "Warte auf Daten",
         recommendationAutorefresh: "Die Seite aktualisiert sich automatisch alle 5 Sekunden.",
@@ -779,7 +779,7 @@ const char PAGE_Weather[] PROGMEM = R"=====(
         insightCopy: "The recommendation compares indoor and outdoor absolute humidity. The more clearly the outside air is drier, the more worthwhile venting becomes.",
         currentAssessmentLabel: "Current assessment",
         absoluteDifferenceLabel: "Absolute difference",
-        differenceThresholdLabel: "Threshold: 3.0 g/m³",
+        differenceThresholdLabel: "Threshold:",
         checkingData: "Checking data",
         waitingForData: "Waiting for data",
         recommendationAutorefresh: "The page refreshes automatically every 5 seconds.",
@@ -1038,6 +1038,10 @@ const char PAGE_Weather[] PROGMEM = R"=====(
       setText("outdoorAbsoluteHumidityGm3", hasOutdoorReading ? formatRounded(data.outdoorAbsoluteHumidityGm3, " g/m³") : "--");
       setText("outdoorBatteryOk", hasOutdoorReading ? (data.outdoorBatteryOk ? t("batteryOk") : t("batteryLow")) : "--");
       setText("outdoorSecondsSinceLastReading", hasOutdoorReading ? formatInteger(data.outdoorSecondsSinceLastReading, " s") : "--");
+
+      if (typeof data.ventingThresholdGm3 === "number") {
+        setText("differenceThresholdLabel", t("differenceThresholdLabel") + " " + formatRounded(data.ventingThresholdGm3, " g/m³"));
+      }
 
       if (hasIndoorReading && hasOutdoorReading) {
         setText("absoluteHumidityDifferenceGm3", formatRounded(data.absoluteHumidityDifferenceGm3, " g/m³"));

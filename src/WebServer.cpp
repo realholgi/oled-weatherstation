@@ -13,10 +13,11 @@
 WebServer::WebServer() : server(80) {
 }
 
-void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage) {
+void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage, float threshold) {
     indoorSensorRef = &indoorSensor;
     outdoorSensorRef = &outdoorSensor;
     pageLanguage = (webLanguage == "en") ? "en" : "de";
+    ventingThreshold = threshold;
     server.on("/", [this]() { handleRoot(); });
     server.on("/data.json", HTTP_GET, [this]() {
         server.sendHeader("Connection", "close");
@@ -101,9 +102,10 @@ void WebServer::handleDataJson() {
         jsonDocument["outdoorBatteryOk"] = nullptr;
     }
     jsonDocument["outdoorSecondsSinceLastReading"] = outdoorSecondsSinceLastReading;
+    jsonDocument["ventingThresholdGm3"] = ventingThreshold;
 
     if (indoorValid && outdoorValid) {
-        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorAbsoluteHumidity, outdoorAbsoluteHumidity);
+        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorAbsoluteHumidity, outdoorAbsoluteHumidity, ventingThreshold);
         jsonDocument["absoluteHumidityDifferenceGm3"] = advice.difference;
         jsonDocument["ventingRecommendation"] =
             advice.recommendation == VentingAdvice::Recommendation::VENT     ? "vent"

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ESP8266WebServer.h>
+#include "config.h"
 
 class SensorIndoor;
 class SensorOutdoor;
@@ -8,7 +9,7 @@ class SensorOutdoor;
 class WebServer {
 public:
     WebServer();
-    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage);
+    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage, float ventingThreshold);
     void handleClient();
 
 private:
@@ -18,6 +19,7 @@ private:
 
     SensorIndoor *indoorSensorRef = nullptr;
     SensorOutdoor *outdoorSensorRef = nullptr;
+    float ventingThreshold = DEFAULT_VENTING_THRESHOLD;
 
     void handleRoot();
     void handleNotFound();

@@ -27,6 +27,7 @@ private:
     static WiFiManagerParameter *tempOffsetIndoorParam;
     static WiFiManagerParameter *outdoorSensorChannelParam;
     static WiFiManagerParameter *webLanguageParam;
+    static WiFiManagerParameter *ventingThresholdParam;
 
     static void setActiveDisplay(Display &screen);
     static Display &activeDisplayRef();

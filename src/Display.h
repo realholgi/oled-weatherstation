@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include "WeatherOled.h"
+#include "config.h"
 
 class SensorIndoor;
 class SensorOutdoor;
@@ -25,6 +26,7 @@ public:
     void showConfigPortalReset();
     void showConfigPortalSsid(const String &ssid);
     void appendWifiConnectionProgress();
+    void setVentingThreshold(float threshold);
     void renderMeasurements(TimeClient &timeClient, const SensorIndoor &indoorSensor, const SensorOutdoor &outdoorSensor);
 
 private:
@@ -34,4 +36,5 @@ private:
     void drawFloatAt(int x, int y, double value, byte decimals = 1, int minimumWidth = 5);
 
     WeatherOled oled;
+    float ventingThreshold = DEFAULT_VENTING_THRESHOLD;
 };

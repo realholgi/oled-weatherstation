@@ -11,6 +11,6 @@ struct Result {
     Recommendation recommendation;
 };
 
-Result calculate(float indoorAbsHumidity, float outdoorAbsHumidity);
+Result calculate(float indoorAbsHumidity, float outdoorAbsHumidity, float ventingThreshold = VENTING_THRESHOLD);
 
 }

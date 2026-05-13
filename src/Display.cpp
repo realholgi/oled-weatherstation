@@ -76,6 +76,10 @@ void Display::showConfigPortalSsid(const String &ssid) {
     drawTextAt(6, 40, ssid);
 }
 
+void Display::setVentingThreshold(float threshold) {
+    ventingThreshold = threshold;
+}
+
 void Display::appendWifiConnectionProgress() {
     oled.print(".");
     oled.display();
@@ -153,7 +157,7 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
         SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
         SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
-        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity());
+        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity(), ventingThreshold);
         drawFloatAt(6, 82 + 4, advice.difference);
         oled.drawBitmap(0, 3 + 82 + OFFSET, warning_icon16x16, 16, 16,
                        advice.recommendation == VentingAdvice::Recommendation::VENT ? WHITE : BLACK);

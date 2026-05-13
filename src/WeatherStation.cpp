@@ -78,8 +78,9 @@ void setup() {
     }
 
     AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
-                                            OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE);
+                                            OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
     indoorSensor.setTemperatureOffset(appConfig.tempOffsetIndoor);
+    displayScreen.setVentingThreshold(appConfig.ventingThreshold);
 
     displayScreen.showStartupConfig();
     if (wifiController.shouldStartConfigPortal(displayScreen)) { wifiController.startConfigPortal(displayScreen, appConfig); }
@@ -88,7 +89,7 @@ void setup() {
     const bool wifiConnected = wifiController.connect(displayScreen, appConfig);
     if (wifiConnected) {
         displayScreen.showStartupHttp();
-        webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady(), appConfig.webLanguage);
+        webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady(), appConfig.webLanguage, appConfig.ventingThreshold);
 
         displayScreen.showStartupTime();
         timeClient.configure(appConfig.timezonePosix.c_str(), appConfig.ntpServer.c_str());
