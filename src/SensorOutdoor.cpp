@@ -7,7 +7,7 @@
 #include "config.h"
 
 SensorOutdoor::SensorOutdoor()
-    : expectedChannelValue(OUTDOOR_SENSOR_CHANNEL),
+    : expectedChannelValue(DEFAULT_OUTDOOR_SENSOR_CHANNEL),
       humidityValue(0),
       temperatureValue(-273),
       batteryValue(0),

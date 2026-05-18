@@ -78,7 +78,7 @@ void setup() {
     }
 
     AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
-                                            OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
+                                            DEFAULT_OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
     indoorSensor.setTemperatureOffset(appConfig.tempOffsetIndoor);
 
     displayScreen.showStartupConfig();
