@@ -80,13 +80,13 @@ void setup() {
     AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
                                             OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
     indoorSensor.setTemperatureOffset(appConfig.tempOffsetIndoor);
-    displayScreen.setVentingThreshold(appConfig.ventingThreshold);
 
     displayScreen.showStartupConfig();
     if (wifiController.shouldStartConfigPortal(displayScreen)) { wifiController.startConfigPortal(displayScreen, appConfig); }
 
     displayScreen.showStartupWifi();
     const bool wifiConnected = wifiController.connect(displayScreen, appConfig);
+    displayScreen.setVentingThreshold(appConfig.ventingThreshold);  // after connect() so portal changes are picked up
     if (wifiConnected) {
         displayScreen.showStartupHttp();
         webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady(), appConfig.webLanguage, appConfig.ventingThreshold);
