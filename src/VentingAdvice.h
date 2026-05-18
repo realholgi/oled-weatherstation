@@ -1,8 +1,8 @@
 #pragma once
 
-namespace VentingAdvice {
+#include "config.h"
 
-constexpr float VENTING_THRESHOLD = 3.0f;
+namespace VentingAdvice {
 
 enum class Recommendation { VENT, MARGINAL, WAIT };
 
@@ -11,6 +11,6 @@ struct Result {
     Recommendation recommendation;
 };
 
-Result calculate(float indoorAbsHumidity, float outdoorAbsHumidity, float ventingThreshold = VENTING_THRESHOLD);
+Result calculate(float indoorAbsHumidity, float outdoorAbsHumidity, float ventingThreshold = DEFAULT_VENTING_THRESHOLD);
 
 }
