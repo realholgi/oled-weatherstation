@@ -1,7 +1,7 @@
 #include "ConfigStore.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
-#include <math.h>
+#include <cmath>
 
 static const char *CONFIG_FILE = "/config.json";
 
@@ -25,11 +25,11 @@ AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTim
         if (strcmp(webLanguageValue, "en") == 0 || strcmp(webLanguageValue, "de") == 0) {
             config.webLanguage = webLanguageValue;
         }
-        if (isfinite(tempOffsetIndoor)) config.tempOffsetIndoor = tempOffsetIndoor;
+        if (std::isfinite(tempOffsetIndoor)) config.tempOffsetIndoor = tempOffsetIndoor;
         if (outdoorSensorChannel >= 1 && outdoorSensorChannel <= 3) {
             config.outdoorSensorChannel = outdoorSensorChannel;
         }
-        if (isfinite(ventingThreshold) && ventingThreshold > 0.0f) config.ventingThreshold = ventingThreshold;
+        if (std::isfinite(ventingThreshold) && ventingThreshold > 0.0f) config.ventingThreshold = ventingThreshold;
     }
     configFile.close();
     LittleFS.end();

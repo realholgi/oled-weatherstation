@@ -2,7 +2,8 @@
 #include <Ticker.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include "Wifi.h"
 #include "WeatherDebug.h"
 #include "Display.h"
@@ -157,7 +158,7 @@ void Wifi::saveConfigParameters() {
     if (tempOffsetValue && strlen(tempOffsetValue) > 0) {
         char *end = nullptr;
         const float parsedIndoorTemperatureOffset = strtof(tempOffsetValue, &end);
-        if (end != tempOffsetValue && *end == '\0' && isfinite(parsedIndoorTemperatureOffset)) {
+        if (end != tempOffsetValue && *end == '\0' && std::isfinite(parsedIndoorTemperatureOffset)) {
             activeConfig->tempOffsetIndoor = parsedIndoorTemperatureOffset;
         }
     }
@@ -172,7 +173,7 @@ void Wifi::saveConfigParameters() {
     if (ventingThresholdValue && strlen(ventingThresholdValue) > 0) {
         char *end = nullptr;
         const float parsedVentingThreshold = strtof(ventingThresholdValue, &end);
-        if (end != ventingThresholdValue && *end == '\0' && isfinite(parsedVentingThreshold) && parsedVentingThreshold > 0.0f) {
+        if (end != ventingThresholdValue && *end == '\0' && std::isfinite(parsedVentingThreshold) && parsedVentingThreshold > 0.0f) {
             activeConfig->ventingThreshold = parsedVentingThreshold;
         }
     }
