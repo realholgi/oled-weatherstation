@@ -35,7 +35,7 @@ Display &Wifi::activeDisplayRef() {
 
 String Wifi::buildTimezoneSelectHtml(const String &currentPosix) {
     String selectMarkup = "<br/><label>Timezone</label>"
-                          "<select onchange=\"document.getElementById('timezone').value=this.value\">";
+                          "<select onchange=\"document.getElementById('timezone_posix').value=this.value\">";
     for (size_t i = 0; i < TZ_COUNT; i++) {
         selectMarkup += "<option value='";
         selectMarkup += TIMEZONES[i].posix;
@@ -101,7 +101,7 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
     String ventingThresholdValue = formatFloatValue(config.ventingThreshold, 1);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
     WiFiManagerParameter languageSelectRaw(languageSelectHtml.c_str());
-    WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
+    WiFiManagerParameter tzHidden("timezone_posix", "", config.timezonePosix.c_str(), 64, "type='hidden'");
     WiFiManagerParameter webLanguage("web_language", "", config.webLanguage.c_str(), 8, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
     WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
@@ -207,7 +207,7 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
     String ventingThresholdValue = formatFloatValue(config.ventingThreshold, 1);
     WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
     WiFiManagerParameter languageSelectRaw(languageSelectHtml.c_str());
-    WiFiManagerParameter tzHidden("timezone", "", config.timezonePosix.c_str(), 64, "type='hidden'");
+    WiFiManagerParameter tzHidden("timezone_posix", "", config.timezonePosix.c_str(), 64, "type='hidden'");
     WiFiManagerParameter webLanguage("web_language", "", config.webLanguage.c_str(), 8, "type='hidden'");
     WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
     WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");

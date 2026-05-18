@@ -15,7 +15,7 @@ AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTim
     JsonDocument jsonDocument;
     if (deserializeJson(jsonDocument, configFile) == DeserializationError::Ok) {
         const char *ntpServerValue = jsonDocument["ntp_server"] | "";
-        const char *timezoneValue  = jsonDocument["timezone"]   | "";
+        const char *timezoneValue  = jsonDocument["timezone_posix"]   | "";
         const char *webLanguageValue = jsonDocument["web_language"] | "";
         const float tempOffsetIndoor = jsonDocument["temp_offset_indoor"] | defaultTempOffsetIndoor;
         const int outdoorSensorChannel = jsonDocument["outdoor_sensor_channel"] | int(defaultOutdoorSensorChannel);
@@ -42,7 +42,7 @@ bool ConfigStore::save(const AppConfig &config) {
     if (!configFile) { LittleFS.end(); return false; }
     JsonDocument jsonDocument;
     jsonDocument["ntp_server"] = config.ntpServer;
-    jsonDocument["timezone"]   = config.timezonePosix;
+    jsonDocument["timezone_posix"]   = config.timezonePosix;
     jsonDocument["temp_offset_indoor"] = config.tempOffsetIndoor;
     jsonDocument["outdoor_sensor_channel"] = config.outdoorSensorChannel;
     jsonDocument["web_language"] = config.webLanguage;
