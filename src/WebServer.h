@@ -9,7 +9,7 @@ class SensorOutdoor;
 class WebServer {
 public:
     WebServer();
-    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage, float ventingThreshold);
+    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage, float threshold);
     void handleClient();
 
 private:
