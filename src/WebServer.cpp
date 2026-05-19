@@ -122,7 +122,12 @@ void WebServer::handleDataJson() {
 }
 
 void WebServer::handleRoot() {
-    String page = FPSTR(PAGE_Weather);
-    page.replace("__DEFAULT_LANG__", pageLanguage);
-    server.send(200, "text/html", page);
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/html", "");
+    server.sendContent_P(PAGE_WEATHER_1);
+    server.sendContent(pageLanguage);
+    server.sendContent_P(PAGE_WEATHER_2);
+    server.sendContent(pageLanguage);
+    server.sendContent_P(PAGE_WEATHER_3);
+    server.sendContent("");
 }

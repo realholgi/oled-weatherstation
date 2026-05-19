@@ -8,6 +8,17 @@
 #include "config.h"
 #include "icons.h"
 
+static constexpr int ROW_OUTDOOR_TEMP = 0;
+static constexpr int ROW_OUTDOOR_AUX  = 20;
+static constexpr int ROW_OUTDOOR_ABS  = 30;
+static constexpr int ROW_DIVIDER1     = 40;
+static constexpr int ROW_INDOOR_TEMP  = 44;
+static constexpr int ROW_INDOOR_AUX   = 62;
+static constexpr int ROW_INDOOR_ABS   = 72;
+static constexpr int ROW_DIVIDER2     = 82;
+static constexpr int ROW_DIFF         = 86;
+static constexpr int ROW_TIME         = 108;
+
 Display::Display() : oled(OLED_RESET) {}
 
 void Display::begin() {
@@ -105,7 +116,7 @@ void Display::drawIntegerAt(int x, int y, int value) {
 void Display::drawFloatAt(int x, int y, double value, byte decimals, int minimumWidth) {
     char textBuffer[27];
     oled.setCursor(x, y + OFFSET);
-    dtostrf(value, minimumWidth, decimals, textBuffer);
+    snprintf(textBuffer, sizeof(textBuffer), "%*.*f", minimumWidth, decimals, value);
     oled.print(textBuffer);
 }
 
@@ -118,39 +129,39 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
     oled.setTextSize(2);
 
     if (SensorSanity::isPlausibleTemperature(outdoorSensor.temperature())) {
-        drawFloatAt(6, 0, outdoorSensor.temperature());
+        drawFloatAt(6, ROW_OUTDOOR_TEMP, outdoorSensor.temperature());
     }
 
     oled.setTextSize(1);
     if (SensorSanity::isPlausibleHumidity(outdoorSensor.humidity())) {
-        drawIntegerAt(46, 20, outdoorSensor.humidity());
+        drawIntegerAt(46, ROW_OUTDOOR_AUX, outdoorSensor.humidity());
         oled.print("%");
     }
 
     if (SensorSanity::isPlausibleAbsoluteHumidity(outdoorSensor.absoluteHumidity())) {
-        drawFloatAt(34, 30, outdoorSensor.absoluteHumidity());
+        drawFloatAt(34, ROW_OUTDOOR_ABS, outdoorSensor.absoluteHumidity());
     }
 
-    oled.drawBitmap(2, 20 + OFFSET, sun_icon16x16, 16, 16, WHITE);
-    oled.drawLine(0, 40 + OFFSET, oled.width() - 1, 40 + OFFSET, WHITE);
+    oled.drawBitmap(2, ROW_OUTDOOR_AUX + OFFSET, sun_icon16x16, 16, 16, WHITE);
+    oled.drawLine(0, ROW_DIVIDER1 + OFFSET, oled.width() - 1, ROW_DIVIDER1 + OFFSET, WHITE);
 
     oled.setTextSize(2);
     if (SensorSanity::isPlausibleTemperature(indoorSensor.temperature())) {
-        drawFloatAt(6, 40 + 4, indoorSensor.temperature());
+        drawFloatAt(6, ROW_INDOOR_TEMP, indoorSensor.temperature());
     }
 
     oled.setTextSize(1);
     if (SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
-        drawIntegerAt(46, 20 + 40 + 2, indoorSensor.humidity());
+        drawIntegerAt(46, ROW_INDOOR_AUX, indoorSensor.humidity());
         oled.print("%");
     }
 
     if (SensorSanity::isPlausibleAbsoluteHumidity(indoorSensor.absoluteHumidity())) {
-        drawFloatAt(34, 30 + 40 + 2, indoorSensor.absoluteHumidity());
+        drawFloatAt(34, ROW_INDOOR_ABS, indoorSensor.absoluteHumidity());
     }
 
-    oled.drawBitmap(2, 20 + 40 + 2 + OFFSET, home_icon16x16, 16, 16, WHITE);
-    oled.drawLine(0, 82 + OFFSET, oled.width() - 1, 82 + OFFSET, WHITE);
+    oled.drawBitmap(2, ROW_INDOOR_AUX + OFFSET, home_icon16x16, 16, 16, WHITE);
+    oled.drawLine(0, ROW_DIVIDER2 + OFFSET, oled.width() - 1, ROW_DIVIDER2 + OFFSET, WHITE);
 
     oled.setTextSize(2);
     if (SensorSanity::isPlausibleTemperature(outdoorSensor.temperature()) &&
@@ -158,10 +169,10 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
         SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
         const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity(), ventingThreshold);
-        drawFloatAt(6, 82 + 4, advice.difference);
-        oled.drawBitmap(0, 3 + 82 + OFFSET, warning_icon16x16, 16, 16,
+        drawFloatAt(6, ROW_DIFF, advice.difference);
+        oled.drawBitmap(0, ROW_DIFF - 1 + OFFSET, warning_icon16x16, 16, 16,
                        advice.recommendation == VentingAdvice::Recommendation::VENT ? WHITE : BLACK);
     }
 
-    drawTextAt(6, 82 + 4 + 22, formattedTime);
+    drawTextAt(6, ROW_TIME, formattedTime);
 }

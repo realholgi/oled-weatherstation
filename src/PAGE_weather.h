@@ -1,6 +1,8 @@
-const char PAGE_Weather[] PROGMEM = R"=====(
+const char PAGE_WEATHER_1[] PROGMEM = R"=====(
 <!DOCTYPE html>
-<html lang="__DEFAULT_LANG__">
+<html lang=")=====";
+
+const char PAGE_WEATHER_2[] PROGMEM = R"=====(">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -696,7 +698,10 @@ const char PAGE_Weather[] PROGMEM = R"=====(
   </main>
 
   <script>
-    var DEFAULT_LANGUAGE = "__DEFAULT_LANG__";
+    var DEFAULT_LANGUAGE = ")=====";
+
+const char PAGE_WEATHER_3[] PROGMEM = R"=====(";
+
     var LANGUAGE_STORAGE_KEY = "wetterstation_web_language";
     var lastWeatherData = null;
     var lastErrorMessage = "";

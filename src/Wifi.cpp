@@ -110,12 +110,33 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
     WiFiManagerParameter ventingThreshold("venting_threshold", "Venting Threshold (g/m\xc2\xb3)",
                                           ventingThresholdValue.c_str(), 8, "type='number' min='0.5' max='10' step='0.5'");
 
-    tzParam  = &tzHidden;
-    webLanguageParam = &webLanguage;
-    ntpParam = &ntpServer;
-    tempOffsetIndoorParam = &tempOffsetIndoor;
+    prepareWifiManager(tzSelectRaw, languageSelectRaw, tzHidden, webLanguage,
+                       ntpServer, tempOffsetIndoor, outdoorSensorChannel, ventingThreshold);
+
+    DEBUG_MSG("Starting configuration portal.");
+    Ticker statusLedTicker;
+    statusLedTicker.attach(0.1, toggleStatusLed);
+
+    if (!wifiManager.startConfigPortal(HOSTNAME)) {
+        DEBUG_MSG("Not connected to WiFi but continuing anyway.");
+    } else {
+        DEBUG_MSG("Connected to WiFi.");
+    }
+    ESP.reset();
+}
+
+void Wifi::prepareWifiManager(
+    WiFiManagerParameter &tzSelectRaw, WiFiManagerParameter &languageSelectRaw,
+    WiFiManagerParameter &tzHidden, WiFiManagerParameter &webLanguage,
+    WiFiManagerParameter &ntpServer, WiFiManagerParameter &tempOffsetIndoor,
+    WiFiManagerParameter &outdoorSensorChannel, WiFiManagerParameter &ventingThreshold)
+{
+    tzParam                   = &tzHidden;
+    webLanguageParam          = &webLanguage;
+    ntpParam                  = &ntpServer;
+    tempOffsetIndoorParam     = &tempOffsetIndoor;
     outdoorSensorChannelParam = &outdoorSensorChannel;
-    ventingThresholdParam = &ventingThreshold;
+    ventingThresholdParam     = &ventingThreshold;
 
     wifiManager.addParameter(&tzSelectRaw);
     wifiManager.addParameter(&languageSelectRaw);
@@ -129,17 +150,6 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
     wifiManager.setSaveParamsCallback(saveConfigParameters);
     wifiManager.setAPCallback(handleConfigPortalStart);
     wifiManager.setTitle(PORTAL_TITLE);
-
-    DEBUG_MSG("Starting configuration portal.");
-    Ticker statusLedTicker;
-    statusLedTicker.attach(0.1, toggleStatusLed);
-
-    if (!wifiManager.startConfigPortal(HOSTNAME)) {
-        DEBUG_MSG("Not connected to WiFi but continuing anyway.");
-    } else {
-        DEBUG_MSG("Connected to WiFi.");
-    }
-    ESP.reset();
 }
 
 void Wifi::saveConfigParameters() {
@@ -216,25 +226,8 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
     WiFiManagerParameter ventingThreshold("venting_threshold", "Venting Threshold (g/m\xc2\xb3)",
                                           ventingThresholdValue.c_str(), 8, "type='number' min='0.5' max='10' step='0.5'");
 
-    tzParam  = &tzHidden;
-    webLanguageParam = &webLanguage;
-    ntpParam = &ntpServer;
-    tempOffsetIndoorParam = &tempOffsetIndoor;
-    outdoorSensorChannelParam = &outdoorSensorChannel;
-    ventingThresholdParam = &ventingThreshold;
-
-    wifiManager.addParameter(&tzSelectRaw);
-    wifiManager.addParameter(&languageSelectRaw);
-    wifiManager.addParameter(&tzHidden);
-    wifiManager.addParameter(&webLanguage);
-    wifiManager.addParameter(&ntpServer);
-    wifiManager.addParameter(&tempOffsetIndoor);
-    wifiManager.addParameter(&outdoorSensorChannel);
-    wifiManager.addParameter(&ventingThreshold);
-
-    wifiManager.setSaveParamsCallback(saveConfigParameters);
-    wifiManager.setAPCallback(handleConfigPortalStart);
-    wifiManager.setTitle(PORTAL_TITLE);
+    prepareWifiManager(tzSelectRaw, languageSelectRaw, tzHidden, webLanguage,
+                       ntpServer, tempOffsetIndoor, outdoorSensorChannel, ventingThreshold);
 
     String hostname(HOSTNAME);
     WiFi.hostname(hostname);

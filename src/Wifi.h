@@ -36,6 +36,12 @@ private:
     static void saveConfigParameters();
     static IRAM_ATTR void toggleStatusLed();
 
+    void prepareWifiManager(
+        WiFiManagerParameter &tzSelectRaw, WiFiManagerParameter &languageSelectRaw,
+        WiFiManagerParameter &tzHidden, WiFiManagerParameter &webLanguage,
+        WiFiManagerParameter &ntpServer, WiFiManagerParameter &tempOffsetIndoor,
+        WiFiManagerParameter &outdoorSensorChannel, WiFiManagerParameter &ventingThreshold);
+
     static String buildTimezoneSelectHtml(const String &currentPosix);
     static String buildLanguageSelectHtml(const String &currentLanguage);
     static String formatFloatValue(float value, uint8_t decimals);
