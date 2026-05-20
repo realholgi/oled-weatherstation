@@ -4,7 +4,8 @@
 #include <cstdio>
 
 void TimeClient::configure(const char *timezonePosix, const char *ntpServer) {
-    configTzTime(timezonePosix, ntpServer);
+    ntpServerStorage = ntpServer;  // sntp_setservername stores raw ptr, not a copy
+    configTzTime(timezonePosix, ntpServerStorage.c_str());
 }
 
 bool TimeClient::isTimeSet() const {
