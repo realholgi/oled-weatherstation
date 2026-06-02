@@ -1,10 +1,11 @@
 #include "WifiConfigParameters.h"
 
 #include "Timezones.h"
+#include "TimezoneSelectMarkup.h"
 
 WifiConfigParameters::WifiConfigParameters(const AppConfig &config)
-    : timezoneSelectHtml(buildTimezoneSelectHtml(config.timezonePosix)),
-      languageSelectHtml(buildLanguageSelectHtml(config.webLanguage)),
+    : timezoneSelectHtml(TimezoneSelectMarkup::build(TIMEZONES, TZ_COUNT, config.timezonePosix.c_str())),
+      languageSelectHtml(TimezoneSelectMarkup::buildLanguage(config.webLanguage.c_str())),
       tempOffsetIndoorValue(formatFloatValue(config.tempOffsetIndoor, 2)),
       outdoorSensorChannelValue(formatIntegerValue(config.outdoorSensorChannel)),
       ventingThresholdValue(formatFloatValue(config.ventingThreshold, 1)),
@@ -50,36 +51,6 @@ WiFiManagerParameter &WifiConfigParameters::outdoorSensorChannel() {
 
 WiFiManagerParameter &WifiConfigParameters::ventingThreshold() {
     return ventingThresholdParam;
-}
-
-String WifiConfigParameters::buildTimezoneSelectHtml(const String &currentPosix) {
-    String selectMarkup = "<br/><label>Timezone</label>"
-                          "<select onchange=\"document.getElementById('timezone_posix').value=this.value\">";
-    for (size_t i = 0; i < TZ_COUNT; i++) {
-        selectMarkup += "<option value='";
-        selectMarkup += TIMEZONES[i].posix;
-        selectMarkup += "'";
-        if (currentPosix == TIMEZONES[i].posix) selectMarkup += " selected";
-        selectMarkup += ">";
-        selectMarkup += TIMEZONES[i].name;
-        selectMarkup += "</option>";
-    }
-    selectMarkup += "</select>";
-    return selectMarkup;
-}
-
-String WifiConfigParameters::buildLanguageSelectHtml(const String &currentLanguage) {
-    const bool isEnglish = currentLanguage == "en";
-    String selectMarkup = "<br/><label>Webpage Language</label>"
-                          "<select onchange=\"document.getElementById('web_language').value=this.value\">";
-    selectMarkup += "<option value='de'";
-    if (!isEnglish) selectMarkup += " selected";
-    selectMarkup += ">Deutsch</option>";
-    selectMarkup += "<option value='en'";
-    if (isEnglish) selectMarkup += " selected";
-    selectMarkup += ">English</option>";
-    selectMarkup += "</select>";
-    return selectMarkup;
 }
 
 String WifiConfigParameters::formatFloatValue(float value, uint8_t decimals) {
