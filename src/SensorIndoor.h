@@ -27,5 +27,6 @@ private:
     float absoluteHumidityValue;
     float dewPointValue;
     float temperatureOffset;
+    // Ticker callback sets this flag; loop() consumes it via isMeasurementDue() / refreshMeasurements()
     volatile bool measurementDueFlag;
 };

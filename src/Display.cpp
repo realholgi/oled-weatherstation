@@ -2,7 +2,6 @@
 #include "Display.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
-#include "SensorSanity.h"
 #include "TimeClient.h"
 #include "VentingAdvice.h"
 #include "config.h"
@@ -132,17 +131,17 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
     oled.clearDisplay();
     oled.setTextSize(2);
 
-    if (SensorSanity::isPlausibleTemperature(outdoorSensor.temperature())) {
+    if (outdoorSensor.isValid()) {
         drawFloatAt(6, ROW_OUTDOOR_TEMP, outdoorSensor.temperature());
     }
 
     oled.setTextSize(1);
-    if (SensorSanity::isPlausibleHumidity(outdoorSensor.humidity())) {
+    if (outdoorSensor.isValid()) {
         drawIntegerAt(46, ROW_OUTDOOR_AUX, outdoorSensor.humidity());
         oled.print("%");
     }
 
-    if (SensorSanity::isPlausibleAbsoluteHumidity(outdoorSensor.absoluteHumidity())) {
+    if (outdoorSensor.isValid()) {
         drawFloatAt(34, ROW_OUTDOOR_ABS, outdoorSensor.absoluteHumidity());
     }
 
@@ -168,9 +167,7 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
     oled.drawLine(0, ROW_DIVIDER2 + OFFSET, oled.width() - 1, ROW_DIVIDER2 + OFFSET, WHITE);
 
     oled.setTextSize(2);
-    if (SensorSanity::isPlausibleTemperature(outdoorSensor.temperature()) &&
-        SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
-        indoorSensor.isValid()) {
+    if (outdoorSensor.isValid() && indoorSensor.isValid()) {
         const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity(), ventingThreshold);
         drawFloatAt(6, ROW_DIFF, advice.difference);
         oled.drawBitmap(0, ROW_DIFF - 1 + OFFSET, warning_icon16x16, 16, 16,

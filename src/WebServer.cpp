@@ -71,6 +71,7 @@ void WebServer::handleDataJson() {
         SensorSanity::isPlausibleHumidity(indoorSensor.humidity()) &&
         SensorSanity::isPlausibleAbsoluteHumidity(indoorAbsoluteHumidity);
     const bool outdoorValid =
+        outdoorSensor.isValid() &&
         SensorSanity::isPlausibleTemperature(outdoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
         SensorSanity::isPlausibleAbsoluteHumidity(outdoorAbsoluteHumidity) &&

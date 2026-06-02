@@ -30,10 +30,14 @@ static bool otaReady = false;
 static Ticker indoorMeasurementTicker;
 static Ticker outdoorReadingExpiryTicker;
 
+// Ticker callback — flag-only: must not read sensors, log, allocate, or perform display/network work.
+// loop() consumes the flag via indoorSensor.isMeasurementDue() / refreshMeasurements().
 static IRAM_ATTR void markIndoorMeasurementDue() {
     indoorSensor.markMeasurementDue();
 }
 
+// Ticker callback — flag-only: must not read sensors, log, allocate, or perform display/network work.
+// loop() consumes the flag via outdoorSensor.applyPendingUpdates().
 static IRAM_ATTR void markOutdoorReadingStale() {
     outdoorSensor.markReadingStale();
 }
