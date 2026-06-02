@@ -9,6 +9,8 @@
 #include "VentingAdvice.h"
 #include "config.h"
 #include "PAGE_weather.h"
+#include "WebNotFound.h"
+#include "DataJsonPayload.h"
 
 WebServer::WebServer() : server(80) {
 }
@@ -38,22 +40,7 @@ void WebServer::handleClient() {
 }
 
 void WebServer::handleNotFound() {
-    String message = "File Not Found\n\n";
-    message += "URI: ";
-    message += server.uri();
-    message += "\nMethod: ";
-    message += (server.method() == HTTP_GET) ? "GET" : "POST";
-    message += "\nArguments: ";
-    message += server.args();
-    message += "\n";
-    for (uint8_t i = 0; i < server.args(); i++) {
-        message += " ";
-        message += server.argName(i);
-        message += ": ";
-        message += server.arg(i);
-        message += "\n";
-    }
-    server.send(404, "text/plain", message);
+    server.send(404, WebNotFound::CONTENT_TYPE, WebNotFound::BODY);
 }
 
 void WebServer::handleDataJson() {
@@ -62,60 +49,59 @@ void WebServer::handleDataJson() {
     const SensorIndoor &indoorSensor = *indoorSensorRef;
     const SensorOutdoor &outdoorSensor = *outdoorSensorRef;
 
-    const float indoorAbsoluteHumidity = indoorSensor.absoluteHumidity();
-    const float outdoorAbsoluteHumidity = outdoorSensor.absoluteHumidity();
-    const uint32_t outdoorSecondsSinceLastReading = outdoorSensor.secondsSinceLastPacket();
-    const bool indoorValid =
-        indoorSensor.isValid() &&
-        SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
-        SensorSanity::isPlausibleHumidity(indoorSensor.humidity()) &&
-        SensorSanity::isPlausibleAbsoluteHumidity(indoorAbsoluteHumidity);
-    const bool outdoorValid =
-        outdoorSensor.isValid() &&
-        SensorSanity::isPlausibleTemperature(outdoorSensor.temperature()) &&
-        SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
-        SensorSanity::isPlausibleAbsoluteHumidity(outdoorAbsoluteHumidity) &&
-        outdoorSecondsSinceLastReading <= MAX_RECEIVE_WAIT_EXT_S;
+    DataJsonPayload::IndoorInputs indoor;
+    indoor.sensorIsValid    = indoorSensor.isValid();
+    indoor.temperature      = indoorSensor.temperature();
+    indoor.humidity         = indoorSensor.humidity();
+    indoor.absoluteHumidity = indoorSensor.absoluteHumidity();
+    indoor.dewPoint         = indoorSensor.dewPoint();
 
-    jsonDocument["indoorValid"] = indoorValid;
-    jsonDocument["outdoorValid"] = outdoorValid;
+    DataJsonPayload::OutdoorInputs outdoor;
+    outdoor.sensorIsValid          = outdoorSensor.isValid();
+    outdoor.temperature            = outdoorSensor.temperature();
+    outdoor.humidity               = outdoorSensor.humidity();
+    outdoor.absoluteHumidity       = outdoorSensor.absoluteHumidity();
+    outdoor.batteryOk              = outdoorSensor.batteryStatus();
+    outdoor.secondsSinceLastPacket = outdoorSensor.secondsSinceLastPacket();
 
-    if (indoorValid) {
-        jsonDocument["indoorTemperatureCelsius"] = indoorSensor.temperature();
-        jsonDocument["indoorHumidityPercent"] = int(indoorSensor.humidity());
-        jsonDocument["indoorAbsoluteHumidityGm3"] = indoorAbsoluteHumidity;
-        jsonDocument["indoorDewPointCelsius"] = indoorSensor.dewPoint();
+    const DataJsonPayload::Payload payload = DataJsonPayload::build(indoor, outdoor, ventingThreshold);
+
+    jsonDocument["indoorValid"]  = payload.indoorValid;
+    jsonDocument["outdoorValid"] = payload.outdoorValid;
+
+    if (payload.indoorValid) {
+        jsonDocument["indoorTemperatureCelsius"]  = payload.indoorTemperatureCelsius;
+        jsonDocument["indoorHumidityPercent"]     = payload.indoorHumidityPercent;
+        jsonDocument["indoorAbsoluteHumidityGm3"] = payload.indoorAbsoluteHumidityGm3;
+        jsonDocument["indoorDewPointCelsius"]     = payload.indoorDewPointCelsius;
     } else {
-        jsonDocument["indoorTemperatureCelsius"] = nullptr;
-        jsonDocument["indoorHumidityPercent"] = nullptr;
+        jsonDocument["indoorTemperatureCelsius"]  = nullptr;
+        jsonDocument["indoorHumidityPercent"]     = nullptr;
         jsonDocument["indoorAbsoluteHumidityGm3"] = nullptr;
-        jsonDocument["indoorDewPointCelsius"] = nullptr;
+        jsonDocument["indoorDewPointCelsius"]     = nullptr;
     }
 
-    if (outdoorValid) {
-        jsonDocument["outdoorTemperatureCelsius"] = outdoorSensor.temperature();
-        jsonDocument["outdoorHumidityPercent"] = int(outdoorSensor.humidity());
-        jsonDocument["outdoorAbsoluteHumidityGm3"] = outdoorAbsoluteHumidity;
-        jsonDocument["outdoorBatteryOk"] = outdoorSensor.batteryStatus();
+    if (payload.outdoorValid) {
+        jsonDocument["outdoorTemperatureCelsius"]  = payload.outdoorTemperatureCelsius;
+        jsonDocument["outdoorHumidityPercent"]     = payload.outdoorHumidityPercent;
+        jsonDocument["outdoorAbsoluteHumidityGm3"] = payload.outdoorAbsoluteHumidityGm3;
+        jsonDocument["outdoorBatteryOk"]           = payload.outdoorBatteryOk;
     } else {
-        jsonDocument["outdoorTemperatureCelsius"] = nullptr;
-        jsonDocument["outdoorHumidityPercent"] = nullptr;
+        jsonDocument["outdoorTemperatureCelsius"]  = nullptr;
+        jsonDocument["outdoorHumidityPercent"]     = nullptr;
         jsonDocument["outdoorAbsoluteHumidityGm3"] = nullptr;
-        jsonDocument["outdoorBatteryOk"] = nullptr;
+        jsonDocument["outdoorBatteryOk"]           = nullptr;
     }
-    jsonDocument["outdoorSecondsSinceLastReading"] = outdoorSecondsSinceLastReading;
-    jsonDocument["ventingThresholdGm3"] = ventingThreshold;
 
-    if (indoorValid && outdoorValid) {
-        const VentingAdvice::Result advice = VentingAdvice::calculate(indoorAbsoluteHumidity, outdoorAbsoluteHumidity, ventingThreshold);
-        jsonDocument["absoluteHumidityDifferenceGm3"] = advice.difference;
-        jsonDocument["ventingRecommendation"] =
-            advice.recommendation == VentingAdvice::Recommendation::VENT     ? "vent"
-          : advice.recommendation == VentingAdvice::Recommendation::MARGINAL ? "marginal"
-                                                                              : "wait";
+    jsonDocument["outdoorSecondsSinceLastReading"] = payload.outdoorSecondsSinceLastReading;
+    jsonDocument["ventingThresholdGm3"]            = payload.ventingThresholdGm3;
+
+    if (payload.hasAdvice) {
+        jsonDocument["absoluteHumidityDifferenceGm3"] = payload.absoluteHumidityDifferenceGm3;
+        jsonDocument["ventingRecommendation"]          = payload.ventingRecommendation;
     } else {
         jsonDocument["absoluteHumidityDifferenceGm3"] = nullptr;
-        jsonDocument["ventingRecommendation"] = nullptr;
+        jsonDocument["ventingRecommendation"]          = nullptr;
     }
 
     server.setContentLength(measureJson(jsonDocument));
