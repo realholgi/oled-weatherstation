@@ -13,6 +13,7 @@ public:
     IRAM_ATTR void markMeasurementDue();
     void setTemperatureOffset(float offset);
 
+    bool isValid() const;
     float humidity() const;
     float temperature() const;
     float absoluteHumidity() const;
@@ -20,6 +21,7 @@ public:
 
 private:
     Adafruit_HTU21DF sensorChip;
+    bool validValue;
     float humidityValue;
     float temperatureValue;
     float absoluteHumidityValue;

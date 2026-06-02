@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "SensorIndoor.h"
-#include "HumidityMath.h"
-#include "SensorSanity.h"
+#include "IndoorSensorState.h"
 #include "config.h"
 
 SensorIndoor::SensorIndoor()
-    : humidityValue(0),
+    : validValue(false),
+      humidityValue(0),
       temperatureValue(-273),
       absoluteHumidityValue(-1),
       dewPointValue(-273),
@@ -22,13 +22,12 @@ void SensorIndoor::refreshMeasurements() {
     const float rawHumidity = sensorChip.readHumidity();
     const float rawTemperature = sensorChip.readTemperature();
 
-    if (SensorSanity::isPlausibleTemperature(rawTemperature) &&
-        SensorSanity::isPlausibleHumidity(rawHumidity)) {
-        humidityValue = rawHumidity;
-        temperatureValue = rawTemperature - temperatureOffset;
-        absoluteHumidityValue = HumidityMath::calculateAbsoluteHumidity(temperatureValue, humidityValue);
-        dewPointValue = HumidityMath::calculateDewPoint(temperatureValue, humidityValue);
-    }
+    IndoorSensorState::Values state = IndoorSensorState::fromReading(rawTemperature, rawHumidity, temperatureOffset);
+    validValue = state.valid;
+    temperatureValue = state.temperature;
+    humidityValue = state.humidity;
+    absoluteHumidityValue = state.absoluteHumidity;
+    dewPointValue = state.dewPoint;
 }
 
 bool SensorIndoor::isMeasurementDue() const {
@@ -41,6 +40,10 @@ IRAM_ATTR void SensorIndoor::markMeasurementDue() {
 
 void SensorIndoor::setTemperatureOffset(float offset) {
     temperatureOffset = offset;
+}
+
+bool SensorIndoor::isValid() const {
+    return validValue;
 }
 
 float SensorIndoor::humidity() const {

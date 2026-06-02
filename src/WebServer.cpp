@@ -66,6 +66,7 @@ void WebServer::handleDataJson() {
     const float outdoorAbsoluteHumidity = outdoorSensor.absoluteHumidity();
     const uint32_t outdoorSecondsSinceLastReading = outdoorSensor.secondsSinceLastPacket();
     const bool indoorValid =
+        indoorSensor.isValid() &&
         SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(indoorSensor.humidity()) &&
         SensorSanity::isPlausibleAbsoluteHumidity(indoorAbsoluteHumidity);

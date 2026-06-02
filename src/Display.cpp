@@ -150,17 +150,17 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
     oled.drawLine(0, ROW_DIVIDER1 + OFFSET, oled.width() - 1, ROW_DIVIDER1 + OFFSET, WHITE);
 
     oled.setTextSize(2);
-    if (SensorSanity::isPlausibleTemperature(indoorSensor.temperature())) {
+    if (indoorSensor.isValid()) {
         drawFloatAt(6, ROW_INDOOR_TEMP, indoorSensor.temperature());
     }
 
     oled.setTextSize(1);
-    if (SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
+    if (indoorSensor.isValid()) {
         drawIntegerAt(46, ROW_INDOOR_AUX, indoorSensor.humidity());
         oled.print("%");
     }
 
-    if (SensorSanity::isPlausibleAbsoluteHumidity(indoorSensor.absoluteHumidity())) {
+    if (indoorSensor.isValid()) {
         drawFloatAt(34, ROW_INDOOR_ABS, indoorSensor.absoluteHumidity());
     }
 
@@ -170,8 +170,7 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
     oled.setTextSize(2);
     if (SensorSanity::isPlausibleTemperature(outdoorSensor.temperature()) &&
         SensorSanity::isPlausibleHumidity(outdoorSensor.humidity()) &&
-        SensorSanity::isPlausibleTemperature(indoorSensor.temperature()) &&
-        SensorSanity::isPlausibleHumidity(indoorSensor.humidity())) {
+        indoorSensor.isValid()) {
         const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity(), ventingThreshold);
         drawFloatAt(6, ROW_DIFF, advice.difference);
         oled.drawBitmap(0, ROW_DIFF - 1 + OFFSET, warning_icon16x16, 16, 16,
