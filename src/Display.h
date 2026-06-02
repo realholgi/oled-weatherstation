@@ -17,6 +17,7 @@ public:
     void begin();
     void showSensorFailure();
     void showStartupConfig();
+    void showStartupConfigDefault();
     void showStartupWifi();
     void showStartupHttp();
     void showStartupTime();

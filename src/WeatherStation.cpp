@@ -15,6 +15,7 @@
 #include "Display.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
+#include "StartupRetryPolicy.h"
 #include "WebServer.h"
 #include "Wifi.h"
 
@@ -71,17 +72,38 @@ void setup() {
 
     displayScreen.begin();
 
-    if (!indoorSensor.begin()) {
+    bool indoorSensorReady = false;
+    for (uint8_t attempt = 1; attempt <= StartupRetryPolicy::maxAttempts(); ++attempt) {
+        if (indoorSensor.begin()) {
+            indoorSensorReady = true;
+            break;
+        }
+
+        DEBUG_MSG("Indoor sensor init failed (%u/%u)\n", attempt, StartupRetryPolicy::maxAttempts());
+        if (StartupRetryPolicy::shouldRetryAfterAttempt(attempt)) {
+            delay(StartupRetryPolicy::retryDelayMs());
+        }
+    }
+
+    if (!indoorSensorReady) {
         displayScreen.showSensorFailure();
         DEBUG_MSG("Couldn't find indoor sensor!\n");
         while (1) { yield(); }
     }
 
-    AppConfig appConfig = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
-                                            DEFAULT_OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
+    ConfigLoadResult configLoad = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
+                                                    DEFAULT_OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
+    AppConfig appConfig = configLoad.config;
+    DEBUG_MSG("Config load: %s (%s)\n",
+              ConfigLoadStatus::statusLabel(configLoad.outcome.status),
+              ConfigLoadStatus::reasonLabel(configLoad.outcome.reason));
     indoorSensor.setTemperatureOffset(appConfig.tempOffsetIndoor);
 
     displayScreen.showStartupConfig();
+    if (configLoad.outcome.usedDefaults) {
+        displayScreen.showStartupConfigDefault();
+        delay(1000);
+    }
     if (wifiController.shouldStartConfigPortal(displayScreen)) { wifiController.startConfigPortal(displayScreen, appConfig); }
 
     displayScreen.showStartupWifi();

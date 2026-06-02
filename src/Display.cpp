@@ -43,6 +43,10 @@ void Display::showStartupConfig() {
     drawTextAt(6, 0, "Config...");
 }
 
+void Display::showStartupConfigDefault() {
+    drawTextAt(6, 0, "Cfg default");
+}
+
 void Display::showStartupWifi() {
     drawTextAt(6, 10, "WIFI...");
 }
