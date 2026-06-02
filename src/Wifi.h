@@ -1,8 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <WiFiManager.h>
 #include <DoubleResetDetector.h>
 #include "ConfigStore.h"
+#include "WifiConfigParameters.h"
 
 class Display;
 
@@ -18,16 +20,12 @@ public:
 private:
     WiFiManager wifiManager;
     DoubleResetDetector doubleResetDetector;
+    std::unique_ptr<WifiConfigParameters> configParameters;
     bool mdnsReady = false;
 
     static Display *activeDisplay;
     static AppConfig *activeConfig;
-    static WiFiManagerParameter *ntpParam;
-    static WiFiManagerParameter *tzParam;
-    static WiFiManagerParameter *tempOffsetIndoorParam;
-    static WiFiManagerParameter *outdoorSensorChannelParam;
-    static WiFiManagerParameter *webLanguageParam;
-    static WiFiManagerParameter *ventingThresholdParam;
+    static WifiConfigParameters *activeConfigParameters;
 
     static void setActiveDisplay(Display &screen);
     static Display &activeDisplayRef();
@@ -36,14 +34,5 @@ private:
     static void saveConfigParameters();
     static IRAM_ATTR void toggleStatusLed();
 
-    void prepareWifiManager(
-        WiFiManagerParameter &tzSelectRaw, WiFiManagerParameter &languageSelectRaw,
-        WiFiManagerParameter &tzHidden, WiFiManagerParameter &webLanguage,
-        WiFiManagerParameter &ntpServer, WiFiManagerParameter &tempOffsetIndoor,
-        WiFiManagerParameter &outdoorSensorChannel, WiFiManagerParameter &ventingThreshold);
-
-    static String buildTimezoneSelectHtml(const String &currentPosix);
-    static String buildLanguageSelectHtml(const String &currentLanguage);
-    static String formatFloatValue(float value, uint8_t decimals);
-    static String formatIntegerValue(uint8_t value);
+    void prepareConfigPortalParameters(AppConfig &config);
 };

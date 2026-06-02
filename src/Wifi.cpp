@@ -2,25 +2,18 @@
 #include <Ticker.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <cmath>
-#include <cstdlib>
 #include "Wifi.h"
 #include "WeatherDebug.h"
 #include "Display.h"
 #include "ConfigStore.h"
+#include "WifiConfigFields.h"
 #include "config.h"
-#include "Timezones.h"
 
 static const char *PORTAL_TITLE = "Weather Station Setup";
 
 Display *Wifi::activeDisplay = nullptr;
 AppConfig *Wifi::activeConfig = nullptr;
-WiFiManagerParameter *Wifi::ntpParam = nullptr;
-WiFiManagerParameter *Wifi::tzParam = nullptr;
-WiFiManagerParameter *Wifi::tempOffsetIndoorParam = nullptr;
-WiFiManagerParameter *Wifi::outdoorSensorChannelParam = nullptr;
-WiFiManagerParameter *Wifi::webLanguageParam = nullptr;
-WiFiManagerParameter *Wifi::ventingThresholdParam = nullptr;
+WifiConfigParameters *Wifi::activeConfigParameters = nullptr;
 
 Wifi::Wifi() : doubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS) {
 }
@@ -31,44 +24,6 @@ void Wifi::setActiveDisplay(Display &screen) {
 
 Display &Wifi::activeDisplayRef() {
     return *activeDisplay;
-}
-
-String Wifi::buildTimezoneSelectHtml(const String &currentPosix) {
-    String selectMarkup = "<br/><label>Timezone</label>"
-                          "<select onchange=\"document.getElementById('timezone_posix').value=this.value\">";
-    for (size_t i = 0; i < TZ_COUNT; i++) {
-        selectMarkup += "<option value='";
-        selectMarkup += TIMEZONES[i].posix;
-        selectMarkup += "'";
-        if (currentPosix == TIMEZONES[i].posix) selectMarkup += " selected";
-        selectMarkup += ">";
-        selectMarkup += TIMEZONES[i].name;
-        selectMarkup += "</option>";
-    }
-    selectMarkup += "</select>";
-    return selectMarkup;
-}
-
-String Wifi::buildLanguageSelectHtml(const String &currentLanguage) {
-    const bool isEnglish = currentLanguage == "en";
-    String selectMarkup = "<br/><label>Webpage Language</label>"
-                          "<select onchange=\"document.getElementById('web_language').value=this.value\">";
-    selectMarkup += "<option value='de'";
-    if (!isEnglish) selectMarkup += " selected";
-    selectMarkup += ">Deutsch</option>";
-    selectMarkup += "<option value='en'";
-    if (isEnglish) selectMarkup += " selected";
-    selectMarkup += ">English</option>";
-    selectMarkup += "</select>";
-    return selectMarkup;
-}
-
-String Wifi::formatFloatValue(float value, uint8_t decimals) {
-    return String(value, decimals);
-}
-
-String Wifi::formatIntegerValue(uint8_t value) {
-    return String(value);
 }
 
 bool Wifi::shouldStartConfigPortal(Display &screen) {
@@ -94,24 +49,7 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
     setActiveDisplay(screen);
     activeConfig = &config;
 
-    String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
-    String languageSelectHtml = buildLanguageSelectHtml(config.webLanguage);
-    String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
-    String outdoorSensorChannelValue = formatIntegerValue(config.outdoorSensorChannel);
-    String ventingThresholdValue = formatFloatValue(config.ventingThreshold, 1);
-    WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
-    WiFiManagerParameter languageSelectRaw(languageSelectHtml.c_str());
-    WiFiManagerParameter tzHidden("timezone_posix", "", config.timezonePosix.c_str(), 64, "type='hidden'");
-    WiFiManagerParameter webLanguage("web_language", "", config.webLanguage.c_str(), 8, "type='hidden'");
-    WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
-    WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
-    WiFiManagerParameter outdoorSensorChannel("outdoor_sensor_channel", "Outdoor Sensor Channel",
-                                              outdoorSensorChannelValue.c_str(), 4, "type='number' min='1' max='3' step='1'");
-    WiFiManagerParameter ventingThreshold("venting_threshold", "Venting Threshold (g/m\xc2\xb3)",
-                                          ventingThresholdValue.c_str(), 8, "type='number' min='0.5' max='10' step='0.5'");
-
-    prepareWifiManager(tzSelectRaw, languageSelectRaw, tzHidden, webLanguage,
-                       ntpServer, tempOffsetIndoor, outdoorSensorChannel, ventingThreshold);
+    prepareConfigPortalParameters(config);
 
     DEBUG_MSG("Starting configuration portal.");
     Ticker statusLedTicker;
@@ -125,27 +63,18 @@ void Wifi::startConfigPortal(Display &screen, AppConfig &config) {
     ESP.reset();
 }
 
-void Wifi::prepareWifiManager(
-    WiFiManagerParameter &tzSelectRaw, WiFiManagerParameter &languageSelectRaw,
-    WiFiManagerParameter &tzHidden, WiFiManagerParameter &webLanguage,
-    WiFiManagerParameter &ntpServer, WiFiManagerParameter &tempOffsetIndoor,
-    WiFiManagerParameter &outdoorSensorChannel, WiFiManagerParameter &ventingThreshold)
-{
-    tzParam                   = &tzHidden;
-    webLanguageParam          = &webLanguage;
-    ntpParam                  = &ntpServer;
-    tempOffsetIndoorParam     = &tempOffsetIndoor;
-    outdoorSensorChannelParam = &outdoorSensorChannel;
-    ventingThresholdParam     = &ventingThreshold;
+void Wifi::prepareConfigPortalParameters(AppConfig &config) {
+    configParameters.reset(new WifiConfigParameters(config));
+    activeConfigParameters = configParameters.get();
 
-    wifiManager.addParameter(&tzSelectRaw);
-    wifiManager.addParameter(&languageSelectRaw);
-    wifiManager.addParameter(&tzHidden);
-    wifiManager.addParameter(&webLanguage);
-    wifiManager.addParameter(&ntpServer);
-    wifiManager.addParameter(&tempOffsetIndoor);
-    wifiManager.addParameter(&outdoorSensorChannel);
-    wifiManager.addParameter(&ventingThreshold);
+    wifiManager.addParameter(&activeConfigParameters->timezoneSelect());
+    wifiManager.addParameter(&activeConfigParameters->languageSelect());
+    wifiManager.addParameter(&activeConfigParameters->timezoneHidden());
+    wifiManager.addParameter(&activeConfigParameters->webLanguage());
+    wifiManager.addParameter(&activeConfigParameters->ntpServer());
+    wifiManager.addParameter(&activeConfigParameters->tempOffsetIndoor());
+    wifiManager.addParameter(&activeConfigParameters->outdoorSensorChannel());
+    wifiManager.addParameter(&activeConfigParameters->ventingThreshold());
 
     wifiManager.setSaveParamsCallback(saveConfigParameters);
     wifiManager.setAPCallback(handleConfigPortalStart);
@@ -153,39 +82,30 @@ void Wifi::prepareWifiManager(
 }
 
 void Wifi::saveConfigParameters() {
-    if (!activeConfig || !ntpParam || !tzParam || !tempOffsetIndoorParam || !outdoorSensorChannelParam || !webLanguageParam || !ventingThresholdParam) return;
-    const char *ntpServerValue = ntpParam->getValue();
-    const char *timezoneValue = tzParam->getValue();
-    const char *webLanguageValue = webLanguageParam->getValue();
-    const char *tempOffsetValue = tempOffsetIndoorParam->getValue();
-    const char *outdoorSensorChannelValue = outdoorSensorChannelParam->getValue();
-    const char *ventingThresholdValue = ventingThresholdParam->getValue();
-    if (ntpServerValue && strlen(ntpServerValue) > 0) activeConfig->ntpServer     = ntpServerValue;
-    if (timezoneValue && strlen(timezoneValue) > 0) activeConfig->timezonePosix = timezoneValue;
-    if (webLanguageValue && (strcmp(webLanguageValue, "de") == 0 || strcmp(webLanguageValue, "en") == 0)) {
+    if (!activeConfig || !activeConfigParameters) return;
+    const char *ntpServerValue = activeConfigParameters->ntpServer().getValue();
+    const char *timezoneValue = activeConfigParameters->timezoneHidden().getValue();
+    const char *webLanguageValue = activeConfigParameters->webLanguage().getValue();
+    const char *tempOffsetValue = activeConfigParameters->tempOffsetIndoor().getValue();
+    const char *outdoorSensorChannelValue = activeConfigParameters->outdoorSensorChannel().getValue();
+    const char *ventingThresholdValue = activeConfigParameters->ventingThreshold().getValue();
+
+    if (WifiConfigFields::hasTextValue(ntpServerValue)) activeConfig->ntpServer = ntpServerValue;
+    if (WifiConfigFields::hasTextValue(timezoneValue)) activeConfig->timezonePosix = timezoneValue;
+    if (WifiConfigFields::isSupportedWebLanguage(webLanguageValue)) {
         activeConfig->webLanguage = webLanguageValue;
     }
-    if (tempOffsetValue && strlen(tempOffsetValue) > 0) {
-        char *end = nullptr;
-        const float parsedIndoorTemperatureOffset = strtof(tempOffsetValue, &end);
-        if (end != tempOffsetValue && *end == '\0' && std::isfinite(parsedIndoorTemperatureOffset)) {
-            activeConfig->tempOffsetIndoor = parsedIndoorTemperatureOffset;
-        }
+    float parsedIndoorTemperatureOffset = 0.0f;
+    if (WifiConfigFields::parseIndoorTemperatureOffset(tempOffsetValue, parsedIndoorTemperatureOffset)) {
+        activeConfig->tempOffsetIndoor = parsedIndoorTemperatureOffset;
     }
-    if (outdoorSensorChannelValue && strlen(outdoorSensorChannelValue) > 0) {
-        char *end = nullptr;
-        const long parsedOutdoorSensorChannel = strtol(outdoorSensorChannelValue, &end, 10);
-        if (end != outdoorSensorChannelValue && *end == '\0' &&
-            parsedOutdoorSensorChannel >= 1 && parsedOutdoorSensorChannel <= 3) {
-            activeConfig->outdoorSensorChannel = parsedOutdoorSensorChannel;
-        }
+    uint8_t parsedOutdoorSensorChannel = 0;
+    if (WifiConfigFields::parseOutdoorSensorChannel(outdoorSensorChannelValue, parsedOutdoorSensorChannel)) {
+        activeConfig->outdoorSensorChannel = parsedOutdoorSensorChannel;
     }
-    if (ventingThresholdValue && strlen(ventingThresholdValue) > 0) {
-        char *end = nullptr;
-        const float parsedVentingThreshold = strtof(ventingThresholdValue, &end);
-        if (end != ventingThresholdValue && *end == '\0' && std::isfinite(parsedVentingThreshold) && parsedVentingThreshold > 0.0f) {
-            activeConfig->ventingThreshold = parsedVentingThreshold;
-        }
+    float parsedVentingThreshold = 0.0f;
+    if (WifiConfigFields::parseVentingThreshold(ventingThresholdValue, parsedVentingThreshold)) {
+        activeConfig->ventingThreshold = parsedVentingThreshold;
     }
     if (!ConfigStore::save(*activeConfig)) {
         DEBUG_MSG("Failed to persist configuration to LittleFS.\n");
@@ -210,24 +130,7 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
     activeConfig = &config;
     mdnsReady = false;
 
-    String selectHtml = buildTimezoneSelectHtml(config.timezonePosix);
-    String languageSelectHtml = buildLanguageSelectHtml(config.webLanguage);
-    String tempOffsetIndoorValue = formatFloatValue(config.tempOffsetIndoor, 2);
-    String outdoorSensorChannelValue = formatIntegerValue(config.outdoorSensorChannel);
-    String ventingThresholdValue = formatFloatValue(config.ventingThreshold, 1);
-    WiFiManagerParameter tzSelectRaw(selectHtml.c_str());
-    WiFiManagerParameter languageSelectRaw(languageSelectHtml.c_str());
-    WiFiManagerParameter tzHidden("timezone_posix", "", config.timezonePosix.c_str(), 64, "type='hidden'");
-    WiFiManagerParameter webLanguage("web_language", "", config.webLanguage.c_str(), 8, "type='hidden'");
-    WiFiManagerParameter ntpServer("ntp_server", "NTP Server", config.ntpServer.c_str(), 64);
-    WiFiManagerParameter tempOffsetIndoor("temp_offset_indoor", "Indoor Temperature Offset", tempOffsetIndoorValue.c_str(), 16, "type='number' step='0.1'");
-    WiFiManagerParameter outdoorSensorChannel("outdoor_sensor_channel", "Outdoor Sensor Channel",
-                                              outdoorSensorChannelValue.c_str(), 4, "type='number' min='1' max='3' step='1'");
-    WiFiManagerParameter ventingThreshold("venting_threshold", "Venting Threshold (g/m\xc2\xb3)",
-                                          ventingThresholdValue.c_str(), 8, "type='number' min='0.5' max='10' step='0.5'");
-
-    prepareWifiManager(tzSelectRaw, languageSelectRaw, tzHidden, webLanguage,
-                       ntpServer, tempOffsetIndoor, outdoorSensorChannel, ventingThreshold);
+    prepareConfigPortalParameters(config);
 
     String hostname(HOSTNAME);
     WiFi.hostname(hostname);
