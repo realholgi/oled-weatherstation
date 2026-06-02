@@ -1,39 +1,58 @@
 #include "ConfigStore.h"
+#include "ConfigJsonParser.h"
+
 #include <LittleFS.h>
 #include <ArduinoJson.h>
-#include <cmath>
 
 static const char *CONFIG_FILE = "/config.json";
 
-AppConfig ConfigStore::load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor,
-                            uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage, float defaultVentingThreshold) {
+namespace {
+ConfigLoadResult resultFromDefaults(const char *defaultNtpServer, const char *defaultTimezonePosix,
+                                    float defaultTempOffsetIndoor, uint8_t defaultOutdoorSensorChannel,
+                                    const char *defaultWebLanguage, float defaultVentingThreshold,
+                                    ConfigLoadStatus::Outcome outcome) {
     AppConfig config{String(defaultNtpServer), String(defaultTimezonePosix), defaultTempOffsetIndoor,
                      defaultOutdoorSensorChannel, String(defaultWebLanguage), defaultVentingThreshold};
-    if (!LittleFS.begin()) return config;
+    return {config, outcome};
+}
+
+AppConfig appConfigFromParsedValues(const ConfigJsonParser::Values &values) {
+    return {String(values.ntpServer.c_str()),
+            String(values.timezonePosix.c_str()),
+            values.tempOffsetIndoor,
+            values.outdoorSensorChannel,
+            String(values.webLanguage.c_str()),
+            values.ventingThreshold};
+}
+}
+
+ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor,
+                                   uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage, float defaultVentingThreshold) {
+    if (!LittleFS.begin()) {
+        return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
+                                  defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  ConfigLoadStatus::mountFailed());
+    }
+
     File configFile = LittleFS.open(CONFIG_FILE, "r");
-    if (!configFile) { LittleFS.end(); return config; }
-    JsonDocument jsonDocument;
-    if (deserializeJson(jsonDocument, configFile) == DeserializationError::Ok) {
-        const char *ntpServerValue = jsonDocument["ntp_server"] | "";
-        const char *timezoneValue  = jsonDocument["timezone_posix"]   | "";
-        const char *webLanguageValue = jsonDocument["web_language"] | "";
-        const float tempOffsetIndoor = jsonDocument["temp_offset_indoor"] | defaultTempOffsetIndoor;
-        const int outdoorSensorChannel = jsonDocument["outdoor_sensor_channel"] | int(defaultOutdoorSensorChannel);
-        const float ventingThreshold = jsonDocument["venting_threshold"] | defaultVentingThreshold;
-        if (strlen(ntpServerValue) > 0) config.ntpServer     = ntpServerValue;
-        if (strlen(timezoneValue)  > 0) config.timezonePosix = timezoneValue;
-        if (strcmp(webLanguageValue, "en") == 0 || strcmp(webLanguageValue, "de") == 0) {
-            config.webLanguage = webLanguageValue;
-        }
-        if (std::isfinite(tempOffsetIndoor)) config.tempOffsetIndoor = tempOffsetIndoor;
-        if (outdoorSensorChannel >= 1 && outdoorSensorChannel <= 3) {
-            config.outdoorSensorChannel = outdoorSensorChannel;
-        }
-        if (std::isfinite(ventingThreshold) && ventingThreshold > 0.0f) config.ventingThreshold = ventingThreshold;
+    if (!configFile) {
+        LittleFS.end();
+        return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
+                                  defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  ConfigLoadStatus::missingFile());
+    }
+
+    String configContent;
+    while (configFile.available()) {
+        configContent += static_cast<char>(configFile.read());
     }
     configFile.close();
     LittleFS.end();
-    return config;
+
+    const ConfigJsonParser::Defaults defaults{defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
+                                              defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold};
+    const ConfigJsonParser::Result parsed = ConfigJsonParser::parse(configContent.c_str(), defaults);
+    return {appConfigFromParsedValues(parsed.values), parsed.outcome};
 }
 
 bool ConfigStore::save(const AppConfig &config) {
