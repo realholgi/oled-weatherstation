@@ -199,8 +199,8 @@ IRAM_ATTR void Wifi::toggleStatusLed() {
 
 void Wifi::handleConfigPortalStart(WiFiManager *wifiManagerInstance) {
     DEBUG_MSG("Entered config mode");
-    DEBUG_MSG(WiFi.softAPIP().toString().c_str());
-    DEBUG_MSG(wifiManagerInstance->getConfigPortalSSID().c_str());
+    DEBUG_MSG("%s\n", WiFi.softAPIP().toString().c_str());
+    DEBUG_MSG("%s\n", wifiManagerInstance->getConfigPortalSSID().c_str());
 
     activeDisplayRef().showConfigPortalSsid(wifiManagerInstance->getConfigPortalSSID());
 }
