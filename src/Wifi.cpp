@@ -159,6 +159,7 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
         DEBUG_MSG("mDNS responder failed to start.\n");
     }
 
+    wasConnected = true;
     return true;
 }
 
@@ -168,4 +169,13 @@ bool Wifi::isMdnsReady() const {
 
 void Wifi::poll() {
     doubleResetDetector.loop();
+
+    // The ESP8266 core reconnects WiFi on its own, but mDNS stays silent
+    // afterwards until re-announced.
+    const bool connectedNow = (WiFi.status() == WL_CONNECTED);
+    if (connectedNow && !wasConnected && mdnsReady) {
+        DEBUG_MSG("WiFi reconnected, re-announcing mDNS.\n");
+        MDNS.announce();
+    }
+    wasConnected = connectedNow;
 }

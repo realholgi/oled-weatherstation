@@ -22,6 +22,7 @@ private:
     DoubleResetDetector doubleResetDetector;
     std::unique_ptr<WifiConfigParameters> configParameters;
     bool mdnsReady = false;
+    bool wasConnected = false;
 
     static Display *activeDisplay;
     static AppConfig *activeConfig;
