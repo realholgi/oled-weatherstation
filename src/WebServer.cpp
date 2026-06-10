@@ -26,9 +26,11 @@ void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, 
     server.on("/data.json", HTTP_GET, [this]() {
         server.sendHeader("Connection", "close");
         server.sendHeader("Access-Control-Allow-Origin", "*");
+        server.sendHeader("Cache-Control", "no-store");
         handleDataJson();
     });
     server.onNotFound([this]() { handleNotFound(); });
+    server.collectHeaders("If-None-Match");
     server.begin();
     started = true;
     if (advertiseMdns) {
@@ -113,6 +115,14 @@ void WebServer::handleDataJson() {
 }
 
 void WebServer::handleRoot() {
+    // HTML content varies with firmware version and configured default language
+    const String etag = String("\"" FIRMWAREVERSION "-") + pageLanguage + "\"";
+    if (server.header("If-None-Match") == etag) {
+        server.send(304, "text/html", "");
+        return;
+    }
+    server.sendHeader("ETag", etag);
+    server.sendHeader("Cache-Control", "max-age=86400");
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.send(200, "text/html", "");
     server.sendContent_P(PAGE_WEATHER_1);
