@@ -56,6 +56,7 @@ static void configureOta() {
         DEBUG_MSG("OTA update finished\n");
     });
     ArduinoOTA.onError([](ota_error_t error) {
+        (void) error; // only used when DEBUG_ESP_PORT is defined
         DEBUG_MSG("OTA error %u\n", error);
     });
 

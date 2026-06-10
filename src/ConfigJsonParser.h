@@ -6,7 +6,7 @@
 #include "ConfigLoadStatus.h"
 
 namespace ConfigJsonParser {
-inline constexpr int CURRENT_SCHEMA_VERSION = 1;
+constexpr int CURRENT_SCHEMA_VERSION = 1;
 
 struct Defaults {
     const char *ntpServer;
