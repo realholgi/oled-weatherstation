@@ -154,6 +154,37 @@ void test_parser_rejects_non_positive_venting_threshold(void) {
     }
 }
 
+void test_parser_schema_version_defaults_to_current(void) {
+    const ConfigJsonParser::Defaults defaults = testDefaults();
+
+    const ConfigJsonParser::Result result = ConfigJsonParser::parse("{}", defaults);
+
+    TEST_ASSERT_EQUAL_INT(ConfigJsonParser::CURRENT_SCHEMA_VERSION, result.values.schemaVersion);
+}
+
+void test_parser_reads_valid_schema_version(void) {
+    const ConfigJsonParser::Defaults defaults = testDefaults();
+
+    const ConfigJsonParser::Result current = ConfigJsonParser::parse("{\"schema_version\":1}", defaults);
+    TEST_ASSERT_EQUAL_INT(1, current.values.schemaVersion);
+
+    const ConfigJsonParser::Result newer =
+        ConfigJsonParser::parse("{\"schema_version\":2,\"ntp_server\":\"future.example.org\"}", defaults);
+    TEST_ASSERT_EQUAL_INT(2, newer.values.schemaVersion);
+    TEST_ASSERT_EQUAL_STRING("future.example.org", newer.values.ntpServer.c_str());
+}
+
+void test_parser_rejects_invalid_schema_versions(void) {
+    const ConfigJsonParser::Defaults defaults = testDefaults();
+    const char *versions[] = {"\"x\"", "0", "-1", "1.5"};
+
+    for (const char *version : versions) {
+        std::string json = std::string("{\"schema_version\":") + version + "}";
+        const ConfigJsonParser::Result result = ConfigJsonParser::parse(json.c_str(), defaults);
+        TEST_ASSERT_EQUAL_INT(ConfigJsonParser::CURRENT_SCHEMA_VERSION, result.values.schemaVersion);
+    }
+}
+
 void test_parser_valid_json_with_invalid_fields_still_reports_loaded(void) {
     const ConfigJsonParser::Defaults defaults = testDefaults();
     const char *json =
@@ -192,6 +223,9 @@ int main(int argc, char **argv) {
     RUN_TEST(test_parser_rejects_non_finite_floats);
     RUN_TEST(test_parser_rejects_invalid_languages);
     RUN_TEST(test_parser_rejects_non_positive_venting_threshold);
+    RUN_TEST(test_parser_schema_version_defaults_to_current);
+    RUN_TEST(test_parser_reads_valid_schema_version);
+    RUN_TEST(test_parser_rejects_invalid_schema_versions);
     RUN_TEST(test_parser_valid_json_with_invalid_fields_still_reports_loaded);
     return UNITY_END();
 }

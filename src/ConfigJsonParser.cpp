@@ -15,7 +15,8 @@ ConfigJsonParser::Values valuesFromDefaults(const ConfigJsonParser::Defaults &de
             defaults.tempOffsetIndoor,
             defaults.outdoorSensorChannel,
             textOrEmpty(defaults.webLanguage),
-            defaults.ventingThreshold};
+            defaults.ventingThreshold,
+            ConfigJsonParser::CURRENT_SCHEMA_VERSION};
 }
 }
 
@@ -51,6 +52,11 @@ Result parse(const char *json, const Defaults &defaults) {
         if (outdoorSensorChannel >= 1 && outdoorSensorChannel <= 3) {
             values.outdoorSensorChannel = static_cast<uint8_t>(outdoorSensorChannel);
         }
+    }
+
+    if (jsonDocument["schema_version"].is<int>()) {
+        const int schemaVersion = jsonDocument["schema_version"].as<int>();
+        if (schemaVersion >= 1) values.schemaVersion = schemaVersion;
     }
 
     if (jsonDocument["venting_threshold"].is<float>()) {

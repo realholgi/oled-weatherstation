@@ -6,6 +6,8 @@
 #include "ConfigLoadStatus.h"
 
 namespace ConfigJsonParser {
+inline constexpr int CURRENT_SCHEMA_VERSION = 1;
+
 struct Defaults {
     const char *ntpServer;
     const char *timezonePosix;
@@ -22,6 +24,7 @@ struct Values {
     uint8_t outdoorSensorChannel;
     std::string webLanguage;
     float ventingThreshold;
+    int schemaVersion;
 };
 
 struct Result {

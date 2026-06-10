@@ -62,6 +62,7 @@ bool ConfigStore::save(const AppConfig &config) {
     File configFile = LittleFS.open(CONFIG_FILE, "w");
     if (!configFile) { LittleFS.end(); return false; }
     JsonDocument jsonDocument;
+    jsonDocument["schema_version"] = ConfigJsonParser::CURRENT_SCHEMA_VERSION;
     jsonDocument["ntp_server"] = config.ntpServer;
     jsonDocument["timezone_posix"]   = config.timezonePosix;
     jsonDocument["temp_offset_indoor"] = config.tempOffsetIndoor;
