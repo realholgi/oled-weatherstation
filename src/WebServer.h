@@ -5,11 +5,12 @@
 
 class SensorIndoor;
 class SensorOutdoor;
+class TimeClient;
 
 class WebServer {
 public:
     WebServer();
-    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage, float threshold);
+    void begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, const TimeClient &timeClient, bool advertiseMdns, const String &webLanguage, float threshold);
     void handleClient();
 
 private:
@@ -19,6 +20,7 @@ private:
 
     SensorIndoor *indoorSensorRef = nullptr;
     SensorOutdoor *outdoorSensorRef = nullptr;
+    const TimeClient *timeClientRef = nullptr;
     float ventingThreshold = DEFAULT_VENTING_THRESHOLD;
 
     void handleRoot();

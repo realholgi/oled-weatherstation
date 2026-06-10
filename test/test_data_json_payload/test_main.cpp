@@ -31,27 +31,27 @@ static DataJsonPayload::OutdoorInputs plausibleOutdoor() {
 // ---- both valid path --------------------------------------------------------
 
 void test_both_valid_sets_valid_flags(void) {
-    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_TRUE(p.indoorValid);
     TEST_ASSERT_TRUE(p.outdoorValid);
 }
 
 void test_both_valid_populates_indoor_numeric_fields(void) {
-    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 21.5f, p.indoorTemperatureCelsius);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 10.8f, p.indoorAbsoluteHumidityGm3);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 11.9f, p.indoorDewPointCelsius);
 }
 
 void test_both_valid_has_advice(void) {
-    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_TRUE(p.hasAdvice);
     TEST_ASSERT_NOT_NULL(p.ventingRecommendation);
 }
 
 void test_both_valid_recommendation_is_vent_when_diff_large(void) {
     // indoor abs 10.8, outdoor abs 5.5 → diff 5.3 >= 3.0 → VENT
-    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_EQUAL_STRING("vent", p.ventingRecommendation);
 }
 
@@ -60,7 +60,7 @@ void test_both_valid_recommendation_is_vent_when_diff_large(void) {
 void test_humidity_int_cast_truncates(void) {
     DataJsonPayload::IndoorInputs in = plausibleIndoor();
     in.humidity = 55.7f;
-    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_EQUAL_INT(55, p.indoorHumidityPercent);
 }
 
@@ -69,14 +69,14 @@ void test_humidity_int_cast_truncates(void) {
 void test_indoor_implausible_temp_sets_indoor_invalid(void) {
     DataJsonPayload::IndoorInputs in = plausibleIndoor();
     in.temperature = 80.0f;   // above 60°C limit → implausible
-    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_FALSE(p.indoorValid);
 }
 
 void test_indoor_invalid_sets_no_advice(void) {
     DataJsonPayload::IndoorInputs in = plausibleIndoor();
     in.temperature = 80.0f;
-    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_FALSE(p.hasAdvice);
     TEST_ASSERT_NULL(p.ventingRecommendation);
 }
@@ -86,14 +86,14 @@ void test_indoor_invalid_sets_no_advice(void) {
 void test_outdoor_stale_121s_is_invalid(void) {
     DataJsonPayload::OutdoorInputs out = plausibleOutdoor();
     out.secondsSinceLastPacket = 121;
-    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), out, 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), out, 3.0f, true);
     TEST_ASSERT_FALSE(p.outdoorValid);
 }
 
 void test_outdoor_boundary_120s_is_valid(void) {
     DataJsonPayload::OutdoorInputs out = plausibleOutdoor();
     out.secondsSinceLastPacket = 120;   // inclusive boundary
-    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), out, 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(plausibleIndoor(), out, 3.0f, true);
     TEST_ASSERT_TRUE(p.outdoorValid);
 }
 
@@ -104,7 +104,7 @@ void test_both_invalid_no_advice(void) {
     in.temperature = 80.0f;   // implausible
     DataJsonPayload::OutdoorInputs out = plausibleOutdoor();
     out.secondsSinceLastPacket = 121;  // stale
-    DataJsonPayload::Payload p = DataJsonPayload::build(in, out, 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(in, out, 3.0f, true);
     TEST_ASSERT_FALSE(p.indoorValid);
     TEST_ASSERT_FALSE(p.outdoorValid);
     TEST_ASSERT_FALSE(p.hasAdvice);
@@ -118,8 +118,18 @@ void test_plausibility_recheck_overrides_sensor_flag(void) {
     DataJsonPayload::IndoorInputs in = plausibleIndoor();
     in.sensorIsValid  = true;
     in.temperature    = 80.0f;  // implausible even though flag says valid
-    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f);
+    DataJsonPayload::Payload p = DataJsonPayload::build(in, plausibleOutdoor(), 3.0f, true);
     TEST_ASSERT_FALSE(p.indoorValid);
+}
+
+// ---- time sync passthrough --------------------------------------------------
+
+void test_time_synced_passes_through(void) {
+    DataJsonPayload::Payload synced = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f, true);
+    TEST_ASSERT_TRUE(synced.timeSynced);
+
+    DataJsonPayload::Payload unsynced = DataJsonPayload::build(plausibleIndoor(), plausibleOutdoor(), 3.0f, false);
+    TEST_ASSERT_FALSE(unsynced.timeSynced);
 }
 
 // ---- main -------------------------------------------------------------------
@@ -139,5 +149,6 @@ int main(int argc, char **argv) {
     RUN_TEST(test_outdoor_boundary_120s_is_valid);
     RUN_TEST(test_both_invalid_no_advice);
     RUN_TEST(test_plausibility_recheck_overrides_sensor_flag);
+    RUN_TEST(test_time_synced_passes_through);
     return UNITY_END();
 }

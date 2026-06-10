@@ -8,7 +8,8 @@ namespace DataJsonPayload {
 Payload build(
     const IndoorInputs& indoor,
     const OutdoorInputs& outdoor,
-    float ventingThreshold
+    float ventingThreshold,
+    bool timeSynced
 ) {
     Payload p{};
 
@@ -44,6 +45,7 @@ Payload build(
 
     p.outdoorSecondsSinceLastReading = outdoor.secondsSinceLastPacket;
     p.ventingThresholdGm3            = ventingThreshold;
+    p.timeSynced                     = timeSynced;
 
     if (indoorValid && outdoorValid) {
         const VentingAdvice::Result advice = VentingAdvice::calculate(

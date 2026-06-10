@@ -37,6 +37,7 @@ struct Payload {
     // Always-present fields
     uint32_t outdoorSecondsSinceLastReading;
     float ventingThresholdGm3;
+    bool timeSynced;
     // Advice fields (meaningful only when indoorValid && outdoorValid)
     bool hasAdvice;
     float absoluteHumidityDifferenceGm3;
@@ -46,7 +47,8 @@ struct Payload {
 Payload build(
     const IndoorInputs& indoor,
     const OutdoorInputs& outdoor,
-    float ventingThreshold
+    float ventingThreshold,
+    bool timeSynced
 );
 
 }  // namespace DataJsonPayload

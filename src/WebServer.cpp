@@ -9,15 +9,17 @@
 #include "VentingAdvice.h"
 #include "config.h"
 #include "PAGE_weather.h"
+#include "TimeClient.h"
 #include "WebNotFound.h"
 #include "DataJsonPayload.h"
 
 WebServer::WebServer() : server(80) {
 }
 
-void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, bool advertiseMdns, const String &webLanguage, float threshold) {
+void WebServer::begin(SensorIndoor &indoorSensor, SensorOutdoor &outdoorSensor, const TimeClient &timeClient, bool advertiseMdns, const String &webLanguage, float threshold) {
     indoorSensorRef = &indoorSensor;
     outdoorSensorRef = &outdoorSensor;
+    timeClientRef = &timeClient;
     pageLanguage = (webLanguage == "en") ? "en" : "de";
     ventingThreshold = threshold;
     server.on("/", [this]() { handleRoot(); });
@@ -64,7 +66,7 @@ void WebServer::handleDataJson() {
     outdoor.batteryOk              = outdoorSensor.batteryStatus();
     outdoor.secondsSinceLastPacket = outdoorSensor.secondsSinceLastPacket();
 
-    const DataJsonPayload::Payload payload = DataJsonPayload::build(indoor, outdoor, ventingThreshold);
+    const DataJsonPayload::Payload payload = DataJsonPayload::build(indoor, outdoor, ventingThreshold, timeClientRef->isTimeSet());
 
     jsonDocument["indoorValid"]  = payload.indoorValid;
     jsonDocument["outdoorValid"] = payload.outdoorValid;
@@ -95,6 +97,7 @@ void WebServer::handleDataJson() {
 
     jsonDocument["outdoorSecondsSinceLastReading"] = payload.outdoorSecondsSinceLastReading;
     jsonDocument["ventingThresholdGm3"]            = payload.ventingThresholdGm3;
+    jsonDocument["timeSynced"]                     = payload.timeSynced;
 
     if (payload.hasAdvice) {
         jsonDocument["absoluteHumidityDifferenceGm3"] = payload.absoluteHumidityDifferenceGm3;

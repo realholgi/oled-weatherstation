@@ -115,7 +115,7 @@ void setup() {
     displayScreen.setVentingThreshold(appConfig.ventingThreshold);  // after connect() so portal changes are picked up
     if (wifiConnected) {
         displayScreen.showStartupHttp();
-        webServer.begin(indoorSensor, outdoorSensor, wifiController.isMdnsReady(), appConfig.webLanguage, appConfig.ventingThreshold);
+        webServer.begin(indoorSensor, outdoorSensor, timeClient, wifiController.isMdnsReady(), appConfig.webLanguage, appConfig.ventingThreshold);
 
         displayScreen.showStartupTime();
         timeClient.configure(appConfig.timezonePosix.c_str(), appConfig.ntpServer.c_str());
