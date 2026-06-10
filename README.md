@@ -26,7 +26,7 @@ It includes an OLED display, indoor and outdoor sensors, NTP time, and a live we
 - OLED view with time, indoor/outdoor temperature, relative humidity, absolute humidity, and humidity difference
 - Live web interface in German or English plus JSON endpoint
 - WiFi captive portal on first boot or double-reset
-- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, and webpage language
+- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, venting threshold, and webpage language
 - OTA updates after the initial USB flash
 
 ## How The Venting Recommendation Works
@@ -89,6 +89,7 @@ Connect to it and enter:
 - POSIX timezone
 - indoor temperature offset
 - outdoor sensor channel (`1`-`3`)
+- venting threshold in g/m³ (`0.5`-`10`)
 - webpage language (`Deutsch` or `English`)
 
 The configuration is stored in LittleFS as `/config.json`.
@@ -125,7 +126,7 @@ pio run -e d1_mini_ota -t upload
 ## Development Notes
 
 - Keep large HTML strings in `PROGMEM`.
-- Use `StaticJsonDocument` or `JsonDocument`; do not reintroduce deprecated `DynamicJsonDocument` patterns.
+- Use `JsonDocument` (ArduinoJson 7); do not reintroduce deprecated `StaticJsonDocument`/`DynamicJsonDocument` patterns.
 - The board uses `eagle.flash.4m1m.ld`: 4 MB flash with 1 MB reserved for LittleFS.
 - `platformio.ini` is the authoritative build configuration.
 
