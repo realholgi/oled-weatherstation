@@ -4,6 +4,8 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
+#include <memory>
+
 static const char *CONFIG_FILE = "/config.json";
 
 namespace {
@@ -42,16 +44,16 @@ ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *def
                                   ConfigLoadStatus::missingFile());
     }
 
-    String configContent;
-    while (configFile.available()) {
-        configContent += static_cast<char>(configFile.read());
-    }
+    const size_t configSize = configFile.size();
+    std::unique_ptr<char[]> configContent(new char[configSize + 1]);
+    const size_t bytesRead = configFile.readBytes(configContent.get(), configSize);
+    configContent[bytesRead] = '\0';
     configFile.close();
     LittleFS.end();
 
     const ConfigJsonParser::Defaults defaults{defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
                                               defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold};
-    const ConfigJsonParser::Result parsed = ConfigJsonParser::parse(configContent.c_str(), defaults);
+    const ConfigJsonParser::Result parsed = ConfigJsonParser::parse(configContent.get(), defaults);
     return {appConfigFromParsedValues(parsed.values), parsed.outcome};
 }
 
