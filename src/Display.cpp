@@ -170,8 +170,9 @@ void Display::renderMeasurements(TimeClient &timeClient, const SensorIndoor &ind
     if (outdoorSensor.isValid() && indoorSensor.isValid()) {
         const VentingAdvice::Result advice = VentingAdvice::calculate(indoorSensor.absoluteHumidity(), outdoorSensor.absoluteHumidity(), ventingThreshold);
         drawFloatAt(6, ROW_DIFF, advice.difference);
+        // Warn-Icon: Lüften kontraproduktiv (draußen feuchter als drinnen)
         oled.drawBitmap(0, ROW_DIFF - 1 + OFFSET, warning_icon16x16, 16, 16,
-                       advice.recommendation == VentingAdvice::Recommendation::VENT ? WHITE : BLACK);
+                       advice.difference < 0.0f ? WHITE : BLACK);
     }
 
     drawTextAt(6, ROW_TIME, formattedTime);
