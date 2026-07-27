@@ -19,7 +19,7 @@ void loop() {
 //    Serial.print(txt);
 //Struct results:
 	fwsResult result = fws.getData();
-	sprintf(txt, "id: %d, channel: %d, humidity: %d%%, temperature: %d.%d C, battery: %s\n", result.id, result.channel, result.humidity, result.temperature / 100, result.temperature % 100, (result.battery ? "OK" : "NOK"));
+	snprintf(txt, sizeof(txt), "id: %d, channel: %d, humidity: %d%%, temperature: %d.%d C, battery: %s\n", result.id, result.channel, result.humidity, result.temperature / 100, result.temperature % 100, (result.battery ? "OK" : "NOK"));
 	Serial.print(txt);
   }
 }
