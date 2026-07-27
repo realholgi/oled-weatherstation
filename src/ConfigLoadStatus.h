@@ -10,7 +10,8 @@ enum class Reason {
     LoadedFromFile,
     MissingFile,
     MountFailed,
-    InvalidJson
+    InvalidJson,
+    FileTooLarge
 };
 
 struct Outcome {
@@ -23,6 +24,7 @@ Outcome loaded();
 Outcome missingFile();
 Outcome mountFailed();
 Outcome invalidJson();
+Outcome fileTooLarge();
 
 const char *statusLabel(Status status);
 const char *reasonLabel(Reason reason);

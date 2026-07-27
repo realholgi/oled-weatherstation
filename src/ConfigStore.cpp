@@ -5,8 +5,10 @@
 #include <ArduinoJson.h>
 
 #include <memory>
+#include <new>
 
 static const char *CONFIG_FILE = "/config.json";
+static constexpr size_t MAX_CONFIG_FILE_SIZE = 1024;
 
 namespace {
 ConfigLoadResult resultFromDefaults(const char *defaultNtpServer, const char *defaultTimezonePosix,
@@ -45,7 +47,22 @@ ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *def
     }
 
     const size_t configSize = configFile.size();
-    std::unique_ptr<char[]> configContent(new char[configSize + 1]);
+    if (configSize > MAX_CONFIG_FILE_SIZE) {
+        configFile.close();
+        LittleFS.end();
+        return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
+                                  defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  ConfigLoadStatus::fileTooLarge());
+    }
+
+    std::unique_ptr<char[]> configContent(new (std::nothrow) char[configSize + 1]);
+    if (!configContent) {
+        configFile.close();
+        LittleFS.end();
+        return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
+                                  defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  ConfigLoadStatus::invalidJson());
+    }
     const size_t bytesRead = configFile.readBytes(configContent.get(), configSize);
     configContent[bytesRead] = '\0';
     configFile.close();

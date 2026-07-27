@@ -34,6 +34,12 @@ void test_default_outcomes_report_used_defaults(void) {
     TEST_ASSERT_EQUAL(ConfigLoadStatus::Reason::InvalidJson, invalid.reason);
     TEST_ASSERT_TRUE(invalid.usedDefaults);
     TEST_ASSERT_EQUAL_STRING("invalid_json", ConfigLoadStatus::reasonLabel(invalid.reason));
+
+    const ConfigLoadStatus::Outcome tooLarge = ConfigLoadStatus::fileTooLarge();
+    TEST_ASSERT_EQUAL(ConfigLoadStatus::Status::UsedDefaults, tooLarge.status);
+    TEST_ASSERT_EQUAL(ConfigLoadStatus::Reason::FileTooLarge, tooLarge.reason);
+    TEST_ASSERT_TRUE(tooLarge.usedDefaults);
+    TEST_ASSERT_EQUAL_STRING("file_too_large", ConfigLoadStatus::reasonLabel(tooLarge.reason));
 }
 
 int main(int argc, char **argv) {

@@ -17,6 +17,10 @@ Outcome invalidJson() {
     return {Status::UsedDefaults, Reason::InvalidJson, true};
 }
 
+Outcome fileTooLarge() {
+    return {Status::UsedDefaults, Reason::FileTooLarge, true};
+}
+
 const char *statusLabel(Status status) {
     switch (status) {
     case Status::Loaded:
@@ -37,6 +41,8 @@ const char *reasonLabel(Reason reason) {
         return "mount_failed";
     case Reason::InvalidJson:
         return "invalid_json";
+    case Reason::FileTooLarge:
+        return "file_too_large";
     }
     return "invalid_json";
 }
