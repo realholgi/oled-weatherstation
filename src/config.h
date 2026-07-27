@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #endif
 
-#define FIRMWAREVERSION "0.9.1"
 #define HOSTNAME "wetter"
 #define OLED_RESET D3
 #define RECEIVER_PIN D6

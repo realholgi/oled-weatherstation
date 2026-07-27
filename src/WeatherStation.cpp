@@ -8,6 +8,7 @@
 #include <ESP8266mDNS.h>
 #include <Ticker.h>
 
+#include "BuildInfoGenerated.h"
 #include "config.h"
 #include "WeatherDebug.h"
 #include "ConfigStore.h"
@@ -69,7 +70,7 @@ void setup() {
     DEBUG_SETUP();
 
     DEBUG_MSG("compiled: %s %s\n", __DATE__, __TIME__);
-    DEBUG_MSG("FW %s\n", FIRMWAREVERSION);
+    DEBUG_MSG("FW %s\n", VERSION_STRING);
     DEBUG_MSG("SDK: %s\n", ESP.getSdkVersion());
 
     pinMode(LED_BUILTIN, OUTPUT);

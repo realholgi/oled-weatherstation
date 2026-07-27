@@ -2,6 +2,7 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
+#include "BuildInfoGenerated.h"
 #include "WebServer.h"
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
@@ -116,7 +117,7 @@ void WebServer::handleDataJson() {
 
 void WebServer::handleRoot() {
     // HTML content varies with firmware version and configured default language
-    const String etag = String("\"" FIRMWAREVERSION "-") + pageLanguage + "\"";
+    const String etag = String("\"" VERSION_STRING "-") + pageLanguage + "\"";
     if (server.header("If-None-Match") == etag) {
         server.send(304, "text/html", "");
         return;
