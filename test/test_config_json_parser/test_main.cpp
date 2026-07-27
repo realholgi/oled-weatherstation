@@ -143,6 +143,18 @@ void test_parser_rejects_invalid_languages(void) {
     }
 }
 
+void test_parser_rejects_invalid_ntp_server_and_timezone(void) {
+    const ConfigJsonParser::Defaults defaults = testDefaults();
+    const char *json =
+        "{\"ntp_server\":\"ntp.example.org\\\" onfocus=alert(1)\","
+        "\"timezone_posix\":\"UTC0<script>\"}";
+
+    const ConfigJsonParser::Result result = ConfigJsonParser::parse(json, defaults);
+
+    TEST_ASSERT_EQUAL_STRING(defaults.ntpServer, result.values.ntpServer.c_str());
+    TEST_ASSERT_EQUAL_STRING(defaults.timezonePosix, result.values.timezonePosix.c_str());
+}
+
 void test_parser_rejects_non_positive_venting_threshold(void) {
     const ConfigJsonParser::Defaults defaults = testDefaults();
     const char *thresholds[] = {"0", "-0.5", "-3"};
@@ -222,6 +234,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_parser_accepts_channel_bounds);
     RUN_TEST(test_parser_rejects_non_finite_floats);
     RUN_TEST(test_parser_rejects_invalid_languages);
+    RUN_TEST(test_parser_rejects_invalid_ntp_server_and_timezone);
     RUN_TEST(test_parser_rejects_non_positive_venting_threshold);
     RUN_TEST(test_parser_schema_version_defaults_to_current);
     RUN_TEST(test_parser_reads_valid_schema_version);

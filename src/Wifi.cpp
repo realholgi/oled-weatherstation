@@ -90,8 +90,8 @@ void Wifi::saveConfigParameters() {
     const char *outdoorSensorChannelValue = activeConfigParameters->outdoorSensorChannel().getValue();
     const char *ventingThresholdValue = activeConfigParameters->ventingThreshold().getValue();
 
-    if (WifiConfigFields::hasTextValue(ntpServerValue)) activeConfig->ntpServer = ntpServerValue;
-    if (WifiConfigFields::hasTextValue(timezoneValue)) activeConfig->timezonePosix = timezoneValue;
+    if (WifiConfigFields::isValidNtpServer(ntpServerValue)) activeConfig->ntpServer = ntpServerValue;
+    if (WifiConfigFields::isSupportedTimezone(timezoneValue)) activeConfig->timezonePosix = timezoneValue;
     if (WifiConfigFields::isSupportedWebLanguage(webLanguageValue)) {
         activeConfig->webLanguage = webLanguageValue;
     }

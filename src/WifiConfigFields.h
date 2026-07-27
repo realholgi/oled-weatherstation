@@ -4,6 +4,8 @@
 
 namespace WifiConfigFields {
 bool hasTextValue(const char *value);
+bool isSupportedTimezone(const char *value);
+bool isValidNtpServer(const char *value);
 bool isSupportedWebLanguage(const char *value);
 bool parseIndoorTemperatureOffset(const char *value, float &out);
 bool parseOutdoorSensorChannel(const char *value, uint8_t &out);

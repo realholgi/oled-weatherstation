@@ -1,4 +1,5 @@
 #include "ConfigJsonParser.h"
+#include "WifiConfigFields.h"
 
 #include <ArduinoJson.h>
 #include <cmath>
@@ -36,8 +37,8 @@ Result parse(const char *json, const Defaults &defaults) {
     const char *timezoneValue = jsonDocument["timezone_posix"] | "";
     const char *webLanguageValue = jsonDocument["web_language"] | "";
 
-    if (ntpServerValue[0] != '\0') values.ntpServer = ntpServerValue;
-    if (timezoneValue[0] != '\0') values.timezonePosix = timezoneValue;
+    if (WifiConfigFields::isValidNtpServer(ntpServerValue)) values.ntpServer = ntpServerValue;
+    if (WifiConfigFields::isSupportedTimezone(timezoneValue)) values.timezonePosix = timezoneValue;
     if (strcmp(webLanguageValue, "en") == 0 || strcmp(webLanguageValue, "de") == 0) {
         values.webLanguage = webLanguageValue;
     }
