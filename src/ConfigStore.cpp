@@ -14,9 +14,12 @@ namespace {
 ConfigLoadResult resultFromDefaults(const char *defaultNtpServer, const char *defaultTimezonePosix,
                                     float defaultTempOffsetIndoor, uint8_t defaultOutdoorSensorChannel,
                                     const char *defaultWebLanguage, float defaultVentingThreshold,
+                                    const char *defaultMqttHost, uint16_t defaultMqttPort,
+                                    const char *defaultMqttUsername, const char *defaultMqttPassword,
                                     ConfigLoadStatus::Outcome outcome) {
     AppConfig config{String(defaultNtpServer), String(defaultTimezonePosix), defaultTempOffsetIndoor,
-                     defaultOutdoorSensorChannel, String(defaultWebLanguage), defaultVentingThreshold};
+                     defaultOutdoorSensorChannel, String(defaultWebLanguage), defaultVentingThreshold,
+                     String(defaultMqttHost), defaultMqttPort, String(defaultMqttUsername), String(defaultMqttPassword)};
     return {config, outcome};
 }
 
@@ -26,15 +29,22 @@ AppConfig appConfigFromParsedValues(const ConfigJsonParser::Values &values) {
             values.tempOffsetIndoor,
             values.outdoorSensorChannel,
             String(values.webLanguage.c_str()),
-            values.ventingThreshold};
+            values.ventingThreshold,
+            String(values.mqttHost.c_str()),
+            values.mqttPort,
+            String(values.mqttUsername.c_str()),
+            String(values.mqttPassword.c_str())};
 }
 }
 
 ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor,
-                                   uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage, float defaultVentingThreshold) {
+                                   uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage, float defaultVentingThreshold,
+                                   const char *defaultMqttHost, uint16_t defaultMqttPort, const char *defaultMqttUsername,
+                                   const char *defaultMqttPassword) {
     if (!LittleFS.begin()) {
         return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
                                   defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  defaultMqttHost, defaultMqttPort, defaultMqttUsername, defaultMqttPassword,
                                   ConfigLoadStatus::mountFailed());
     }
 
@@ -43,6 +53,7 @@ ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *def
         LittleFS.end();
         return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
                                   defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  defaultMqttHost, defaultMqttPort, defaultMqttUsername, defaultMqttPassword,
                                   ConfigLoadStatus::missingFile());
     }
 
@@ -52,6 +63,7 @@ ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *def
         LittleFS.end();
         return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
                                   defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  defaultMqttHost, defaultMqttPort, defaultMqttUsername, defaultMqttPassword,
                                   ConfigLoadStatus::fileTooLarge());
     }
 
@@ -61,6 +73,7 @@ ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *def
         LittleFS.end();
         return resultFromDefaults(defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
                                   defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                  defaultMqttHost, defaultMqttPort, defaultMqttUsername, defaultMqttPassword,
                                   ConfigLoadStatus::invalidJson());
     }
     const size_t bytesRead = configFile.readBytes(configContent.get(), configSize);
@@ -69,7 +82,8 @@ ConfigLoadResult ConfigStore::load(const char *defaultNtpServer, const char *def
     LittleFS.end();
 
     const ConfigJsonParser::Defaults defaults{defaultNtpServer, defaultTimezonePosix, defaultTempOffsetIndoor,
-                                              defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold};
+                                              defaultOutdoorSensorChannel, defaultWebLanguage, defaultVentingThreshold,
+                                              defaultMqttHost, defaultMqttPort, defaultMqttUsername, defaultMqttPassword};
     const ConfigJsonParser::Result parsed = ConfigJsonParser::parse(configContent.get(), defaults);
     return {appConfigFromParsedValues(parsed.values), parsed.outcome};
 }
@@ -86,6 +100,10 @@ bool ConfigStore::save(const AppConfig &config) {
     jsonDocument["outdoor_sensor_channel"] = config.outdoorSensorChannel;
     jsonDocument["web_language"] = config.webLanguage;
     jsonDocument["venting_threshold"] = config.ventingThreshold;
+    jsonDocument["mqtt_host"] = config.mqttHost;
+    jsonDocument["mqtt_port"] = config.mqttPort;
+    jsonDocument["mqtt_username"] = config.mqttUsername;
+    jsonDocument["mqtt_password"] = config.mqttPassword;
     if (serializeJson(jsonDocument, configFile) == 0) {
         configFile.close();
         LittleFS.end();

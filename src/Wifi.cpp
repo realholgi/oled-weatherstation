@@ -8,6 +8,8 @@
 #include "ConfigStore.h"
 #include "WifiConfigFields.h"
 #include "config.h"
+#include "MqttDiscovery.h"
+#include "BuildInfoGenerated.h"
 
 static const char *PORTAL_TITLE = "Weather Station Setup";
 
@@ -15,7 +17,7 @@ Display *Wifi::activeDisplay = nullptr;
 AppConfig *Wifi::activeConfig = nullptr;
 WifiConfigParameters *Wifi::activeConfigParameters = nullptr;
 
-Wifi::Wifi() : doubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS) {
+Wifi::Wifi() : doubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS), mqttClient(mqttTransport) {
 }
 
 void Wifi::setActiveDisplay(Display &screen) {
@@ -75,6 +77,10 @@ void Wifi::prepareConfigPortalParameters(AppConfig &config) {
     wifiManager.addParameter(&activeConfigParameters->tempOffsetIndoor());
     wifiManager.addParameter(&activeConfigParameters->outdoorSensorChannel());
     wifiManager.addParameter(&activeConfigParameters->ventingThreshold());
+    wifiManager.addParameter(&activeConfigParameters->mqttHost());
+    wifiManager.addParameter(&activeConfigParameters->mqttPort());
+    wifiManager.addParameter(&activeConfigParameters->mqttUsername());
+    wifiManager.addParameter(&activeConfigParameters->mqttPassword());
 
     wifiManager.setSaveParamsCallback(saveConfigParameters);
     wifiManager.setAPCallback(handleConfigPortalStart);
@@ -89,12 +95,19 @@ void Wifi::saveConfigParameters() {
     const char *tempOffsetValue = activeConfigParameters->tempOffsetIndoor().getValue();
     const char *outdoorSensorChannelValue = activeConfigParameters->outdoorSensorChannel().getValue();
     const char *ventingThresholdValue = activeConfigParameters->ventingThreshold().getValue();
+    const char *mqttHostValue = activeConfigParameters->mqttHost().getValue();
+    const char *mqttPortValue = activeConfigParameters->mqttPort().getValue();
+    const char *mqttUsernameValue = activeConfigParameters->mqttUsername().getValue();
+    const char *mqttPasswordValue = activeConfigParameters->mqttPassword().getValue();
 
     if (WifiConfigFields::isValidNtpServer(ntpServerValue)) activeConfig->ntpServer = ntpServerValue;
     if (WifiConfigFields::isSupportedTimezone(timezoneValue)) activeConfig->timezonePosix = timezoneValue;
     if (WifiConfigFields::isSupportedWebLanguage(webLanguageValue)) {
         activeConfig->webLanguage = webLanguageValue;
     }
+    if (WifiConfigFields::isValidMqttHost(mqttHostValue)) activeConfig->mqttHost = mqttHostValue;
+    if (WifiConfigFields::isValidMqttCredential(mqttUsernameValue)) activeConfig->mqttUsername = mqttUsernameValue;
+    if (WifiConfigFields::isValidMqttCredential(mqttPasswordValue)) activeConfig->mqttPassword = mqttPasswordValue;
     float parsedIndoorTemperatureOffset = 0.0f;
     if (WifiConfigFields::parseIndoorTemperatureOffset(tempOffsetValue, parsedIndoorTemperatureOffset)) {
         activeConfig->tempOffsetIndoor = parsedIndoorTemperatureOffset;
@@ -102,6 +115,10 @@ void Wifi::saveConfigParameters() {
     uint8_t parsedOutdoorSensorChannel = 0;
     if (WifiConfigFields::parseOutdoorSensorChannel(outdoorSensorChannelValue, parsedOutdoorSensorChannel)) {
         activeConfig->outdoorSensorChannel = parsedOutdoorSensorChannel;
+    }
+    uint16_t parsedMqttPort = 0;
+    if (WifiConfigFields::parseMqttPort(mqttPortValue, parsedMqttPort)) {
+        activeConfig->mqttPort = parsedMqttPort;
     }
     float parsedVentingThreshold = 0.0f;
     if (WifiConfigFields::parseVentingThreshold(ventingThresholdValue, parsedVentingThreshold)) {
@@ -151,6 +168,7 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
 
     if (WiFi.status() != WL_CONNECTED) {
         DEBUG_MSG("WiFi did not reach WL_CONNECTED within the startup window.\n");
+
         return false;
     }
 
@@ -162,12 +180,69 @@ bool Wifi::connect(Display &screen, AppConfig &config) {
     wasConnected = true;
     return true;
 }
+void Wifi::configureMqtt(const AppConfig &config) {
+    mqttHost = config.mqttHost;
+    mqttPort = config.mqttPort;
+    mqttUsername = config.mqttUsername;
+    mqttPassword = config.mqttPassword;
+    mqttClient.disconnect();
+    mqttClient.setServer(mqttHost.c_str(), mqttPort);
+    mqttClient.setBufferSize(1024);
+    lastMqttAttempt = 0;
+}
+
+bool Wifi::mqttEnabled() const {
+    return mqttHost.length() != 0;
+}
+
+void Wifi::publishDiscovery() {
+    for (size_t index = 0; index < MqttDiscovery::ENTITY_COUNT; ++index) {
+        const std::string topic = MqttDiscovery::discoveryTopic(index);
+        const std::string payload = MqttDiscovery::discoveryPayload(index, VERSION_STRING);
+        mqttClient.publish(topic.c_str(), payload.c_str(), true);
+    }
+}
+
+bool Wifi::connectMqtt() {
+    if (!mqttEnabled() || WiFi.status() != WL_CONNECTED || mqttClient.connected()) return false;
+    const unsigned long now = millis();
+    if (now - lastMqttAttempt < 5000) return false;
+    lastMqttAttempt = now;
+
+    bool connected = false;
+    if (mqttUsername.length() == 0 && mqttPassword.length() == 0) {
+        connected = mqttClient.connect(HOSTNAME, MqttDiscovery::AVAILABILITY_TOPIC, 0, true,
+                                       MqttDiscovery::PAYLOAD_NOT_AVAILABLE);
+    } else {
+        connected = mqttClient.connect(HOSTNAME, mqttUsername.c_str(), mqttPassword.c_str(),
+                                       MqttDiscovery::AVAILABILITY_TOPIC, 0, true,
+                                       MqttDiscovery::PAYLOAD_NOT_AVAILABLE);
+    }
+    if (!connected) return false;
+
+    mqttClient.publish(MqttDiscovery::AVAILABILITY_TOPIC, MqttDiscovery::PAYLOAD_AVAILABLE, true);
+    publishDiscovery();
+    return true;
+}
+
+void Wifi::publishSensorStates(const DataJsonPayload::Payload &payload) {
+    if (!mqttClient.connected()) return;
+
+    const std::vector<MqttDiscovery::StateMessage> messages = MqttDiscovery::stateMessages(payload);
+    for (const MqttDiscovery::StateMessage &message : messages) {
+        mqttClient.publish(message.topic.c_str(), message.payload.c_str(), true);
+    }
+}
 
 bool Wifi::isMdnsReady() const {
     return mdnsReady;
 }
 
-void Wifi::poll() {
+bool Wifi::isMqttConnected() const {
+    return const_cast<PubSubClient &>(mqttClient).connected();
+}
+
+bool Wifi::poll() {
     doubleResetDetector.loop();
 
     // The ESP8266 core reconnects WiFi on its own, but mDNS stays silent
@@ -178,4 +253,7 @@ void Wifi::poll() {
         MDNS.announce();
     }
     wasConnected = connectedNow;
+    const bool mqttJustConnected = connectMqtt();
+    if (mqttClient.connected()) mqttClient.loop();
+    return mqttJustConnected;
 }

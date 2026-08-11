@@ -17,6 +17,10 @@ ConfigJsonParser::Values valuesFromDefaults(const ConfigJsonParser::Defaults &de
             defaults.outdoorSensorChannel,
             textOrEmpty(defaults.webLanguage),
             defaults.ventingThreshold,
+            textOrEmpty(defaults.mqttHost),
+            defaults.mqttPort,
+            textOrEmpty(defaults.mqttUsername),
+            textOrEmpty(defaults.mqttPassword),
             ConfigJsonParser::CURRENT_SCHEMA_VERSION};
 }
 }
@@ -36,12 +40,18 @@ Result parse(const char *json, const Defaults &defaults) {
     const char *ntpServerValue = jsonDocument["ntp_server"] | "";
     const char *timezoneValue = jsonDocument["timezone_posix"] | "";
     const char *webLanguageValue = jsonDocument["web_language"] | "";
+    const char *mqttHostValue = jsonDocument["mqtt_host"] | "";
+    const char *mqttUsernameValue = jsonDocument["mqtt_username"] | "";
+    const char *mqttPasswordValue = jsonDocument["mqtt_password"] | "";
 
     if (WifiConfigFields::isValidNtpServer(ntpServerValue)) values.ntpServer = ntpServerValue;
     if (WifiConfigFields::isSupportedTimezone(timezoneValue)) values.timezonePosix = timezoneValue;
     if (strcmp(webLanguageValue, "en") == 0 || strcmp(webLanguageValue, "de") == 0) {
         values.webLanguage = webLanguageValue;
     }
+    if (WifiConfigFields::isValidMqttHost(mqttHostValue)) values.mqttHost = mqttHostValue;
+    if (WifiConfigFields::isValidMqttCredential(mqttUsernameValue)) values.mqttUsername = mqttUsernameValue;
+    if (WifiConfigFields::isValidMqttCredential(mqttPasswordValue)) values.mqttPassword = mqttPasswordValue;
 
     if (jsonDocument["temp_offset_indoor"].is<float>()) {
         const float tempOffsetIndoor = jsonDocument["temp_offset_indoor"].as<float>();
@@ -53,6 +63,10 @@ Result parse(const char *json, const Defaults &defaults) {
         if (outdoorSensorChannel >= 1 && outdoorSensorChannel <= 3) {
             values.outdoorSensorChannel = static_cast<uint8_t>(outdoorSensorChannel);
         }
+    }
+    if (jsonDocument["mqtt_port"].is<int>()) {
+        const int mqttPort = jsonDocument["mqtt_port"].as<int>();
+        if (mqttPort >= 1 && mqttPort <= 65535) values.mqttPort = static_cast<uint16_t>(mqttPort);
     }
 
     if (jsonDocument["schema_version"].is<int>()) {

@@ -17,6 +17,7 @@
 #include "SensorIndoor.h"
 #include "SensorOutdoor.h"
 #include "StartupRetryPolicy.h"
+#include "MqttPublishPolicy.h"
 #include "WebServer.h"
 #include "Wifi.h"
 
@@ -27,6 +28,7 @@ static SensorOutdoor outdoorSensor;
 static Wifi wifiController;
 static WebServer webServer;
 static bool otaReady = false;
+static AppConfig appConfig;
 
 static Ticker indoorMeasurementTicker;
 static Ticker outdoorReadingExpiryTicker;
@@ -98,8 +100,9 @@ void setup() {
     }
 
     ConfigLoadResult configLoad = ConfigStore::load(DEFAULT_NTP_SERVER, DEFAULT_TIMEZONE_POSIX, DEFAULT_TEMP_OFFSET_INDOOR,
-                                                    DEFAULT_OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD);
-    AppConfig appConfig = configLoad.config;
+                                                    DEFAULT_OUTDOOR_SENSOR_CHANNEL, DEFAULT_WEB_LANGUAGE, DEFAULT_VENTING_THRESHOLD,
+                                                    DEFAULT_MQTT_HOST, DEFAULT_MQTT_PORT, DEFAULT_MQTT_USERNAME, DEFAULT_MQTT_PASSWORD);
+    appConfig = configLoad.config;
     DEBUG_MSG("Config load: %s (%s)\n",
               ConfigLoadStatus::statusLabel(configLoad.outcome.status),
               ConfigLoadStatus::reasonLabel(configLoad.outcome.reason));
@@ -114,6 +117,7 @@ void setup() {
 
     displayScreen.showStartupWifi();
     const bool wifiConnected = wifiController.connect(displayScreen, appConfig);
+    wifiController.configureMqtt(appConfig);
     displayScreen.setVentingThreshold(appConfig.ventingThreshold);  // after connect() so portal changes are picked up
     if (wifiConnected) {
         displayScreen.showStartupHttp();
@@ -140,16 +144,31 @@ void setup() {
 
 void loop() {
     static unsigned long lastDisplayUpdate = 0;
-    wifiController.poll();
+    static uint32_t lastMqttPublishAtMillis = 0;
+    const bool mqttJustConnected = wifiController.poll();
     if (otaReady) {
         ArduinoOTA.handle();
     }
-
-    if (indoorSensor.isMeasurementDue()) { indoorSensor.refreshMeasurements(); }
-    if (outdoorSensor.hasPendingPacket()) { outdoorSensor.refreshMeasurements(); }
+    const bool indoorUpdated = indoorSensor.isMeasurementDue();
+    if (indoorUpdated) indoorSensor.refreshMeasurements();
+    const bool outdoorUpdated = outdoorSensor.hasPendingPacket();
+    if (outdoorUpdated) outdoorSensor.refreshMeasurements();
     outdoorSensor.applyPendingUpdates();
 
-    unsigned long now = millis();
+    const uint32_t now = millis();
+    if (MqttPublishPolicy::shouldPublish(
+            wifiController.isMqttConnected(), mqttJustConnected, now, lastMqttPublishAtMillis)) {
+        const DataJsonPayload::IndoorInputs indoor{
+            indoorSensor.isValid(), indoorSensor.temperature(), indoorSensor.humidity(),
+            indoorSensor.absoluteHumidity(), indoorSensor.dewPoint()};
+        const DataJsonPayload::OutdoorInputs outdoor{
+            outdoorSensor.isValid(), outdoorSensor.temperature(), outdoorSensor.humidity(),
+            outdoorSensor.absoluteHumidity(), outdoorSensor.batteryStatus(), outdoorSensor.secondsSinceLastPacket()};
+        wifiController.publishSensorStates(DataJsonPayload::build(
+            indoor, outdoor, appConfig.ventingThreshold, timeClient.isTimeSet()));
+        lastMqttPublishAtMillis = now;
+    }
+
     if (now - lastDisplayUpdate >= 1000) {
         displayScreen.renderMeasurements(timeClient, indoorSensor, outdoorSensor);
         lastDisplayUpdate = now;

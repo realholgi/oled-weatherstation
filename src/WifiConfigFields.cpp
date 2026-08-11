@@ -8,6 +8,7 @@
 
 namespace {
 constexpr size_t MAX_NTP_SERVER_LENGTH = 63;
+constexpr size_t MAX_MQTT_CREDENTIAL_LENGTH = 63;
 
 bool isAsciiLetterOrDigit(char value) {
     return (value >= 'a' && value <= 'z') ||
@@ -74,6 +75,14 @@ bool isValidNtpServer(const char *value) {
     return labelLength != 0 && !labelStartsWithHyphen && lastCharacter != '-';
 }
 
+bool isValidMqttHost(const char *value) {
+    return value != nullptr && (value[0] == '\0' || isValidNtpServer(value));
+}
+
+bool isValidMqttCredential(const char *value) {
+    return value != nullptr && (value[0] == '\0' || hasLengthWithinLimit(value, MAX_MQTT_CREDENTIAL_LENGTH));
+}
+
 bool isSupportedWebLanguage(const char *value) {
     return value != nullptr && (strcmp(value, "de") == 0 || strcmp(value, "en") == 0);
 }
@@ -90,6 +99,17 @@ bool parseOutdoorSensorChannel(const char *value, uint8_t &out) {
     if (end == value || *end != '\0' || parsed < 1 || parsed > 3) return false;
 
     out = static_cast<uint8_t>(parsed);
+    return true;
+}
+
+bool parseMqttPort(const char *value, uint16_t &out) {
+    if (!hasTextValue(value)) return false;
+
+    char *end = nullptr;
+    const long parsed = strtol(value, &end, 10);
+    if (end == value || *end != '\0' || parsed < 1 || parsed > 65535) return false;
+
+    out = static_cast<uint16_t>(parsed);
     return true;
 }
 

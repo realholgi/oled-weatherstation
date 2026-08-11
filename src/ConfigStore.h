@@ -10,6 +10,10 @@ struct AppConfig {
     uint8_t outdoorSensorChannel;
     String webLanguage;
     float ventingThreshold;
+    String mqttHost;
+    uint16_t mqttPort;
+    String mqttUsername;
+    String mqttPassword;
 };
 
 struct ConfigLoadResult {
@@ -20,6 +24,8 @@ struct ConfigLoadResult {
 class ConfigStore {
 public:
     static ConfigLoadResult load(const char *defaultNtpServer, const char *defaultTimezonePosix, float defaultTempOffsetIndoor,
-                                 uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage, float defaultVentingThreshold);
+                                 uint8_t defaultOutdoorSensorChannel, const char *defaultWebLanguage, float defaultVentingThreshold,
+                                 const char *defaultMqttHost, uint16_t defaultMqttPort, const char *defaultMqttUsername,
+                                 const char *defaultMqttPassword);
     static bool save(const AppConfig &config);
 };

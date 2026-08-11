@@ -26,7 +26,8 @@ It includes an OLED display, indoor and outdoor sensors, NTP time, and a live we
 - OLED view with time, indoor/outdoor temperature, relative humidity, absolute humidity, and humidity difference
 - Live web interface in German or English plus JSON endpoint
 - WiFi captive portal on first boot or double-reset
-- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, venting threshold, and webpage language
+- Configurable NTP server, timezone, indoor temperature offset, outdoor sensor channel, venting threshold, webpage language, and MQTT broker
+- Home Assistant MQTT auto-discovery with retained sensor state and availability
 - OTA updates after the initial USB flash
 
 ## How The Venting Recommendation Works
@@ -40,6 +41,7 @@ If the outdoor air contains less water than the indoor air, opening the windows 
 1. Flash the firmware to the Wemos D1 Mini with `pio run --target upload`.
 2. Join the `wetter` captive portal on first boot and save your WiFi settings.
 3. Open `http://wetter.local` to view the live dashboard.
+4. Optionally configure an MQTT broker in the captive portal; Home Assistant discovers the sensors automatically.
 
 ## Bill Of Materials
 
@@ -91,8 +93,16 @@ Connect to it and enter:
 - outdoor sensor channel (`1`-`3`)
 - venting threshold in g/m³ (`0.5`-`10`)
 - webpage language (`Deutsch` or `English`)
+- MQTT broker host and port
+- MQTT username and password (when required by the broker)
 
 The configuration is stored in LittleFS as `/config.json`.
+
+## Home Assistant MQTT
+
+MQTT is disabled until an MQTT broker host is configured in the captive portal. The station publishes Home Assistant MQTT discovery documents below `homeassistant/#`, identifies itself as `wetter` / `WetterStation`, and publishes retained state below `wetter/sensor/#`.
+
+Sensor states are published every 30 seconds and immediately after the initial MQTT connection or a reconnection; invalid or stale readings do not replace retained state. The retained availability topic is `wetter/status`; it is `online` while connected and has an `offline` last will. Discovery documents are republished whenever the broker connection is re-established, so Home Assistant can recreate the same entities after a restart.
 
 ## Build & Flash
 

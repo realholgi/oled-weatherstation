@@ -9,7 +9,8 @@ void setUp(void) {}
 void tearDown(void) {}
 
 static ConfigJsonParser::Defaults testDefaults() {
-    return {"pool.ntp.org", "CET-1CEST,M3.5.0,M10.5.0/3", 0.5f, 2, "de", 2.5f};
+    return {"pool.ntp.org", "CET-1CEST,M3.5.0,M10.5.0/3", 0.5f, 2, "de", 2.5f,
+            "", 1883, "", ""};
 }
 
 static void assertAllDefaults(const ConfigJsonParser::Result &result, const ConfigJsonParser::Defaults &defaults) {
@@ -19,6 +20,10 @@ static void assertAllDefaults(const ConfigJsonParser::Result &result, const Conf
     TEST_ASSERT_EQUAL_UINT8(defaults.outdoorSensorChannel, result.values.outdoorSensorChannel);
     TEST_ASSERT_EQUAL_STRING(defaults.webLanguage, result.values.webLanguage.c_str());
     TEST_ASSERT_FLOAT_WITHIN(0.001f, defaults.ventingThreshold, result.values.ventingThreshold);
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttHost, result.values.mqttHost.c_str());
+    TEST_ASSERT_EQUAL_UINT16(defaults.mqttPort, result.values.mqttPort);
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttUsername, result.values.mqttUsername.c_str());
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttPassword, result.values.mqttPassword.c_str());
 }
 
 void test_parser_loads_valid_json_values(void) {
@@ -28,7 +33,11 @@ void test_parser_loads_valid_json_values(void) {
         "\"temp_offset_indoor\":-1.25,"
         "\"outdoor_sensor_channel\":3,"
         "\"web_language\":\"en\","
-        "\"venting_threshold\":4.75}";
+        "\"venting_threshold\":4.75,"
+        "\"mqtt_host\":\"mqtt.example.org\","
+        "\"mqtt_port\":1884,"
+        "\"mqtt_username\":\"station\","
+        "\"mqtt_password\":\"configured-at-runtime\"}";
 
     const ConfigJsonParser::Result result = ConfigJsonParser::parse(json, testDefaults());
 
@@ -41,6 +50,10 @@ void test_parser_loads_valid_json_values(void) {
     TEST_ASSERT_EQUAL_UINT8(3, result.values.outdoorSensorChannel);
     TEST_ASSERT_EQUAL_STRING("en", result.values.webLanguage.c_str());
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.75f, result.values.ventingThreshold);
+    TEST_ASSERT_EQUAL_STRING("mqtt.example.org", result.values.mqttHost.c_str());
+    TEST_ASSERT_EQUAL_UINT16(1884, result.values.mqttPort);
+    TEST_ASSERT_EQUAL_STRING("station", result.values.mqttUsername.c_str());
+    TEST_ASSERT_EQUAL_STRING("configured-at-runtime", result.values.mqttPassword.c_str());
 }
 
 void test_parser_invalid_json_uses_defaults(void) {
@@ -97,6 +110,10 @@ void test_parser_missing_fields_fall_back_individually(void) {
     TEST_ASSERT_EQUAL_UINT8(defaults.outdoorSensorChannel, result.values.outdoorSensorChannel);
     TEST_ASSERT_EQUAL_STRING(defaults.webLanguage, result.values.webLanguage.c_str());
     TEST_ASSERT_FLOAT_WITHIN(0.001f, defaults.ventingThreshold, result.values.ventingThreshold);
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttHost, result.values.mqttHost.c_str());
+    TEST_ASSERT_EQUAL_UINT16(defaults.mqttPort, result.values.mqttPort);
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttUsername, result.values.mqttUsername.c_str());
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttPassword, result.values.mqttPassword.c_str());
 }
 
 void test_parser_rejects_out_of_range_channels(void) {
@@ -153,6 +170,22 @@ void test_parser_rejects_invalid_ntp_server_and_timezone(void) {
 
     TEST_ASSERT_EQUAL_STRING(defaults.ntpServer, result.values.ntpServer.c_str());
     TEST_ASSERT_EQUAL_STRING(defaults.timezonePosix, result.values.timezonePosix.c_str());
+}
+
+void test_parser_rejects_invalid_mqtt_values(void) {
+    const ConfigJsonParser::Defaults defaults = testDefaults();
+    const char *json =
+        "{\"mqtt_host\":\"mqtt.example.org\\\" onfocus=alert(1)\","
+        "\"mqtt_port\":65536,"
+        "\"mqtt_username\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\","
+        "\"mqtt_password\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}";
+
+    const ConfigJsonParser::Result result = ConfigJsonParser::parse(json, defaults);
+
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttHost, result.values.mqttHost.c_str());
+    TEST_ASSERT_EQUAL_UINT16(defaults.mqttPort, result.values.mqttPort);
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttUsername, result.values.mqttUsername.c_str());
+    TEST_ASSERT_EQUAL_STRING(defaults.mqttPassword, result.values.mqttPassword.c_str());
 }
 
 void test_parser_rejects_non_positive_venting_threshold(void) {
@@ -239,6 +272,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_parser_schema_version_defaults_to_current);
     RUN_TEST(test_parser_reads_valid_schema_version);
     RUN_TEST(test_parser_rejects_invalid_schema_versions);
+    RUN_TEST(test_parser_rejects_invalid_mqtt_values);
     RUN_TEST(test_parser_valid_json_with_invalid_fields_still_reports_loaded);
     return UNITY_END();
 }

@@ -6,7 +6,7 @@
 #include "ConfigLoadStatus.h"
 
 namespace ConfigJsonParser {
-constexpr int CURRENT_SCHEMA_VERSION = 1;
+constexpr int CURRENT_SCHEMA_VERSION = 2;
 
 struct Defaults {
     const char *ntpServer;
@@ -15,6 +15,10 @@ struct Defaults {
     uint8_t outdoorSensorChannel;
     const char *webLanguage;
     float ventingThreshold;
+    const char *mqttHost;
+    uint16_t mqttPort;
+    const char *mqttUsername;
+    const char *mqttPassword;
 };
 
 struct Values {
@@ -24,6 +28,10 @@ struct Values {
     uint8_t outdoorSensorChannel;
     std::string webLanguage;
     float ventingThreshold;
+    std::string mqttHost;
+    uint16_t mqttPort;
+    std::string mqttUsername;
+    std::string mqttPassword;
     int schemaVersion;
 };
 

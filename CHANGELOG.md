@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- MQTT broker configuration in the captive portal and LittleFS configuration.
+- Home Assistant MQTT auto-discovery for indoor and outdoor temperature, humidity, absolute humidity, dew point, and outdoor battery.
+- Retained MQTT availability, state publishing, and discovery republishing after broker reconnects.
+- MQTT sensor states are published every 30 seconds and immediately after broker connection or reconnection.
+
 ## [1.0.2] - 2026-07-27
 
 ### Changed

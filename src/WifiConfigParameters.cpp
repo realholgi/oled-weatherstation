@@ -9,6 +9,7 @@ WifiConfigParameters::WifiConfigParameters(const AppConfig &config)
       tempOffsetIndoorValue(formatFloatValue(config.tempOffsetIndoor, 2)),
       outdoorSensorChannelValue(formatIntegerValue(config.outdoorSensorChannel)),
       ventingThresholdValue(formatFloatValue(config.ventingThreshold, 1)),
+      mqttPortValue(formatMqttPortValue(config.mqttPort)),
       timezoneSelectParam(timezoneSelectHtml.c_str()),
       languageSelectParam(languageSelectHtml.c_str()),
       timezoneHiddenParam("timezone_posix", "", config.timezonePosix.c_str(), 64, "type='hidden'"),
@@ -18,7 +19,11 @@ WifiConfigParameters::WifiConfigParameters(const AppConfig &config)
       outdoorSensorChannelParam("outdoor_sensor_channel", "Outdoor Sensor Channel",
                                 outdoorSensorChannelValue.c_str(), 4, "type='number' min='1' max='3' step='1'"),
       ventingThresholdParam("venting_threshold", "Venting Threshold (g/m\xc2\xb3)",
-                            ventingThresholdValue.c_str(), 8, "type='number' min='0.5' max='10' step='0.5'") {
+                            ventingThresholdValue.c_str(), 8, "type='number' min='0.5' max='10' step='0.5'"),
+      mqttHostParam("mqtt_host", "MQTT Broker Host", config.mqttHost.c_str(), 64),
+      mqttPortParam("mqtt_port", "MQTT Broker Port", mqttPortValue.c_str(), 6, "type='number' min='1' max='65535' step='1'"),
+      mqttUsernameParam("mqtt_username", "MQTT Username", config.mqttUsername.c_str(), 64),
+      mqttPasswordParam("mqtt_password", "MQTT Password", config.mqttPassword.c_str(), 64, "type='password'") {
 }
 
 WiFiManagerParameter &WifiConfigParameters::timezoneSelect() {
@@ -53,10 +58,30 @@ WiFiManagerParameter &WifiConfigParameters::ventingThreshold() {
     return ventingThresholdParam;
 }
 
+WiFiManagerParameter &WifiConfigParameters::mqttHost() {
+    return mqttHostParam;
+}
+
+WiFiManagerParameter &WifiConfigParameters::mqttPort() {
+    return mqttPortParam;
+}
+
+WiFiManagerParameter &WifiConfigParameters::mqttUsername() {
+    return mqttUsernameParam;
+}
+
+WiFiManagerParameter &WifiConfigParameters::mqttPassword() {
+    return mqttPasswordParam;
+}
+
 String WifiConfigParameters::formatFloatValue(float value, uint8_t decimals) {
     return String(value, decimals);
 }
 
 String WifiConfigParameters::formatIntegerValue(uint8_t value) {
+    return String(value);
+}
+
+String WifiConfigParameters::formatMqttPortValue(uint16_t value) {
     return String(value);
 }
